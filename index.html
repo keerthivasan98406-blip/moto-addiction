@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MotoForce — Premium Sports Bike Accessories</title>
-  <meta name="description" content="MotoForce – Your ultimate destination for premium sports bike accessories, helmets, gear, and performance parts. Shop the best motorcycle accessories online." />
+  <title>Moto Pitshop — Your Ride. Your Parts. Your Pitstop.</title>
+  <meta name="description" content="Moto Pitshop – Your ultimate destination for premium sports bike accessories, helmets, gear, and performance parts. Shop the best motorcycle accessories online." />
   <meta name="keywords" content="sports bike accessories, motorcycle helmets, bike gear, performance parts, riding jackets, motorcycle gloves" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css?v=2" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff4d00'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
 </head>
 <body>
@@ -30,7 +30,7 @@
           <span class="speed-unit">KM/H</span>
         </div>
       </div>
-      <div class="preloader-logo">MOTO<span>FORCE</span></div>
+      <div class="preloader-logo">MOTO<span>PITSHOP</span></div>
       <div class="preloader-race-track">
         <div class="preloader-race-fill" id="preloader-race-fill"></div>
         <!-- Racing motorcycle SVG icon -->
@@ -44,14 +44,15 @@
   <!-- ===== NAVBAR ===== -->
   <nav class="navbar" id="navbar">
     <div class="nav-container">
-      <a href="#" class="nav-logo" id="nav-logo-link">MOTO<span>FORCE</span></a>
+      <a href="/" class="nav-logo" id="nav-logo-link">MOTO<span>PITSHOP</span></a>
       <ul class="nav-links" id="nav-links">
-        <li><a href="#home" class="nav-link active" id="nav-home">Home</a></li>
-        <li><a href="#products" class="nav-link" id="nav-products">Products</a></li>
-
-        <li><a href="#why-us" class="nav-link" id="nav-about">About Us</a></li>
-        <li><a href="#testimonials" class="nav-link" id="nav-testimonials">Reviews</a></li>
-        <li><a href="#contact" class="nav-link" id="nav-location">Shop Location</a></li>
+        <li><a href="/" class="nav-link active" id="nav-home">Home</a></li>
+        <li><a href="/products" class="nav-link" id="nav-shop">Shop</a></li>
+        <li><a href="/products?category=all#categories" class="nav-link" id="nav-categories">Categories</a></li>
+        <li><a href="/products?category=engine" class="nav-link" id="nav-bike-parts">Bike Parts</a></li>
+        <li><a href="/products?category=accessories" class="nav-link" id="nav-accessories">Accessories</a></li>
+        <li><a href="/products?filter=offers" class="nav-link" id="nav-offers">Offers</a></li>
+        <li><a href="/track-order" class="nav-link" id="nav-track">Track Order</a></li>
       </ul>
       <div class="nav-actions">
         <button class="nav-icon-btn" id="search-btn" aria-label="Search">
@@ -164,15 +165,6 @@
         <span class="section-badge">FEATURED PRODUCTS</span>
         <h2 class="section-title">Gear Up With <span>The Best</span></h2>
         <p class="section-subtitle">Handpicked premium accessories for every serious rider</p>
-      </div>
-
-      <!-- Filter Tabs -->
-      <div class="filter-tabs" id="filter-tabs">
-        <button class="filter-tab active" id="filter-all" data-filter="all">All Products</button>
-        <button class="filter-tab" id="filter-helmets-tab" data-filter="helmets">Helmets</button>
-        <button class="filter-tab" id="filter-gear-tab" data-filter="gear">Gear</button>
-        <button class="filter-tab" id="filter-parts-tab" data-filter="parts">Parts</button>
-        <button class="filter-tab" id="filter-electronics-tab" data-filter="electronics">Electronics</button>
       </div>
 
       <!-- Products Grid -->
@@ -290,228 +282,9 @@
           </div>
         </div>
 
-        <!-- Product 5: Helmet 2 -->
-        <div class="product-card" id="product-5" data-category="helmets" data-image2="https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&w=600&q=80">
-          <div class="product-img-wrap">
-            <img src="hero2.png" alt="Carbon Flip-Up Modular Helmet" class="product-img" loading="lazy" style="object-position: right" />
-            <div class="product-badges">
-              <span class="badge badge-new">LIMITED</span>
-            </div>
-            <button class="overlay-wish" id="wish-5" aria-label="Wishlist" data-id="5">♡</button>
-          </div>
-          <div class="product-info">
-            <span class="product-brand">AGV Italia</span>
-            <h3 class="product-name">Carbon Flip-Up Modular Helmet</h3>
-            <div class="product-rating">
-              <span class="stars">★★★★★</span>
-              <span class="rating-count">(56)</span>
-            </div>
-            <div class="product-pricing">
-              <span class="price-current">₹11,999</span>
-              <span class="price-old">₹15,999</span>
-              <span class="price-discount">25% OFF</span>
-            </div>
-            <div class="product-actions">
-              <button class="btn-buy buy-btn" data-id="5" data-name="Carbon Flip-Up Helmet" data-price="11999">Buy Now</button>
-              <button class="btn-cart add-cart-btn" data-id="5" data-name="Carbon Flip-Up Helmet" data-price="11999">Add to Cart</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 6: Gear -->
-        <div class="product-card" id="product-6" data-category="gear" data-image2="https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=600&q=80">
-          <div class="product-img-wrap">
-            <img src="gloves.png" alt="Waterproof Adventure Gloves" class="product-img" loading="lazy" style="filter: hue-rotate(120deg)" />
-            <div class="product-badges">
-              <span class="badge badge-sale">DEAL</span>
-            </div>
-            <button class="overlay-wish" id="wish-6" aria-label="Wishlist" data-id="6">♡</button>
-          </div>
-          <div class="product-info">
-            <span class="product-brand">Alpinestars</span>
-            <h3 class="product-name">Waterproof Adventure Gloves</h3>
-            <div class="product-rating">
-              <span class="stars">★★★★☆</span>
-              <span class="rating-count">(203)</span>
-            </div>
-            <div class="product-pricing">
-              <span class="price-current">₹1,899</span>
-              <span class="price-old">₹2,799</span>
-              <span class="price-discount">32% OFF</span>
-            </div>
-            <div class="product-actions">
-              <button class="btn-buy buy-btn" data-id="6" data-name="Waterproof Adventure Gloves" data-price="1899">Buy Now</button>
-              <button class="btn-cart add-cart-btn" data-id="6" data-name="Waterproof Adventure Gloves" data-price="1899">Add to Cart</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 7: Parts -->
-        <div class="product-card" id="product-7" data-category="parts" data-image2="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=600&q=80">
-          <div class="product-img-wrap">
-            <img src="exhaust.png" alt="Carbon Brake Lever Kit" class="product-img" loading="lazy" style="filter: hue-rotate(200deg)" />
-            <div class="product-badges">
-              <span class="badge badge-hot">TOP RATED</span>
-            </div>
-            <button class="overlay-wish" id="wish-7" aria-label="Wishlist" data-id="7">♡</button>
-          </div>
-          <div class="product-info">
-            <span class="product-brand">Brembo × MotoForce</span>
-            <h3 class="product-name">Carbon Adjustable Brake Lever Kit</h3>
-            <div class="product-rating">
-              <span class="stars">★★★★★</span>
-              <span class="rating-count">(144)</span>
-            </div>
-            <div class="product-pricing">
-              <span class="price-current">₹3,499</span>
-              <span class="price-old">₹4,999</span>
-              <span class="price-discount">30% OFF</span>
-            </div>
-            <div class="product-actions">
-              <button class="btn-buy buy-btn" data-id="7" data-name="Carbon Brake Lever Kit" data-price="3499">Buy Now</button>
-              <button class="btn-cart add-cart-btn" data-id="7" data-name="Carbon Brake Lever Kit" data-price="3499">Add to Cart</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 8: Electronics -->
-        <div class="product-card" id="product-8" data-category="electronics" data-image2="https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&w=600&q=80">
-          <div class="product-img-wrap">
-            <img src="hero3.png" alt="Smart GPS Navigator Mount" class="product-img" loading="lazy" />
-            <div class="product-badges">
-              <span class="badge badge-new">NEW TECH</span>
-            </div>
-            <button class="overlay-wish" id="wish-8" aria-label="Wishlist" data-id="8">♡</button>
-          </div>
-          <div class="product-info">
-            <span class="product-brand">Garmin × MotoForce</span>
-            <h3 class="product-name">Smart GPS Navigator Mount</h3>
-            <div class="product-rating">
-              <span class="stars">★★★★★</span>
-              <span class="rating-count">(78)</span>
-            </div>
-            <div class="product-pricing">
-              <span class="price-current">₹4,999</span>
-              <span class="price-old">₹6,499</span>
-              <span class="price-discount">23% OFF</span>
-            </div>
-            <div class="product-actions">
-              <button class="btn-buy buy-btn" data-id="8" data-name="Smart GPS Navigator Mount" data-price="4999">Buy Now</button>
-              <button class="btn-cart add-cart-btn" data-id="8" data-name="Smart GPS Navigator Mount" data-price="4999">Add to Cart</button>
-            </div>
-          </div>
-        </div>
-
       </div>
 
 
-    </div>
-  </section>
-
-  <!-- ===== WHY CHOOSE US ===== -->
-  <section class="why-us-section section" id="why-us">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-badge">WHY MOTOFORCE</span>
-        <h2 class="section-title">The Rider's <span>Trusted Choice</span></h2>
-      </div>
-      <div class="why-us-grid">
-        <div class="why-card" id="why-1">
-          <div class="why-card-img-wrap">
-            <img src="https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&w=600&q=80" alt="Certified Safety" class="why-card-img">
-          </div>
-          <div class="why-icon-wrap">
-            <div class="why-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 13c0 5-3.5 7.5-7.66 9.7a1 1 0 0 1-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .76-.97l8-2a1 1 0 0 1 .48 0l8 2A1 1 0 0 1 20 6z"/>
-                <path d="m9 12 2 2 4-4"/>
-              </svg>
-            </div>
-          </div>
-          <h3>Certified Safety</h3>
-          <p>All helmets and gear are CE/DOT certified ensuring your protection on every ride.</p>
-        </div>
-        <div class="why-card" id="why-2">
-          <div class="why-card-img-wrap">
-            <img src="https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=600&q=80" alt="Fast Delivery" class="why-card-img">
-          </div>
-          <div class="why-icon-wrap">
-            <div class="why-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="3" width="15" height="13" rx="2" ry="2"/>
-                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-                <circle cx="5.5" cy="18.5" r="2.5"/>
-                <circle cx="18.5" cy="18.5" r="2.5"/>
-              </svg>
-            </div>
-          </div>
-          <h3>Fast Delivery</h3>
-          <p>2-day delivery across India with real-time tracking and free shipping above ₹2999.</p>
-        </div>
-        <div class="why-card" id="why-3">
-          <div class="why-card-img-wrap">
-            <img src="https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=600&q=80" alt="Easy Returns" class="why-card-img">
-          </div>
-          <div class="why-icon-wrap">
-            <div class="why-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                <path d="M3 3v5h5"/>
-              </svg>
-            </div>
-          </div>
-          <h3>Easy Returns</h3>
-          <p>30-day hassle-free return policy. Not satisfied? We'll make it right, guaranteed.</p>
-        </div>
-        <div class="why-card" id="why-4">
-          <div class="why-card-img-wrap">
-            <img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=600&q=80" alt="Best Price" class="why-card-img">
-          </div>
-          <div class="why-icon-wrap">
-            <div class="why-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2H2v10l9.29 9.29c.39.39 1.02.39 1.41 0l7.59-7.59c.39-.39.39-1.02 0-1.41L12 2z"/>
-                <path d="M7 7h.01"/>
-              </svg>
-            </div>
-          </div>
-          <h3>Best Price</h3>
-          <p>Price match guarantee. If you find it cheaper elsewhere, we'll beat that price.</p>
-        </div>
-        <div class="why-card" id="why-5">
-          <div class="why-card-img-wrap">
-            <img src="https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80" alt="Premium Quality" class="why-card-img">
-          </div>
-          <div class="why-icon-wrap">
-            <div class="why-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                <path d="M4 22h16"/>
-                <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/>
-                <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z"/>
-              </svg>
-            </div>
-          </div>
-          <h3>Premium Quality</h3>
-          <p>Carefully curated from the world's leading brands — only the best for serious riders.</p>
-        </div>
-        <div class="why-card" id="why-6">
-          <div class="why-card-img-wrap">
-            <img src="https://images.unsplash.com/photo-1521791136368-1a46827d0a92?auto=format&fit=crop&w=600&q=80" alt="Expert Support" class="why-card-img">
-          </div>
-          <div class="why-icon-wrap">
-            <div class="why-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-              </svg>
-            </div>
-          </div>
-          <h3>Expert Support</h3>
-          <p>Rider-to-rider customer support available 24/7 via chat, call, or WhatsApp.</p>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -604,24 +377,6 @@
           <div class="rating-bar-row"><span>2★</span><div class="bar-track"><div class="bar-fill" style="width: 1%"></div></div><span>1%</span></div>
           <div class="rating-bar-row"><span>1★</span><div class="bar-track"><div class="bar-fill" style="width: 0%"></div></div><span>0%</span></div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== NEWSLETTER ===== -->
-  <section class="newsletter-section" id="newsletter">
-    <div class="container">
-      <div class="newsletter-content">
-        <div class="newsletter-text">
-          <span class="section-badge">STAY IN THE LOOP</span>
-          <h2>Get Exclusive Deals & <span>Rider Updates</span></h2>
-          <p>Subscribe and get ₹500 off your first order + early access to flash sales</p>
-        </div>
-        <form class="newsletter-form" id="newsletter-form">
-          <input type="email" id="newsletter-email" class="newsletter-input" placeholder="Enter your email address" required />
-          <button type="submit" class="btn btn-primary" id="newsletter-submit">Subscribe →</button>
-        </form>
-        <p class="newsletter-note">No spam. Unsubscribe anytime.</p>
       </div>
     </div>
   </section>
@@ -849,6 +604,6 @@
   <!-- ===== BACK TO TOP ===== -->
   <button class="back-to-top" id="back-to-top" aria-label="Back to top">↑</button>
 
-  <script src="main.js"></script>
+  <script src="/main.js?v=2"></script>
 </body>
 </html>

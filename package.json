@@ -1,0 +1,20 @@
+{
+  "name": "moto-pitshop",
+  "version": "2.0.0",
+  "description": "Production Motorcycle Spare Parts Ecommerce & Business Management Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "init-db": "node database.js"
+  },
+  "keywords": [
+    "motorcycle",
+    "parts",
+    "ecommerce",
+    "moto-pitshop",
+    "inventory",
+    "business-management"
+  ],
+  "author": "Moto Pitshop Development Team",
+  "license": "ISC"
+}

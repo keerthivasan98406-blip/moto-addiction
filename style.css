@@ -2180,3 +2180,133 @@ input, textarea, select { font-family: inherit; }
 .shop-map-iframe:hover {
   filter: invert(90%) hue-rotate(180deg) grayscale(0%) contrast(95%);
 }
+
+/* ========== OWNER PORTAL STYLES ARE IN owner.css ========== */
+
+/* ========== ACCOUNT DROPDOWN STYLES ========== */
+.nav-account-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.account-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 250px;
+  background: var(--surface-2, #14141e);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1050;
+}
+
+.nav-account-wrap:hover .account-dropdown-menu,
+.account-dropdown-menu.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 12px 10px;
+}
+
+.user-avatar-initials {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary, #ff4d00);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(255, 77, 0, 0.4);
+  flex-shrink: 0;
+}
+
+.user-info {
+  overflow: hidden;
+}
+
+.user-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-primary, #ffffff);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.user-email {
+  font-size: 0.76rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.6));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 6px 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.dropdown-item svg {
+  width: 18px;
+  height: 18px;
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 77, 0, 0.15);
+  color: var(--primary, #ff4d00);
+}
+
+.dropdown-item:hover svg {
+  opacity: 1;
+  stroke: var(--primary, #ff4d00);
+}
+
+.dropdown-item.logout-item:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.dropdown-item.logout-item:hover svg {
+  stroke: #ef4444;
+}
+
+
+

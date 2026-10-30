@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
+  <ellipse cx="60" cy="20" rx="45" ry="16" fill="none" stroke="#003366" stroke-width="2.5" />
+  <text x="60" y="26" font-family="'Outfit', 'Georgia', serif" font-size="21" font-weight="bold" font-style="italic" fill="#003366" text-anchor="middle">Arai</text>
+  <text x="60" y="32" font-family="'Outfit', sans-serif" font-size="5" font-weight="800" fill="#003366" text-anchor="middle" letter-spacing="1.5">HELMET</text>
+</svg>

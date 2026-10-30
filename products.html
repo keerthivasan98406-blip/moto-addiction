@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moto Pitshop — Rider's Gear & Accessories Catalog</title>
+  <meta name="description" content="Explore the Moto Pitshop catalog for premium sports bike accessories, helmets, gear, and performance parts." />
+  <meta name="keywords" content="sports bike accessories, motorcycle helmets, bike gear, performance parts, riding jackets, motorcycle gloves" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff4d00'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
+</head>
+<body class="products-page">
+
+  <!-- ===== PRELOADER ===== -->
+  <div id="preloader" class="preloader">
+    <div class="preloader-track-bg"></div>
+    <div class="preloader-track-overlay"></div>
+    <div class="speed-lines-container" id="speed-lines-container"></div>
+    <div class="preloader-content">
+      <div class="speedometer-wrap">
+        <svg class="speedometer-ring" viewBox="0 0 180 180">
+          <circle class="speedometer-circle-bg" cx="90" cy="90" r="80"></circle>
+          <circle class="speedometer-circle-fill" id="speedometer-fill" cx="90" cy="90" r="80"></circle>
+        </svg>
+        <div class="speedometer-text">
+          <span class="speed-value" id="speed-value">0</span>
+          <span class="speed-unit">KM/H</span>
+        </div>
+      </div>
+      <div class="preloader-logo">MOTO<span>PITSHOP</span></div>
+      <div class="preloader-race-track">
+        <div class="preloader-race-fill" id="preloader-race-fill"></div>
+        <!-- Racing motorcycle SVG icon -->
+        <svg class="preloader-motorcycle" id="preloader-motorcycle" viewBox="0 0 24 24">
+          <path d="M19.5 9.5c0-.83-.67-1.5-1.5-1.5h-2.12l-1.44-2.88c-.28-.56-.85-.92-1.48-.92h-3.41c-.91 0-1.66.75-1.66 1.66v.63c0 .28.22.5.5.5h2.12l1 2H7.24L5.68 7.32c-.28-.56-.85-.92-1.48-.92H2.5c-.28 0-.5.22-.5.5v.63c0 .91.75 1.66 1.66 1.66h1.22l2.36 4.72c.11.22.33.36.58.36h7.36c.25 0 .47-.14.58-.36l1.24-2.48H18c.83 0 1.5-.67 1.5-1.5zM6.5 15.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm11 0c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm-11 4c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-logo" id="nav-logo-link">MOTO<span>PITSHOP</span></a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="/" class="nav-link" id="nav-home">Home</a></li>
+        <li><a href="/products" class="nav-link active" id="nav-shop">Shop</a></li>
+        <li><a href="/products?category=all#categories" class="nav-link" id="nav-categories">Categories</a></li>
+        <li><a href="/products?category=engine" class="nav-link" id="nav-bike-parts">Bike Parts</a></li>
+        <li><a href="/products?category=accessories" class="nav-link" id="nav-accessories">Accessories</a></li>
+        <li><a href="/products?filter=offers" class="nav-link" id="nav-offers">Offers</a></li>
+        <li><a href="/track-order" class="nav-link" id="nav-track">Track Order</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="nav-icon-btn" id="search-btn" aria-label="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <button class="nav-icon-btn" id="wishlist-btn" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        <button class="nav-icon-btn cart-btn" id="cart-btn" aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-badge" id="cart-count">0</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== SEARCH OVERLAY ===== -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-container">
+      <input type="text" class="search-input" id="search-input" placeholder="Search for helmets, gloves, jackets..." />
+      <button class="search-close" id="search-close" aria-label="Close search">✕</button>
+    </div>
+  </div>
+
+  <!-- ===== PRODUCTS HERO/BANNER ===== -->
+  <section class="products-banner">
+    <div class="products-banner-bg"></div>
+    <div class="products-banner-overlay"></div>
+    <div class="container products-banner-content">
+      <div class="breadcrumbs">
+        <a href="index.html">Home</a> <span class="sep">/</span> <span class="curr">Products</span>
+      </div>
+      <h1 class="banner-title">Rider's <span>Gear & Accessories</span></h1>
+      <p class="banner-subtitle">Premium equipment and custom performance upgrades designed to unlock your machine's true potential.</p>
+    </div>
+  </section>
+
+  <!-- ===== PRODUCTS SECTION ===== -->
+  <section class="products-section section" id="products">
+    <div class="container">
+      <!-- Filter Tabs -->
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="filter-tab active" id="filter-all" data-filter="all">All Products</button>
+        <button class="filter-tab" id="filter-helmets-tab" data-filter="helmets">Helmets</button>
+        <button class="filter-tab" id="filter-gear-tab" data-filter="gear">Gear</button>
+        <button class="filter-tab" id="filter-parts-tab" data-filter="parts">Parts</button>
+        <button class="filter-tab" id="filter-electronics-tab" data-filter="electronics">Electronics</button>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid" id="products-grid">
+
+        <!-- Product 1: Helmet -->
+        <div class="product-card" id="product-1" data-category="helmets" data-image2="https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&w=600&q=80">
+          <div class="product-img-wrap">
+            <img src="hero2.png" alt="Pro Racing Helmet Full Face" class="product-img" loading="lazy" />
+            <div class="product-badges">
+              <span class="badge badge-hot">HOT</span>
+            </div>
+            <button class="overlay-wish" id="wish-1" aria-label="Wishlist" data-id="1">♡</button>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">Shoei × MotoForce</span>
+            <h3 class="product-name">Pro Racing Helmet – Full Face</h3>
+            <div class="product-rating">
+              <span class="stars">★★★★★</span>
+              <span class="rating-count">(248)</span>
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹8,999</span>
+              <span class="price-old">₹12,999</span>
+              <span class="price-discount">31% OFF</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="1" data-name="Pro Racing Helmet" data-price="8999">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="1" data-name="Pro Racing Helmet" data-price="8999">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 2: Gloves -->
+        <div class="product-card" id="product-2" data-category="gear" data-image2="https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=600&q=80">
+          <div class="product-img-wrap">
+            <img src="gloves.png" alt="Carbon Fiber Racing Gloves" class="product-img" loading="lazy" />
+            <div class="product-badges">
+              <span class="badge badge-new">NEW</span>
+            </div>
+            <button class="overlay-wish" id="wish-2" aria-label="Wishlist" data-id="2">♡</button>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">MotoForce Elite</span>
+            <h3 class="product-name">Carbon Fiber Racing Gloves</h3>
+            <div class="product-rating">
+              <span class="stars">★★★★★</span>
+              <span class="rating-count">(185)</span>
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹2,499</span>
+              <span class="price-old">₹3,499</span>
+              <span class="price-discount">28% OFF</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="2" data-name="Carbon Fiber Racing Gloves" data-price="2499">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="2" data-name="Carbon Fiber Racing Gloves" data-price="2499">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 3: Jacket -->
+        <div class="product-card" id="product-3" data-category="gear" data-image2="https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80">
+          <div class="product-img-wrap">
+            <img src="jacket.png" alt="Aerodynamic Racing Jacket" class="product-img" loading="lazy" />
+            <div class="product-badges">
+              <span class="badge badge-sale">SALE</span>
+            </div>
+            <button class="overlay-wish" id="wish-3" aria-label="Wishlist" data-id="3">♡</button>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">MotoForce Pro</span>
+            <h3 class="product-name">Aerodynamic Racing Jacket</h3>
+            <div class="product-rating">
+              <span class="stars">★★★★☆</span>
+              <span class="rating-count">(312)</span>
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹6,499</span>
+              <span class="price-old">₹9,999</span>
+              <span class="price-discount">35% OFF</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="3" data-name="Aerodynamic Racing Jacket" data-price="6499">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="3" data-name="Aerodynamic Racing Jacket" data-price="6499">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 4: Exhaust -->
+        <div class="product-card" id="product-4" data-category="parts" data-image2="https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=600&q=80">
+          <div class="product-img-wrap">
+            <img src="exhaust.png" alt="Titanium Slip-On Exhaust" class="product-img" loading="lazy" />
+            <div class="product-badges">
+              <span class="badge badge-hot">POPULAR</span>
+            </div>
+            <button class="overlay-wish" id="wish-4" aria-label="Wishlist" data-id="4">♡</button>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">Akrapovič × MotoForce</span>
+            <h3 class="product-name">Titanium Slip-On Exhaust</h3>
+            <div class="product-rating">
+              <span class="stars">★★★★★</span>
+              <span class="rating-count">(97)</span>
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹14,999</span>
+              <span class="price-old">₹19,999</span>
+              <span class="price-discount">25% OFF</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="4" data-name="Titanium Slip-On Exhaust" data-price="14999">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="4" data-name="Titanium Slip-On Exhaust" data-price="14999">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 5: Helmet 2 -->
+        <div class="product-card" id="product-5" data-category="helmets" data-image2="https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&w=600&q=80">
+          <div class="product-img-wrap">
+            <img src="hero2.png" alt="Carbon Flip-Up Modular Helmet" class="product-img" loading="lazy" style="object-position: right" />
+            <div class="product-badges">
+              <span class="badge badge-new">LIMITED</span>
+            </div>
+            <button class="overlay-wish" id="wish-5" aria-label="Wishlist" data-id="5">♡</button>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">AGV Italia</span>
+            <h3 class="product-name">Carbon Flip-Up Modular Helmet</h3>
+            <div class="product-rating">
+              <span class="stars">★★★★★</span>
+              <span class="rating-count">(56)</span>
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹11,999</span>
+              <span class="price-old">₹15,999</span>
+              <span class="price-discount">25% OFF</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="5" data-name="Carbon Flip-Up Helmet" data-price="11999">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="5" data-name="Carbon Flip-Up Helmet" data-price="11999">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 6: Gear -->
+        <div class="product-card" id="product-6" data-category="gear" data-image2="https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=600&q=80">
+          <div class="product-img-wrap">
+            <img src="gloves.png" alt="Waterproof Adventure Gloves" class="product-img" loading="lazy" style="filter: hue-rotate(120deg)" />
+            <div class="product-badges">
+              <span class="badge badge-sale">DEAL</span>
+            </div>
+            <button class="overlay-wish" id="wish-6" aria-label="Wishlist" data-id="6">♡</button>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">Alpinestars</span>
+            <h3 class="product-name">Waterproof Adventure Gloves</h3>
+            <div class="product-rating">
+              <span class="stars">★★★★☆</span>
+              <span class="rating-count">(203)</span>
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹1,899</span>
+              <span class="price-old">₹2,799</span>
+              <span class="price-discount">32% OFF</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="6" data-name="Waterproof Adventure Gloves" data-price="1899">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="6" data-name="Waterproof Adventure Gloves" data-price="1899">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 7: Parts -->
+        <div class="product-card" id="product-7" data-category="parts" data-image2="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=600&q=80">
+          <div class="product-img-wrap">
+            <img src="exhaust.png" alt="Carbon Brake Lever Kit" class="product-img" loading="lazy" style="filter: hue-rotate(200deg)" />
+            <div class="product-badges">
+              <span class="badge badge-hot">TOP RATED</span>
+            </div>
+            <button class="overlay-wish" id="wish-7" aria-label="Wishlist" data-id="7">♡</button>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">Brembo × MotoForce</span>
+            <h3 class="product-name">Carbon Adjustable Brake Lever Kit</h3>
+            <div class="product-rating">
+              <span class="stars">★★★★★</span>
+              <span class="rating-count">(144)</span>
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹3,499</span>
+              <span class="price-old">₹4,999</span>
+              <span class="price-discount">30% OFF</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="7" data-name="Carbon Brake Lever Kit" data-price="3499">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="7" data-name="Carbon Brake Lever Kit" data-price="3499">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 8: Electronics -->
+        <div class="product-card" id="product-8" data-category="electronics" data-image2="https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&w=600&q=80">
+          <div class="product-img-wrap">
+            <img src="hero3.png" alt="Smart GPS Navigator Mount" class="product-img" loading="lazy" />
+            <div class="product-badges">
+              <span class="badge badge-new">NEW TECH</span>
+            </div>
+            <button class="overlay-wish" id="wish-8" aria-label="Wishlist" data-id="8">♡</button>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">Garmin × MotoForce</span>
+            <h3 class="product-name">Smart GPS Navigator Mount</h3>
+            <div class="product-rating">
+              <span class="stars">★★★★★</span>
+              <span class="rating-count">(78)</span>
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹4,999</span>
+              <span class="price-old">₹6,499</span>
+              <span class="price-discount">23% OFF</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="8" data-name="Smart GPS Navigator Mount" data-price="4999">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="8" data-name="Smart GPS Navigator Mount" data-price="4999">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer" id="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand" id="footer-brand">
+          <a href="index.html" class="footer-logo">MOTO<span>FORCE</span></a>
+          <p>India's premier destination for premium sports bike accessories. Gear up and ride bold.</p>
+          <div class="social-links" id="social-links">
+            <a href="#" class="social-link" id="social-instagram" aria-label="Instagram">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+            <a href="#" class="social-link" id="social-facebook" aria-label="Facebook">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="#" class="social-link" id="social-youtube" aria-label="YouTube">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-links-col" id="footer-quick">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html#home" id="footer-home">Home</a></li>
+            <li><a href="products.html" id="footer-products-link">Products</a></li>
+            <li><a href="index.html#brands" id="footer-brands-link">Brands</a></li>
+            <li><a href="index.html#testimonials" id="footer-reviews-link">Reviews</a></li>
+          </ul>
+        </div>
+        <div class="footer-links-col" id="footer-support">
+          <h4>Customer Care</h4>
+          <ul>
+            <li><a href="index.html#contact" id="footer-contact-link">Contact Us</a></li>
+            <li><a href="#" id="footer-faq">FAQ</a></li>
+            <li><a href="#" id="footer-shipping">Shipping Policy</a></li>
+            <li><a href="#" id="footer-returns">Return Policy</a></li>
+            <li><a href="#" id="footer-warranty">Warranty</a></li>
+          </ul>
+        </div>
+        <div class="footer-links-col" id="footer-categories-col">
+          <h4>Categories</h4>
+          <ul>
+            <li><a href="products.html?filter=helmets" id="footer-helmets-link">Helmets</a></li>
+            <li><a href="products.html?filter=gear" id="footer-jackets-link">Jackets</a></li>
+            <li><a href="products.html?filter=gear" id="footer-gloves-link">Gloves</a></li>
+            <li><a href="products.html?filter=parts" id="footer-parts-link">Performance Parts</a></li>
+            <li><a href="products.html?filter=electronics" id="footer-electronics-link">Electronics</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2024 MotoForce. All rights reserved. Made with <img src="icons/heart.svg" alt="love" style="width:14px;height:14px;vertical-align:middle;display:inline"> for riders.</p>
+        <div class="footer-payments">
+          <span><img src="icons/card.svg" alt="card" style="width:16px;height:16px;vertical-align:middle;filter:brightness(0) invert(0.6)"> Card</span><span>UPI</span><span>Net Banking</span><span>COD</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== CART SIDEBAR ===== -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <aside class="cart-sidebar" id="cart-sidebar">
+    <div class="cart-header">
+      <h3>Your Cart</h3>
+      <button class="cart-close-btn" id="cart-close-btn" aria-label="Close cart">✕</button>
+    </div>
+    <div class="cart-items" id="cart-items">
+      <div class="cart-empty" id="cart-empty">
+        <span class="cart-empty-icon"><img src="icons/bike.svg" alt="empty cart" style="width:64px;height:64px;opacity:0.4;filter:brightness(0) invert(0.5)"></span>
+        <p>Your cart is empty</p>
+        <a href="products.html" class="btn btn-primary" id="cart-shop-link">Start Shopping</a>
+      </div>
+    </div>
+    <div class="cart-footer" id="cart-footer" style="display:none">
+      <div class="cart-total">
+        <span>Total:</span>
+        <span id="cart-total-amount">₹0</span>
+      </div>
+      <button class="btn btn-primary" id="checkout-btn" style="width:100%;margin-top:12px">Proceed to Checkout →</button>
+    </div>
+  </aside>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ===== PRODUCT IMAGE MODAL ===== -->
+  <div class="image-modal" id="image-modal">
+    <button class="modal-close" id="modal-close" aria-label="Cancel">✕ Cancel</button>
+    <button class="modal-nav modal-prev" id="modal-prev">‹</button>
+    <div class="modal-img-container">
+      <img src="" alt="Product View" id="modal-img">
+    </div>
+    <button class="modal-nav modal-next" id="modal-next">›</button>
+    <div class="modal-dots" id="modal-dots">
+      <span class="modal-dot active" data-index="0"></span>
+      <span class="modal-dot" data-index="1"></span>
+    </div>
+  </div>
+
+  <!-- ===== CHECKOUT MODAL ===== -->
+  <div class="checkout-modal" id="checkout-modal">
+    <div class="checkout-content">
+      <div class="checkout-header">
+        <h3>Checkout Details</h3>
+        <button class="checkout-close" id="checkout-close" aria-label="Close checkout">✕</button>
+      </div>
+      <form id="checkout-form" class="checkout-form">
+        <div class="form-group">
+          <label for="cust-name">Full Name *</label>
+          <input type="text" id="cust-name" required placeholder="e.g. Rahul Sharma" style="background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm);">
+        </div>
+        <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:12px;">
+          <div class="form-group">
+            <label for="cust-email">Email Address *</label>
+            <input type="email" id="cust-email" required placeholder="e.g. rahul@example.com" style="background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm); width:100%;">
+          </div>
+          <div class="form-group">
+            <label for="cust-phone">Phone Number *</label>
+            <input type="tel" id="cust-phone" required placeholder="e.g. 9876543210" style="background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm); width:100%;">
+          </div>
+        </div>
+        
+        <div class="form-row" style="display:grid; grid-template-columns: 1fr; gap:16px; margin-top:12px;">
+          <div class="form-group">
+            <label for="cust-pay">Payment Method *</label>
+            <select id="cust-pay" required style="background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm); width:100%;">
+              <option value="upi">UPI (GPay / PhonePe)</option>
+              <option value="online">Online Payment (Scan & Pay)</option>
+              <option value="cod" selected>Cash on Delivery (COD)</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Online Scan & Pay Panel -->
+        <div id="online-pay-details" style="display: none; background: var(--surface-2); border: 1px dashed var(--primary); border-radius: var(--radius-sm); padding: 16px; margin-top: 12px; text-align: center;">
+          <p style="font-size: 0.9rem; margin-bottom: 12px; color: var(--text-primary);">Scan the QR Code below to pay via GPay / PhonePe / Paytm:</p>
+          <div style="width: 140px; height: 140px; background: white; margin: 0 auto 12px; padding: 10px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+            <svg viewBox="0 0 29 29" width="120" height="120" style="shape-rendering: crispEdges;">
+              <path fill="#000000" d="M0 0h7v7H0zm1 1v5h5V1zm8 0h3v1h-3zm4 0h1v1h-1zm2 0h1v2h-1zm2 0h3v1h-3zm4 0h3v7h-3zm1 1v5h1V2zm-12 1h1v1h-1zm1 1h1v2h-1zm1 1h2v1h-2zm-11 3h3v1h-3zm12 0h1v1h-1zm4 0h1v1h-1zm1 1h1v2h-1zm4 0h3v3h-3zm1 1v1h1v-1zm-15 1h1v2h-1zm2 0h1v1h-1zm2 0h1v1h-1zm4 0h1v2h-1zm5 0h1v2h-1zm-15 1h1v1h-1zm10 0h1v1h-1zm3 0h1v1h-1zm-13 1h3v1h-3zm5 0h1v1h-1zm4 0h1v2h-1zm2 0h2v1h-2zm3 0h1v1h-1zm-14 1h1v2h-1zm2 0h1v1h-1zm2 0h1v1h-1zm5 0h1v1h-1zm4 0h1v1h-1zm3 0h1v2h-1zm-17 1h1v1h-1zm11 0h1v1h-1zm3 0h1v1h-1zm1 1h1v2h-1zm2 0h3v1h-3zm-17 1h3v1h-3zm5 0h2v1h-2zm3 0h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm3 0h1v1h-1zm-15 1h1v1h-1zm4 0h1v2h-1zm3 0h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm1 1h2v1h-2zm-12 1h3v1h-3zm6 0h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm4 0h1v1h-1zm-14 1h1v1h-1zm3 0h1v1h-1zm5 0h1v2h-1zm3 0h1v1h-1zm2 0h1v1h-1zm-13 1h3v1h-3zm5 0h1v1h-1zm2 0h1v1h-1zm2 0h1v2h-1zm3 0h1v1h-1zm1 1h2v1h-2zm-12 1h1v2h-1zm2 0h1v1h-1zm2 0h1v1h-1zm4 0h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm3 0h2v1h-2z"/>
+            </svg>
+          </div>
+          <p style="font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; color: var(--primary);">UPI ID: motoforce@upi</p>
+          <div class="form-group" style="text-align: left;">
+            <label for="cust-screenshot" style="font-size: 0.85rem; color: var(--text-secondary);">Upload Payment Screenshot *</label>
+            <input type="file" id="cust-screenshot" accept="image/*" style="background: var(--surface-3); border: 1px solid var(--border); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.85rem; width: 100%; color: var(--text-muted);">
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="cust-address">Shipping Address *</label>
+          <textarea id="cust-address" required placeholder="e.g. Flat 302, Phase 1, Dynamic City, Bangalore" rows="3" style="resize:none; background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm); font-family:inherit; width: 100%;"></textarea>
+        </div>
+        
+        <div class="checkout-summary" style="margin-top: 16px; background: var(--surface-3); padding:16px; border-radius: var(--radius-sm); border:1px solid var(--border);">
+          <h4 style="margin-bottom:8px; font-family:var(--font-heading); color: var(--primary); font-size:1.1rem;">Order Summary</h4>
+          <div class="summary-row" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
+            <span>Items:</span>
+            <span id="summary-items-count">0</span>
+          </div>
+          <div class="summary-row" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:8px;">
+            <span>Shipping:</span>
+            <span style="color: #4ade80; font-weight: 600;">FREE</span>
+          </div>
+          <div class="summary-row total" style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:700; border-top:1px solid var(--border); padding-top:8px;">
+            <span>Total:</span>
+            <span id="summary-total-amount">₹0</span>
+          </div>
+        </div>
+        
+        <button type="submit" id="checkout-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Place Order 🏍️</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== BACK TO TOP ===== -->
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">↑</button>
+
+  <script src="main.js"></script>
+</body>
+</html>

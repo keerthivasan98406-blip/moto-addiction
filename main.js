@@ -5,6 +5,15 @@
 
 // ========== PRELOADER RACE TRACK ANIMATION ==========
 document.addEventListener('DOMContentLoaded', () => {
+  const preloader = document.getElementById('preloader');
+
+  // Skip preloader on navigation (only show on very first page load per session)
+  if (sessionStorage.getItem('mps_visited')) {
+    if (preloader) preloader.classList.add('hidden');
+    return;
+  }
+  sessionStorage.setItem('mps_visited', '1');
+
   const speedLinesContainer = document.getElementById('speed-lines-container');
   if (speedLinesContainer) {
     // Generate horizontal particle speed lines
@@ -23,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const speedometerFill = document.getElementById('speedometer-fill');
   const raceFill = document.getElementById('preloader-race-fill');
   const motorcycle = document.getElementById('preloader-motorcycle');
-  const preloader = document.getElementById('preloader');
 
   let currentSpeed = 0;
   const targetSpeed = 299; // Top speed in km/h
@@ -88,17 +96,18 @@ window.addEventListener('scroll', () => {
 // ========== HAMBURGER MENU ==========
 const hamburger = document.getElementById('hamburger');
 const navLinks = document.getElementById('nav-links');
-hamburger.addEventListener('click', () => {
-  hamburger.classList.toggle('open');
-  navLinks.classList.toggle('open');
-});
-// Close menu on link click
-navLinks.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => {
-    hamburger.classList.remove('open');
-    navLinks.classList.remove('open');
+if (hamburger && navLinks) {
+  hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('open');
+    navLinks.classList.toggle('open');
   });
-});
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      hamburger.classList.remove('open');
+      navLinks.classList.remove('open');
+    });
+  });
+}
 
 // ========== SEARCH OVERLAY ==========
 const searchBtn = document.getElementById('search-btn');
@@ -106,16 +115,22 @@ const searchOverlay = document.getElementById('search-overlay');
 const searchClose = document.getElementById('search-close');
 const searchInput = document.getElementById('search-input');
 
-searchBtn.addEventListener('click', () => {
-  searchOverlay.classList.add('active');
-  setTimeout(() => searchInput.focus(), 300);
-});
-searchClose.addEventListener('click', () => searchOverlay.classList.remove('active'));
-searchOverlay.addEventListener('click', (e) => {
-  if (e.target === searchOverlay) searchOverlay.classList.remove('active');
-});
+if (searchBtn && searchOverlay) {
+  searchBtn.addEventListener('click', () => {
+    searchOverlay.classList.add('active');
+    if (searchInput) setTimeout(() => searchInput.focus(), 300);
+  });
+}
+if (searchClose && searchOverlay) {
+  searchClose.addEventListener('click', () => searchOverlay.classList.remove('active'));
+}
+if (searchOverlay) {
+  searchOverlay.addEventListener('click', (e) => {
+    if (e.target === searchOverlay) searchOverlay.classList.remove('active');
+  });
+}
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') searchOverlay.classList.remove('active');
+  if (e.key === 'Escape' && searchOverlay) searchOverlay.classList.remove('active');
 });
 
 // ========== HERO CAROUSEL ==========
@@ -155,16 +170,17 @@ dots.forEach((dot, i) => {
 // Touch swipe support
 let touchStartX = 0;
 const carousel = document.getElementById('carousel');
-carousel.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
-carousel.addEventListener('touchend', e => {
-  const diff = touchStartX - e.changedTouches[0].clientX;
-  if (Math.abs(diff) > 50) {
-    diff > 0 ? nextSlide() : prevSlide();
-    resetCarouselTimer();
-  }
-});
-
-startCarouselTimer();
+if (carousel) {
+  carousel.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  carousel.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? nextSlide() : prevSlide();
+      resetCarouselTimer();
+    }
+  });
+  startCarouselTimer();
+}
 
 // Function to limit the number of visible products to 8 (2 rows) on the home page
 function applyProductDisplayLimit() {
@@ -185,6 +201,9 @@ function applyProductDisplayLimit() {
 function loadOwnerProducts() {
   const productsGrid = document.getElementById('products-grid');
   if (!productsGrid) return;
+
+  // Only inject owner products on the products/shop page, not the homepage
+  if (window.location.pathname === '/' || window.location.pathname === '/index.html') return;
 
   const ownerProducts = JSON.parse(localStorage.getItem('owner_products') || '[]');
   
@@ -323,9 +342,9 @@ function closeCart() {
   document.body.style.overflow = '';
 }
 
-document.getElementById('cart-btn').addEventListener('click', openCart);
-document.getElementById('cart-close-btn').addEventListener('click', closeCart);
-cartOverlay.addEventListener('click', closeCart);
+document.getElementById('cart-btn')?.addEventListener('click', openCart);
+document.getElementById('cart-close-btn')?.addEventListener('click', closeCart);
+if (cartOverlay) cartOverlay.addEventListener('click', closeCart);
 
 function updateCartUI() {
   const count = cart.reduce((acc, item) => acc + item.qty, 0);
@@ -513,52 +532,65 @@ if (checkoutForm) {
     
     const screenshotFile = custScreenshotInput && custScreenshotInput.files[0];
     
-    const saveOrder = (screenshotDataUrl = null) => {
-      let orderItems = [];
+    const saveOrder = async (screenshotDataUrl = null) => {
+      let itemsList = [];
       let total = 0;
       
       if (activeCheckoutItem) {
-        orderItems = [{ name: activeCheckoutItem.name, price: activeCheckoutItem.price, qty: 1 }];
+        itemsList = [{ product_id: activeCheckoutItem.id, name: activeCheckoutItem.name, price: activeCheckoutItem.price, quantity: 1 }];
         total = activeCheckoutItem.price;
       } else {
-        orderItems = cart.map(item => ({ name: item.name, price: item.price, qty: item.qty }));
+        itemsList = cart.map(item => ({ product_id: item.id, name: item.name, price: item.price, quantity: item.qty }));
         total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
       }
       
-      // Generate unique Order ID
-      const orderId = 'MF-' + Math.floor(100000 + Math.random() * 900000);
-      
-      const newOrder = {
-        id: orderId,
-        date: new Date().toLocaleString('en-IN'),
+      const payload = {
         customer: {
           name,
           email,
           phone,
-          payment: payment === 'online' ? 'ONLINE (PAID & ATTACHED)' : payment.toUpperCase(),
           address,
+          payment: payment === 'online' ? 'ONLINE' : payment.toUpperCase(),
           screenshot: screenshotDataUrl
         },
-        items: orderItems,
-        total: total,
-        status: 'Pending'
+        items: itemsList,
+        payment: { status: payment === 'online' ? 'SUCCESS' : 'PENDING' }
       };
-      
-      // Save to localStorage
-      const existingOrders = JSON.parse(localStorage.getItem('moto_orders') || '[]');
-      existingOrders.unshift(newOrder);
-      localStorage.setItem('moto_orders', JSON.stringify(existingOrders));
-      
-      // If cart checkout, clear cart. Otherwise (direct Buy Now), leave cart items intact.
-      if (!activeCheckoutItem) {
-        cart = [];
-        updateCartUI();
+
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const orderId = data.orderNumber || ('MPS-' + Date.now());
+
+        // Also dual-save to localStorage for fallback compatibility
+        const existingOrders = JSON.parse(localStorage.getItem('moto_orders') || '[]');
+        existingOrders.unshift({
+          id: orderId,
+          date: new Date().toLocaleString('en-IN'),
+          customer: { name, email, phone, payment: payment === 'online' ? 'ONLINE (PAID)' : payment.toUpperCase(), address, screenshot: screenshotDataUrl },
+          items: itemsList.map(i => ({ name: i.name, price: i.price, qty: i.quantity })),
+          total: total,
+          status: 'Placed'
+        });
+        localStorage.setItem('moto_orders', JSON.stringify(existingOrders));
+
+        if (!activeCheckoutItem) {
+          cart = [];
+          updateCartUI();
+        }
+
+        closeCheckout();
+        checkoutForm.reset();
+
+        showToast(`🏁 Order Placed Successfully! Order #${orderId}`);
+      } catch (err) {
+        console.error('Order creation error:', err);
+        showToast(`❌ Error placing order: ${err.message}`);
       }
-      
-      closeCheckout();
-      checkoutForm.reset();
-      
-      showToast(`🏁 Order Placed Successfully! Order ID: ${orderId}`);
     };
     
     if (payment === 'online' && screenshotFile) {
@@ -572,6 +604,142 @@ if (checkoutForm) {
     }
   });
 }
+
+// ========== AUTHENTICATION & USER ACCOUNT SYSTEM ==========
+const accountBtn = document.getElementById('account-btn');
+const accountBtnLabel = document.getElementById('account-btn-label');
+const accountWrap = document.getElementById('nav-account-wrap');
+const dropdownMenu = document.getElementById('account-dropdown-menu');
+const dropdownUserName = document.getElementById('dropdown-user-name');
+const dropdownUserEmail = document.getElementById('dropdown-user-email');
+const dropdownAvatarInitials = document.getElementById('dropdown-avatar-initials');
+const dropdownLogoutBtn = document.getElementById('dropdown-logout-btn');
+
+const wishlistBtn = document.getElementById('wishlist-btn');
+
+let loggedInUser = null;
+
+async function checkAuthStatus() {
+  try {
+    const res = await fetch('/api/auth/me');
+    if (res.ok) {
+      const data = await res.json();
+      loggedInUser = (data.authenticated && data.user) ? data.user : null;
+    } else {
+      loggedInUser = null;
+    }
+  } catch (err) {
+    loggedInUser = null;
+  }
+  updateAuthUI();
+  updateNavbarActiveState();
+}
+
+function updateAuthUI() {
+  if (loggedInUser) {
+    const displayName = loggedInUser.full_name || loggedInUser.email;
+    const parts = displayName.trim().split(' ');
+    const initials = parts.length >= 2 
+      ? (parts[0][0] + parts[1][0]).toUpperCase() 
+      : parts[0].substring(0, 2).toUpperCase();
+
+    if (accountBtnLabel) {
+      accountBtnLabel.textContent = parts[0];
+      accountBtnLabel.style.display = 'inline-block';
+    }
+
+    if (dropdownUserName) dropdownUserName.textContent = displayName;
+    if (dropdownUserEmail) dropdownUserEmail.textContent = loggedInUser.email;
+    if (dropdownAvatarInitials) dropdownAvatarInitials.textContent = initials;
+  } else {
+    if (accountBtnLabel) {
+      accountBtnLabel.textContent = 'Account';
+      accountBtnLabel.style.display = 'none';
+    }
+    if (dropdownUserName) dropdownUserName.textContent = 'Guest';
+    if (dropdownUserEmail) dropdownUserEmail.textContent = 'Sign in to your account';
+    if (dropdownAvatarInitials) dropdownAvatarInitials.textContent = 'MP';
+  }
+}
+
+// Navbar Active State
+function updateNavbarActiveState() {
+  const currentPath = window.location.pathname;
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  navLinks.forEach(link => link.classList.remove('active'));
+
+  if (currentPath === '/' || currentPath === '/index.html') {
+    const homeLink = document.getElementById('nav-home');
+    if (homeLink) homeLink.classList.add('active');
+  } else if (currentPath.includes('/products') || currentPath.includes('/shop')) {
+    const shopLink = document.getElementById('nav-shop');
+    if (shopLink) shopLink.classList.add('active');
+  } else if (currentPath.includes('/track-order')) {
+    const trackLink = document.getElementById('nav-track');
+    if (trackLink) trackLink.classList.add('active');
+  } else if (currentPath.includes('/account')) {
+    const accBtn = document.getElementById('account-btn');
+    if (accBtn) accBtn.classList.add('active');
+  }
+}
+
+// Account Button Click Logic
+if (accountBtn) {
+  accountBtn.addEventListener('click', (e) => {
+    // Mobile touch toggle or direct click
+    if (window.innerWidth <= 768 && dropdownMenu) {
+      dropdownMenu.classList.toggle('active');
+    } else {
+      if (loggedInUser) {
+        window.location.href = '/account';
+      } else {
+        window.location.href = '/login';
+      }
+    }
+  });
+}
+
+// Wishlist Button Click Logic
+if (wishlistBtn) {
+  wishlistBtn.addEventListener('click', () => {
+    if (loggedInUser) {
+      window.location.href = '/account?tab=wishlist';
+    } else {
+      window.location.href = '/login?redirect=/account?tab=wishlist';
+    }
+  });
+}
+
+// Dropdown Logout Handler
+if (dropdownLogoutBtn) {
+  dropdownLogoutBtn.addEventListener('click', async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      loggedInUser = null;
+      updateAuthUI();
+      showToast('Logged out successfully');
+      setTimeout(() => { window.location.href = '/'; }, 400);
+    } catch (e) {
+      window.location.href = '/';
+    }
+  });
+}
+
+// Search Input Keyboard Navigation
+const searchInputEl = document.getElementById('search-input');
+if (searchInputEl) {
+  searchInputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const term = searchInputEl.value.trim();
+      if (term) {
+        window.location.href = `/products?search=${encodeURIComponent(term)}`;
+      }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', checkAuthStatus);
 
 // Cart shop link
 document.getElementById('cart-shop-link')?.addEventListener('click', closeCart);
@@ -610,11 +778,12 @@ function showToast(message, duration = 3000) {
 }
 
 // ========== NEWSLETTER FORM ==========
-document.getElementById('newsletter-form').addEventListener('submit', (e) => {
+document.getElementById('newsletter-form')?.addEventListener('submit', (e) => {
   e.preventDefault();
-  const email = document.getElementById('newsletter-email').value;
+  const emailInput = document.getElementById('newsletter-email');
+  const email = emailInput ? emailInput.value : '';
   showToast(`🎉 Subscribed with ${email}! ₹500 coupon sent to your email.`);
-  document.getElementById('newsletter-email').value = '';
+  if (emailInput) emailInput.value = '';
 });
 
 // ========== CONTACT FORM ==========
@@ -622,14 +791,15 @@ const contactForm = document.getElementById('contact-form');
 if (contactForm) {
   contactForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = document.getElementById('contact-name').value;
+    const nameEl = document.getElementById('contact-name');
+    const name = nameEl ? nameEl.value : 'Rider';
     showToast(`✅ Thanks ${name}! We'll get back to you within 24 hours.`);
     e.target.reset();
   });
 }
 
 // ========== BACK TO TOP ==========
-document.getElementById('back-to-top').addEventListener('click', () => {
+document.getElementById('back-to-top')?.addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 

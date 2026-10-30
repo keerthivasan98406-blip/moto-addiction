@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Account & Orders — Moto Pitshop</title>
+  <meta name="description" content="Manage your Moto Pitshop customer profile, track orders, view GST invoices, wishlist, and shipping addresses." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=2" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff4d00'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
+  <style>
+    .account-layout {
+      min-height: calc(100vh - var(--nav-h));
+      margin-top: var(--nav-h);
+      padding: 40px 24px;
+      max-width: 1280px;
+      margin-left: auto;
+      margin-right: auto;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 32px;
+    }
+    @media (max-width: 900px) {
+      .account-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .account-sidebar {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      height: fit-content;
+    }
+    .account-user-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .account-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(255, 77, 0, 0.4);
+    }
+    .account-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .account-menu-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .account-menu-btn svg { width: 18px; height: 18px; stroke: currentColor; opacity: 0.7; }
+    .account-menu-btn:hover, .account-menu-btn.active {
+      background: rgba(255, 77, 0, 0.12);
+      color: var(--primary);
+    }
+    .account-menu-btn:hover svg, .account-menu-btn.active svg { opacity: 1; stroke: var(--primary); }
+    
+    .account-main-content {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      min-height: 500px;
+    }
+    .account-section-title {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .order-card {
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: var(--transition);
+    }
+    .order-card:hover {
+      border-color: rgba(255, 77, 0, 0.4);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status-placed { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .status-confirmed { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .status-shipped { background: rgba(234, 179, 8, 0.15); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .status-delivered { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+  </style>
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-logo" id="nav-logo-link">MOTO<span>PITSHOP</span></a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="/" class="nav-link" id="nav-home">Home</a></li>
+        <li><a href="/products" class="nav-link" id="nav-shop">Shop</a></li>
+        <li><a href="/products?category=all#categories" class="nav-link" id="nav-categories">Categories</a></li>
+        <li><a href="/products?category=engine" class="nav-link" id="nav-bike-parts">Bike Parts</a></li>
+        <li><a href="/products?category=accessories" class="nav-link" id="nav-accessories">Accessories</a></li>
+        <li><a href="/products?filter=offers" class="nav-link" id="nav-offers">Offers</a></li>
+        <li><a href="/track-order" class="nav-link" id="nav-track">Track Order</a></li>
+      </ul>
+      <div class="nav-actions">
+        <!-- Account Dropdown Menu Button -->
+        <div class="nav-account-wrap" id="nav-account-wrap">
+          <button class="nav-icon-btn nav-account-btn" id="account-btn" aria-label="Account" title="Account">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span class="account-btn-label" id="account-btn-label" style="display:none;">My Account</span>
+          </button>
+          <div class="account-dropdown-menu" id="account-dropdown-menu">
+            <div class="dropdown-header" id="dropdown-user-header">
+              <div class="user-avatar-initials" id="dropdown-avatar-initials">MP</div>
+              <div class="user-info">
+                <div class="user-name" id="dropdown-user-name">Guest</div>
+                <div class="user-email" id="dropdown-user-email">Sign in to your account</div>
+              </div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <a href="/account" class="dropdown-item" id="dropdown-item-account">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              My Account
+            </a>
+            <a href="/account?tab=orders" class="dropdown-item" id="dropdown-item-orders">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              My Orders
+            </a>
+            <a href="/account?tab=wishlist" class="dropdown-item" id="dropdown-item-wishlist">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              Wishlist
+            <a href="/owner" class="dropdown-item" id="dropdown-item-owner" style="display:none; color:var(--primary); font-weight:700;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Master Owner Portal ↗
+            </a>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item logout-item" id="dropdown-logout-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <button class="nav-icon-btn" id="search-btn" aria-label="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <button class="nav-icon-btn" id="wishlist-btn" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        <button class="nav-icon-btn cart-btn" id="cart-btn" aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-badge" id="cart-count">0</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== SEARCH OVERLAY ===== -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-container">
+      <input type="text" class="search-input" id="search-input" placeholder="Search for helmets, gloves, jackets..." />
+      <button class="search-close" id="search-close" aria-label="Close search">✕</button>
+    </div>
+  </div>
+
+  <!-- ===== ACCOUNT DASHBOARD MAIN ===== -->
+  <main class="account-layout">
+    <!-- Sidebar -->
+    <aside class="account-sidebar">
+      <div class="account-user-card">
+        <div class="account-avatar" id="acc-avatar-initials">MP</div>
+        <div>
+          <h4 id="acc-user-fullname" style="font-size: 1rem; margin-bottom: 2px; color: var(--text-primary);">Rider Account</h4>
+          <span id="acc-user-email" style="font-size: 0.78rem; color: var(--text-muted);">customer@motopitshop.com</span>
+        </div>
+      </div>
+
+      <nav class="account-menu">
+        <button class="account-menu-btn active" data-tab="profile">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          My Profile
+        </button>
+        <button class="account-menu-btn" data-tab="orders">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          My Orders
+        </button>
+        <a href="/track-order" class="account-menu-btn">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Track Order
+        </a>
+        <button class="account-menu-btn" data-tab="wishlist">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Wishlist
+        </button>
+        <button class="account-menu-btn" data-tab="addresses">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Addresses
+        </button>
+        <button class="account-menu-btn" data-tab="invoices">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Invoices
+        </button>
+        <button class="account-menu-btn" data-tab="payments">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Payments
+        </button>
+        <button class="account-menu-btn" data-tab="reviews">
+          <svg viewBox="0 0 24 24" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          My Reviews
+        </button>
+        <button class="account-menu-btn" data-tab="security">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Security & Password
+        <a href="/owner" class="account-menu-btn" id="acc-owner-link" style="display:none; color:var(--primary); font-weight:700; background:rgba(255, 77, 0, 0.08); border:1px solid rgba(255, 77, 0, 0.3); margin-top:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Master Owner Panel ↗
+        </a>
+        <button class="account-menu-btn" id="acc-logout-btn" style="color: #ef4444; margin-top: 12px; border-top: 1px dashed var(--border);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Content Area -->
+    <section class="account-main-content">
+      <!-- TAB: PROFILE -->
+      <div class="acc-tab-content" id="tab-profile">
+        <h2 class="account-section-title">My Profile & Personal Details</h2>
+        <form id="profile-form" style="max-width: 540px;">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Full Name *</label>
+            <input type="text" id="prof-name" required style="width:100%; padding:12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit;">
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Email Address *</label>
+            <input type="email" id="prof-email" readonly style="width:100%; padding:12px; background:var(--surface-1); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-muted); font-family:inherit; cursor:not-allowed;">
+          </div>
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Phone Number</label>
+            <input type="tel" id="prof-phone" placeholder="+91 98765 43210" style="width:100%; padding:12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit;">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Profile Changes</button>
+        </form>
+      </div>
+
+      <!-- TAB: ORDERS -->
+      <div class="acc-tab-content" id="tab-orders" style="display: none;">
+        <h2 class="account-section-title">Order History</h2>
+        <div id="orders-list-container">
+          <p style="color: var(--text-muted);">Loading your orders...</p>
+        </div>
+      </div>
+
+      <!-- TAB: WISHLIST -->
+      <div class="acc-tab-content" id="tab-wishlist" style="display: none;">
+        <h2 class="account-section-title">Saved Wishlist Items</h2>
+        <div id="wishlist-container">
+          <p style="color: var(--text-muted);">Your wishlist is empty. Explore our catalog and save your favorite gear!</p>
+        </div>
+      </div>
+
+      <!-- TAB: ADDRESSES -->
+      <div class="acc-tab-content" id="tab-addresses" style="display: none;">
+        <h2 class="account-section-title">Saved Shipping Addresses</h2>
+        <div style="background: var(--surface-3); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-sm);">
+          <h4 style="margin-bottom: 8px;">Primary Delivery Address</h4>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;" id="address-display-text">
+            No saved address found. Add your shipping address during checkout or update below.
+          </p>
+        </div>
+      </div>
+
+      <!-- TAB: INVOICES -->
+      <div class="acc-tab-content" id="tab-invoices" style="display: none;">
+        <h2 class="account-section-title">GST Tax Invoices</h2>
+        <div id="invoices-container">
+          <p style="color: var(--text-muted);">No invoices available yet.</p>
+        </div>
+      </div>
+
+      <!-- TAB: PAYMENTS -->
+      <div class="acc-tab-content" id="tab-payments" style="display: none;">
+        <h2 class="account-section-title">Saved Payment Methods</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+          Secure payment methods (UPI, Cards, Net Banking) are tokenized via Razorpay / Paytm gateway. No sensitive card numbers are stored.
+        </p>
+      </div>
+
+      <!-- TAB: REVIEWS -->
+      <div class="acc-tab-content" id="tab-reviews" style="display: none;">
+        <h2 class="account-section-title">My Product Reviews</h2>
+        <p style="color: var(--text-muted);">You have not submitted any product reviews yet.</p>
+      </div>
+
+      <!-- TAB: SECURITY -->
+      <div class="acc-tab-content" id="tab-security" style="display: none;">
+        <h2 class="account-section-title">Security & Change Password</h2>
+        <form id="password-form" style="max-width: 540px;">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Current Password *</label>
+            <input type="password" id="pass-current" required placeholder="••••••••" style="width:100%; padding:12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit;">
+          </div>
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">New Password *</label>
+            <input type="password" id="pass-new" required placeholder="At least 6 characters" style="width:100%; padding:12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit;">
+          </div>
+          <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/main.js?v=2"></script>
+  <script>
+    let currentUser = null;
+
+    // Prevent Back Button caching after logout
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) window.location.reload();
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Authenticate user
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        if (!data.authenticated || !data.user) {
+          window.location.href = '/login?redirect=/account&msg=unauthorized';
+          return;
+        }
+        currentUser = data.user;
+
+        // Render user details
+        document.getElementById('acc-user-fullname').textContent = currentUser.full_name || currentUser.email;
+        document.getElementById('acc-user-email').textContent = currentUser.email;
+        document.getElementById('prof-name').value = currentUser.full_name || '';
+        document.getElementById('prof-email').value = currentUser.email || '';
+        document.getElementById('prof-phone').value = currentUser.phone || '';
+
+        // Init avatar initials
+        const parts = (currentUser.full_name || currentUser.email).trim().split(' ');
+        const initials = parts.length >= 2 
+          ? (parts[0][0] + parts[1][0]).toUpperCase() 
+          : parts[0].substring(0, 2).toUpperCase();
+        document.getElementById('acc-avatar-initials').textContent = initials;
+
+        // Show Owner link if OWNER / ADMIN / STAFF
+        if (['OWNER', 'ADMIN', 'STAFF'].includes(currentUser.role)) {
+          const ownerLink = document.getElementById('acc-owner-link');
+          if (ownerLink) ownerLink.style.display = 'flex';
+          const dropOwner = document.getElementById('dropdown-item-owner');
+          if (dropOwner) dropOwner.style.display = 'flex';
+        }
+
+        // Fetch Orders & Invoices
+        loadCustomerOrders();
+      } catch (err) {
+        window.location.href = '/login?redirect=/account&msg=unauthorized';
+      }
+
+      // 2. Tab switching logic
+      const menuBtns = document.querySelectorAll('.account-menu-btn[data-tab]');
+      const tabContents = document.querySelectorAll('.acc-tab-content');
+
+      function switchTab(tabKey) {
+        menuBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.style.display = 'none');
+
+        const activeBtn = document.querySelector(`.account-menu-btn[data-tab="${tabKey}"]`);
+        const activeContent = document.getElementById(`tab-${tabKey}`);
+
+        if (activeBtn) activeBtn.classList.add('active');
+        if (activeContent) activeContent.style.display = 'block';
+      }
+
+      menuBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.getAttribute('data-tab');
+          switchTab(tab);
+        });
+      });
+
+      // Handle URL tab parameter
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) switchTab(tabParam);
+
+      // Logout handler
+      document.getElementById('acc-logout-btn').addEventListener('click', async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+          showToast('Logged out successfully');
+          setTimeout(() => window.location.href = '/', 500);
+        } catch (e) {
+          window.location.href = '/';
+        }
+      });
+    });
+
+    async function loadCustomerOrders() {
+      const container = document.getElementById('orders-list-container');
+      const invoicesContainer = document.getElementById('invoices-container');
+
+      try {
+        const res = await fetch('/api/orders');
+        if (!res.ok) {
+          container.innerHTML = '<p style="color: var(--text-muted);">No recent orders found.</p>';
+          return;
+        }
+        const data = await res.json();
+        const orders = data.orders || [];
+
+        if (orders.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-muted);">You have not placed any orders yet.</p>';
+          return;
+        }
+
+        container.innerHTML = orders.map(o => `
+          <div class="order-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap:wrap; gap:8px;">
+              <div>
+                <span style="font-weight: 700; font-family: var(--font-heading); color: var(--text-primary); font-size:1.1rem;">${o.order_number}</span>
+                <span style="font-size:0.78rem; color:var(--text-muted); margin-left:8px;">${new Date(o.created_at).toLocaleDateString('en-IN')}</span>
+              </div>
+              <span class="status-badge status-${(o.status || 'placed').toLowerCase()}">${o.status}</span>
+            </div>
+
+            <div style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:12px;">
+              ${(o.items || []).map(i => `<div>• ${i.product_name} × ${i.quantity} (₹${i.price})</div>`).join('')}
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:12px; font-size:0.9rem;">
+              <span>Total: <strong style="color:var(--primary); font-size:1.05rem;">₹${(o.grand_total || 0).toLocaleString('en-IN')}</strong></span>
+              <a href="/track-order?order=${o.order_number}" class="btn btn-outline" style="padding:6px 14px; font-size:0.8rem;">Track Order →</a>
+            </div>
+          </div>
+        `).join('');
+
+        // Populate Invoices
+        invoicesContainer.innerHTML = orders.map(o => `
+          <div class="order-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:var(--text-primary);">GST Invoice for ${o.order_number}</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">Amount: ₹${o.grand_total} | Taxable: ₹${o.subtotal}</div>
+            </div>
+            <button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;" onclick="showToast('📄 Downloading GST Invoice for ${o.order_number}...')">Download Tax Invoice</button>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        container.innerHTML = '<p style="color: var(--text-muted);">Unable to load orders at this time.</p>';
+      }
+    }
+  </script>
+</body>
+</html>
