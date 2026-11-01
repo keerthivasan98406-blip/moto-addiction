@@ -797,7 +797,7 @@ function seedInitialData() {
   const expCount = db.prepare('SELECT COUNT(*) as count FROM expenses').get().count;
   if (expCount === 0) {
     const insertExp = db.prepare(`
-      INSERT INTO expenses (expense_number, expense_date, category, description, amount, payment_method, vendor, reference_no, recorded_by)
+      INSERT INTO expenses (expense_number, expense_date, category, description, amount, payment_method, vendor, reference_number, recorded_by)
       VALUES (?, date('now', '-5 days'), ?, ?, ?, ?, ?, ?, 1)
     `);
     insertExp.run('EXP-2026-001', 'Shop Rent', 'Monthly showroom and workshop rental fee', 35000, 'BANK_TRANSFER', 'Chennai Commercial Real Estate', 'NEFT-889911');
