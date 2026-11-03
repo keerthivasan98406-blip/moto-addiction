@@ -4,17 +4,12 @@
   "description": "Production Motorcycle Spare Parts Ecommerce & Business Management Platform",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "init-db": "node database.js"
+    "start": "node server.js"
   },
-  "keywords": [
-    "motorcycle",
-    "parts",
-    "ecommerce",
-    "moto-pitshop",
-    "inventory",
-    "business-management"
-  ],
+  "dependencies": {
+    "mongoose": "^8.9.0"
+  },
+  "keywords": ["motorcycle", "parts", "ecommerce", "moto-pitshop"],
   "author": "Moto Pitshop Development Team",
   "license": "ISC"
 }
