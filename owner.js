@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authOk = await verifyAuthentication();
   if (authOk) {
     await loadInitialMasterData();
+    loadMongoStatus();
     // Check initial hash route
     const hash = window.location.hash.replace('#', '');
     navigateTo(hash || 'dashboard');
@@ -36,6 +37,34 @@ function showToast(message, type = 'info') {
   setTimeout(() => {
     toast.className = 'toast';
   }, 4000);
+}
+
+// Confirm Dialog (no browser confirm() - no black overlay)
+function showConfirmDialog(title, message, onConfirm) {
+  let overlay = document.getElementById('confirm-dialog-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'confirm-dialog-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div style="background:#202329;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="font-size:1.5rem;">⚠️</span>
+        <h3 style="color:#fff;font-size:1.1rem;font-weight:700;margin:0;">${title}</h3>
+      </div>
+      <p style="color:#A1A1AA;font-size:0.9rem;margin:0 0 24px;">${message}</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button onclick="document.getElementById('confirm-dialog-overlay').style.display='none'" style="background:#374151;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:0.9rem;">Cancel</button>
+        <button id="confirm-dialog-yes" style="background:#EF4444;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600;">Delete</button>
+      </div>
+    </div>`;
+  overlay.style.display = 'flex';
+  document.getElementById('confirm-dialog-yes').onclick = () => {
+    overlay.style.display = 'none';
+    onConfirm();
+  };
 }
 
 // Format Currency INR
@@ -161,7 +190,7 @@ function updateHeaderTitle(viewId) {
     settings: ['Shop Settings & GST Setup', 'Business profile, legal entity GSTIN, invoice prefixing & staff permissions']
   };
 
-  const t = titles[viewId] || ['Master Owner Panel', 'Moto Pitshop Management Platform'];
+  const t = titles[viewId] || ['Master Owner Panel', 'MOTO ADDICTOR PITSHOP Management Platform'];
   titleEl.textContent = t[0];
   subEl.textContent = t[1];
 }
@@ -222,6 +251,15 @@ function setupSidebarToggle() {
   if (mobileHamburger && sidebar) {
     mobileHamburger.addEventListener('click', () => {
       sidebar.classList.toggle('mobile-open');
+    });
+
+    // Close mobile sidebar on outside click
+    document.addEventListener('click', (e) => {
+      if (sidebar.classList.contains('mobile-open')) {
+        if (!sidebar.contains(e.target) && !mobileHamburger.contains(e.target)) {
+          sidebar.classList.remove('mobile-open');
+        }
+      }
     });
   }
 
@@ -413,6 +451,9 @@ async function loadDashboardData() {
             <td><span style="font-weight:700; font-feature-settings:'tnum'; font-size:0.82rem;">${formatINR(o.grand_total)}</span></td>
             <td><span class="badge badge-${getOrderStatusBadge(o.status)}">${o.status}</span></td>
             <td style="color:var(--text-muted); font-size:0.74rem;">${new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" style="padding:2px 8px; font-size:0.75rem;" onclick="deleteOrderItem(${o.id}, '${o.order_number}')">Delete</button>
+            </td>
           </tr>
         `).join('');
       }
@@ -431,6 +472,9 @@ async function loadDashboardData() {
             <td><span style="font-weight:700; font-feature-settings:'tnum'; font-size:0.82rem;">${formatINR(b.grand_total)}</span></td>
             <td><span class="badge badge-neutral">${b.payment_method || 'CASH'}</span></td>
             <td style="color:var(--text-muted); font-size:0.74rem;">${new Date(b.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" style="padding:2px 8px; font-size:0.75rem;" onclick="deleteOrderItem(${b.id}, '${b.order_number}')">Delete</button>
+            </td>
           </tr>
         `).join('');
       }
@@ -820,8 +864,11 @@ async function loadPosRecentBills() {
         <td><strong>${formatINR(b.grand_total)}</strong></td>
         <td><span class="badge badge-neutral">${b.payment_method || 'CASH'}</span></td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="reprintBill('${b.invoice_number || b.id}')">Reprint</button>
-          <button class="btn btn-outline-orange btn-sm" onclick="openSalesReturnModal('${b.invoice_number}')">Return</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="reprintBill('${b.invoice_number || b.id}')">Reprint</button>
+            <button class="btn btn-outline-orange btn-sm" onclick="openSalesReturnModal('${b.invoice_number}')">Return</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteOrderItem(${b.id}, '${b.invoice_number || b.order_number}')">Delete</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -852,8 +899,8 @@ function displayThermalReceipt(saleData) {
 
   area.innerHTML = `
     <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:10px; margin-bottom:10px;">
-      <h2 style="font-size:1.2rem; font-weight:800; margin:0;">${store.name || 'MOTO PITSHOP'}</h2>
-      <div style="font-size:0.75rem;">${store.legalName || 'Moto Pitshop Retail Pvt Ltd'}</div>
+      <h2 style="font-size:1.2rem; font-weight:800; margin:0;">${store.name || 'MOTO ADDICTOR PITSHOP'}</h2>
+      <div style="font-size:0.75rem;">${store.legalName || 'MOTO ADDICTOR PITSHOP Retail Pvt Ltd'}</div>
       <div style="font-size:0.72rem;">${store.address || 'Chennai, TN'}</div>
       <div style="font-size:0.75rem; font-weight:700; margin-top:4px;">GSTIN: ${store.gstin || '33AABCM1234F1Z9'}</div>
       <div style="font-size:0.72rem;">Ph: ${store.phone || '+91 98765 43210'}</div>
@@ -971,7 +1018,10 @@ async function loadOrdersData() {
         </td>
         <td>${new Date(o.created_at).toLocaleDateString('en-IN')}</td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="viewGstInvoice('${o.invoice_number || o.order_number}')">View Tax Invoice</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="viewGstInvoice('${o.invoice_number || o.order_number}')">View Tax Invoice</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteOrderItem(${o.id}, '${o.order_number}')">Delete</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1071,6 +1121,7 @@ async function loadProductsData() {
             <button class="btn btn-secondary btn-sm" onclick="toggleArchiveProduct(${p.id}, ${p.is_archived ? 0 : 1})">
               ${p.is_archived ? 'Restore' : 'Archive'}
             </button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProductItem(${p.id}, '${(p.name || '').replace(/'/g, "\\'")}')">Delete</button>
           </div>
         </td>
       </tr>
@@ -1286,6 +1337,7 @@ async function loadPurchasesData() {
           <div style="display:flex; gap:6px;">
             ${p.status !== 'RECEIVED' ? `<button class="btn btn-primary btn-sm" onclick="confirmPurchaseReceipt(${p.id})">Confirm Goods</button>` : ''}
             ${p.outstanding_balance > 0 ? `<button class="btn btn-secondary btn-sm" onclick="openSupplierPaymentModal(${p.id}, '${p.purchase_number}', ${p.outstanding_balance})">Pay Dues</button>` : ''}
+            <button class="btn btn-danger btn-sm" onclick="deletePurchaseItem(${p.id}, '${p.purchase_number}')">Delete</button>
           </div>
         </td>
       </tr>
@@ -1423,7 +1475,10 @@ async function loadInvoicesData() {
         <td><span class="badge ${i.invoice_type === 'POS' ? 'badge-neutral' : 'badge-info'}">${i.invoice_type || 'ONLINE'}</span></td>
         <td>${new Date(i.created_at).toLocaleString('en-IN')}</td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="viewGstInvoice('${i.invoice_number}')">View Tax Invoice</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="viewGstInvoice('${i.invoice_number}')">View Tax Invoice</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteInvoiceItem(${i.id}, '${i.invoice_number}')">Delete</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1449,8 +1504,8 @@ async function viewGstInvoice(invoiceNumber) {
         <!-- Invoice Header -->
         <div style="display:flex; justify-content:space-between; border-bottom:2px solid #F59E0B; padding-bottom:14px; margin-bottom:18px;">
           <div>
-            <h1 style="font-size:1.6rem; font-weight:800; color:#111318; margin:0;">${store.name || 'MOTO PITSHOP'}</h1>
-            <div style="font-size:0.85rem; color:#444;">${store.legalName || 'Moto Pitshop Retail Pvt Ltd'}</div>
+            <h1 style="font-size:1.6rem; font-weight:800; color:#111318; margin:0;">${store.name || 'MOTO ADDICTOR PITSHOP'}</h1>
+            <div style="font-size:0.85rem; color:#444;">${store.legalName || 'MOTO ADDICTOR PITSHOP Retail Pvt Ltd'}</div>
             <div style="font-size:0.8rem; color:#555;">${store.address || 'Chennai, TN'}</div>
             <div style="font-size:0.85rem; font-weight:700; margin-top:4px;">GSTIN: ${store.gstin || '33AABCM1234F1Z9'}</div>
             <div style="font-size:0.8rem;">State: ${store.state || 'Tamil Nadu'} (Code: ${store.stateCode || '33'})</div>
@@ -1532,7 +1587,7 @@ async function viewGstInvoice(invoiceNumber) {
             3. Subject to Chennai jurisdiction.
           </div>
           <div style="text-align:center;">
-            <div style="margin-bottom:30px; font-style:italic;">For ${store.legalName || 'MOTO PITSHOP'}</div>
+            <div style="margin-bottom:30px; font-style:italic;">For ${store.legalName || 'MOTO ADDICTOR PITSHOP'}</div>
             <div style="border-top:1px solid #444; width:160px; margin:0 auto; padding-top:4px; font-weight:700;">Authorised Signatory</div>
           </div>
         </div>
@@ -1571,7 +1626,10 @@ async function loadCreditNotes() {
         <td><span class="badge badge-danger">CREDIT NOTE</span></td>
         <td>${cn.return_date}</td>
         <td>
-          <span class="badge badge-success">Refund ${cn.refund_status}</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="badge badge-success">Refund ${cn.refund_status}</span>
+            <button class="btn btn-danger btn-sm" onclick="deleteCreditNoteItem(${cn.id}, '${cn.credit_note_number}')">Delete</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1610,7 +1668,10 @@ async function loadCustomersData() {
         <td><strong>${formatINR(c.total_spend || 0)}</strong></td>
         <td>${c.total_orders || 0}</td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="showToast('Customer lifetime spend: ${formatINR(c.total_spend || 0)}', 'info')">Details</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Customer lifetime spend: ${formatINR(c.total_spend || 0)}', 'info')">Details</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteCustomerItem(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}')">Delete</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1653,7 +1714,11 @@ async function loadSuppliersData() {
         <td><strong style="color:${(s.outstanding_balance || 0) > 0 ? 'var(--danger)' : 'var(--success)'};">${formatINR(s.outstanding_balance || 0)}</strong></td>
         <td><span class="badge badge-success">${s.status || 'ACTIVE'}</span></td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="viewSupplierStatement(${s.id})">Ledger Statement</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="viewSupplierStatement(${s.id})">Ledger Statement</button>
+            <button class="btn btn-warning btn-sm" onclick="editSupplierItem(${s.id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeleteSupplier(${s.id}, '${(s.name || '').replace(/'/g, "\\'")}')">Delete</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1827,8 +1892,8 @@ async function loadSettingsData() {
     if (res.ok) {
       const data = await res.json();
       const s = data.settings || {};
-      document.getElementById('set-store-name').value = s.STORE_NAME || 'MOTO PITSHOP';
-      document.getElementById('set-legal-name').value = s.STORE_LEGAL_NAME || 'Moto Pitshop Retail Pvt Ltd';
+      document.getElementById('set-store-name').value = s.STORE_NAME || 'MOTO ADDICTOR PITSHOP';
+      document.getElementById('set-legal-name').value = s.STORE_LEGAL_NAME || 'MOTO ADDICTOR PITSHOP Retail Pvt Ltd';
       document.getElementById('set-store-gstin').value = s.STORE_GSTIN || '33AABCM1234F1Z9';
       document.getElementById('set-store-state').value = `${s.STORE_STATE || 'Tamil Nadu'} (${s.STORE_STATE_CODE || '33'})`;
       document.getElementById('set-store-address').value = s.STORE_ADDRESS || '124 Racing Track Boulevard, Motor City, Chennai, TN 600001';
@@ -1840,6 +1905,7 @@ async function loadSettingsData() {
 
     // Load Staff Accounts
     loadStaffUsers();
+    loadMongoStatus();
   } catch (err) {
     console.error('Settings load error:', err);
   }
@@ -1861,6 +1927,9 @@ async function loadStaffUsers() {
         <td>${u.email}</td>
         <td><span class="badge ${u.role === 'OWNER' ? 'badge-warning' : 'badge-info'}">${u.staff_role || u.role}</span></td>
         <td><span class="badge badge-success">${u.status}</span></td>
+        <td>
+          ${u.role === 'OWNER' || u.id === 1 ? `<span style="color:var(--text-muted); font-size:0.75rem; font-weight:600;">Store Owner</span>` : `<button class="btn btn-danger btn-sm" onclick="deleteStaffUser(${u.id}, '${(u.full_name || '').replace(/'/g, "\\'")}')">Delete</button>`}
+        </td>
       </tr>
     `).join('');
   } catch (err) {
@@ -2298,4 +2367,254 @@ function setupEventListeners() {
       }
     });
   }
+}
+
+
+// ==========================================
+// MONGODB ATLAS CLUSTER INTEGRATION CLIENT
+// ==========================================
+async function loadMongoStatus() {
+  try {
+    const res = await fetch('/api/owner/mongodb/status');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const topDot = document.getElementById('mongo-top-dot');
+    const topText = document.getElementById('mongo-top-text');
+    const cardDot = document.getElementById('mongo-card-dot');
+    const cardText = document.getElementById('mongo-card-status-text');
+    const cardStatus = document.getElementById('mongo-card-status');
+    const banner = document.getElementById('mongo-whitelist-banner');
+
+    if (data.connected) {
+      if (topDot) topDot.style.background = '#10b981';
+      if (topText) topText.textContent = 'MongoDB: Connected';
+      if (cardDot) cardDot.style.background = '#10b981';
+      if (cardText) {
+        cardText.textContent = 'Active & Connected';
+        if (cardStatus) cardStatus.style.color = '#10b981';
+      }
+      if (banner) banner.style.display = 'none';
+
+      if (data.counts) {
+        const c = data.counts;
+        if (document.getElementById('cnt-products')) document.getElementById('cnt-products').textContent = c.products || 0;
+        if (document.getElementById('cnt-orders')) document.getElementById('cnt-orders').textContent = c.orders || 0;
+        if (document.getElementById('cnt-invoices')) document.getElementById('cnt-invoices').textContent = c.invoices || 0;
+        if (document.getElementById('cnt-customers')) document.getElementById('cnt-customers').textContent = c.customers || 0;
+        if (document.getElementById('cnt-purchases')) document.getElementById('cnt-purchases').textContent = c.purchases || 0;
+        if (document.getElementById('cnt-suppliers')) document.getElementById('cnt-suppliers').textContent = c.suppliers || 0;
+        if (document.getElementById('cnt-expenses')) document.getElementById('cnt-expenses').textContent = c.expenses || 0;
+        if (document.getElementById('cnt-settings')) document.getElementById('cnt-settings').textContent = c.settings || 0;
+      }
+    } else {
+      const isWhitelistIssue = data.error && (data.error.includes('alert number 80') || data.error.includes('tlsv1 alert internal error'));
+      if (topDot) topDot.style.background = isWhitelistIssue ? '#f59e0b' : '#ef4444';
+      if (topText) topText.textContent = isWhitelistIssue ? 'MongoDB: Whitelist Required' : 'MongoDB: Disconnected';
+      if (cardDot) cardDot.style.background = isWhitelistIssue ? '#f59e0b' : '#ef4444';
+      if (cardText) {
+        cardText.textContent = isWhitelistIssue ? 'IP Whitelist Required' : 'Disconnected';
+        if (cardStatus) cardStatus.style.color = isWhitelistIssue ? '#f59e0b' : '#ef4444';
+      }
+      if (banner) banner.style.display = isWhitelistIssue ? 'block' : 'none';
+    }
+  } catch (err) {
+    console.error('Mongo status check error:', err);
+  }
+}
+
+async function triggerMongoSync() {
+  const btn = document.getElementById('btn-mongo-sync');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Syncing Data...';
+  }
+
+  showToast('Starting full sync of owner portal data to MongoDB Atlas...', 'info');
+
+  try {
+    const res = await fetch('/api/owner/mongodb/sync', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('All owner portal data stored in MongoDB cluster successfully!', 'success');
+      await loadMongoStatus();
+    } else {
+      showToast(data.reason || data.error || 'Failed to sync data to MongoDB', 'error');
+    }
+  } catch (err) {
+    showToast('Sync request error: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Sync All Data to MongoDB';
+    }
+  }
+}
+
+async function triggerMongoReconnect() {
+  const btn = document.getElementById('btn-mongo-reconnect');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Connecting...';
+  }
+
+  showToast('Retrying MongoDB Atlas connection...', 'info');
+
+  try {
+    const res = await fetch('/api/owner/mongodb/reconnect', { method: 'POST' });
+    const data = await res.json();
+    if (data.connected) {
+      showToast('MongoDB Atlas connected successfully!', 'success');
+      await triggerMongoSync();
+    } else {
+      showToast('Could not connect. Please ensure your IP (42.109.144.22 or 0.0.0.0/0) is whitelisted in Atlas.', 'warning');
+    }
+    await loadMongoStatus();
+  } catch (err) {
+    showToast('Reconnect error: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Retry Connection';
+    }
+  }
+}
+
+
+// ==========================================
+// UNIVERSAL DELETE CONTROLLERS
+// ==========================================
+async function deleteProductItem(id, name) {
+  try {
+    const res = await fetch(`/api/owner/products/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete product');
+    showToast(data.message || 'Product deleted successfully', 'success');
+    loadProductsData();
+    loadDashboardData();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function confirmDeleteProduct(id, name) {
+  showConfirmDialog(`Delete product "${name}"?`, 'This will remove it from the catalog.', () => deleteProductItem(id, name));
+}
+
+async function deleteOrderItem(id, orderNum) {
+  try {
+    const res = await fetch(`/api/owner/orders/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete order');
+    showToast(data.message || 'Order deleted successfully', 'success');
+    if (typeof loadOrdersData === 'function') loadOrdersData();
+    if (typeof loadDashboardData === 'function') loadDashboardData();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function confirmDeleteOrder(id, orderNum) {
+  showConfirmDialog(`Delete Order #${orderNum}?`, 'This will permanently remove the order and all items.', () => deleteOrderItem(id, orderNum));
+}
+
+async function deletePurchaseItem(id, purchaseNum) {
+  try {
+    const res = await fetch(`/api/owner/purchases/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete purchase');
+    showToast(data.message || 'Purchase deleted successfully', 'success');
+    loadPurchasesData();
+    loadDashboardData();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function confirmDeletePurchase(id, purchaseNum) {
+  showConfirmDialog(`Delete Purchase #${purchaseNum}?`, 'This will remove the purchase and stock entry.', () => deletePurchaseItem(id, purchaseNum));
+}
+
+async function deleteInvoiceItem(id, invoiceNum) {
+  try {
+    const res = await fetch(`/api/owner/invoices/${id || invoiceNum}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete invoice');
+    showToast(data.message || 'Invoice deleted successfully', 'success');
+    loadInvoicesData();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function confirmDeleteInvoice(id, invoiceNum) {
+  showConfirmDialog(`Delete Invoice "${invoiceNum}"?`, 'This will permanently remove this invoice.', () => deleteInvoiceItem(id, invoiceNum));
+}
+
+async function deleteCreditNoteItem(id, cnNum) {
+  try {
+    const res = await fetch(`/api/owner/credit-notes/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete credit note');
+    showToast(data.message || 'Credit note deleted successfully', 'success');
+    loadCreditNotes();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function confirmDeleteCreditNote(id, cnNum) {
+  showConfirmDialog(`Delete Credit Note "${cnNum}"?`, 'This will permanently remove this return record.', () => deleteCreditNoteItem(id, cnNum));
+}
+
+async function deleteCustomerItem(id, name) {
+  try {
+    const res = await fetch(`/api/owner/customers/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete customer');
+    showToast(data.message || 'Customer deleted successfully', 'success');
+    loadCustomersData();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function confirmDeleteCustomer(id, name) {
+  showConfirmDialog(`Delete customer "${name}"?`, 'This will remove all customer records.', () => deleteCustomerItem(id, name));
+}
+
+async function deleteSupplierItem(id, name) {
+  try {
+    const res = await fetch(`/api/owner/suppliers/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete supplier');
+    showToast(data.message || 'Supplier deleted successfully', 'success');
+    loadSuppliersData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function confirmDeleteSupplier(id, name) {
+  showConfirmDialog(`Delete supplier "${name}"?`, 'This will permanently remove the supplier record.', () => deleteSupplierItem(id, name));
+}
+
+function editSupplierItem(id) {
+  const s = cachedSuppliers.find(x => x.id == id);
+  if (!s) return showToast('Supplier not found', 'error');
+  document.getElementById('supp-form-name').value = s.name || '';
+  document.getElementById('supp-form-contact').value = s.contact_person || '';
+  document.getElementById('supp-form-email').value = s.email || '';
+  document.getElementById('supp-form-phone').value = s.phone || '';
+  document.getElementById('supp-form-address').value = s.address || '';
+  document.getElementById('supp-form-gstin').value = s.gstin || '';
+  const modal = document.getElementById('modal-supplier');
+  if (modal) {
+    modal.dataset.editId = id;
+    const title = modal.querySelector('.modal-title');
+    if (title) title.textContent = 'Edit Supplier';
+  }
+  openModal('modal-supplier');
+}
+
+async function deleteStaffUser(id, name) {
+  try {
+    const res = await fetch(`/api/owner/users/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete staff member');
+    showToast(data.message || 'Staff member deleted successfully', 'success');
+    loadStaffUsers();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function confirmDeleteStaff(id, name) {
+  showConfirmDialog(`Delete staff account "${name}"?`, 'This action cannot be undone.', () => deleteStaffUser(id, name));
 }

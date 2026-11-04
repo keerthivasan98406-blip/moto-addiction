@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Account & Orders — Moto Pitshop</title>
-  <meta name="description" content="Manage your Moto Pitshop customer profile, track orders, view GST invoices, wishlist, and shipping addresses." />
+  <title>My Account & Orders — Moto Addictor Pitshop</title>
+  <meta name="description" content="Manage your Moto Addictor Pitshop customer profile, track orders, view GST invoices, wishlist, and shipping addresses." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=2" />
+  <link rel="stylesheet" href="/style.css?v=3" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff4d00'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
   <style>
     .account-layout {
@@ -25,6 +25,24 @@
     @media (max-width: 900px) {
       .account-layout {
         grid-template-columns: 1fr;
+        padding: 20px 16px;
+        gap: 20px;
+      }
+      .account-menu {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .account-menu::-webkit-scrollbar {
+        height: 4px;
+      }
+      .account-menu-btn {
+        white-space: nowrap;
+        width: auto;
+        flex-shrink: 0;
+        background: var(--surface-3);
       }
     }
     .account-sidebar {
@@ -131,15 +149,12 @@
   <!-- ===== NAVBAR ===== -->
   <nav class="navbar scrolled" id="navbar">
     <div class="nav-container">
-      <a href="/" class="nav-logo" id="nav-logo-link">MOTO<span>PITSHOP</span></a>
+      <a href="/" class="nav-logo" id="nav-logo-link">MOTO<span>ADDICTOR PITSHOP</span></a>
       <ul class="nav-links" id="nav-links">
-        <li><a href="/" class="nav-link" id="nav-home">Home</a></li>
-        <li><a href="/products" class="nav-link" id="nav-shop">Shop</a></li>
-        <li><a href="/products?category=all#categories" class="nav-link" id="nav-categories">Categories</a></li>
-        <li><a href="/products?category=engine" class="nav-link" id="nav-bike-parts">Bike Parts</a></li>
-        <li><a href="/products?category=accessories" class="nav-link" id="nav-accessories">Accessories</a></li>
-        <li><a href="/products?filter=offers" class="nav-link" id="nav-offers">Offers</a></li>
-        <li><a href="/track-order" class="nav-link" id="nav-track">Track Order</a></li>
+        <li><a href="/" class="nav-link " id="nav-home">Home</a></li>
+        <li><a href="/products" class="nav-link " id="nav-shop">Shop</a></li>
+        <li><a href="/track-order" class="nav-link " id="nav-track">Track Order</a></li>
+        <li class="mobile-only-link"><a href="/account" class="nav-link active" id="nav-account-mobile">My Account</a></li>
       </ul>
       <div class="nav-actions">
         <!-- Account Dropdown Menu Button -->
@@ -305,12 +320,19 @@
       <!-- TAB: ADDRESSES -->
       <div class="acc-tab-content" id="tab-addresses" style="display: none;">
         <h2 class="account-section-title">Saved Shipping Addresses</h2>
-        <div style="background: var(--surface-3); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-sm);">
+        <div style="background: var(--surface-3); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 24px;">
           <h4 style="margin-bottom: 8px;">Primary Delivery Address</h4>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;" id="address-display-text">
-            No saved address found. Add your shipping address during checkout or update below.
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;" id="address-display-text">
+            No saved address found. Add your shipping address below.
           </p>
         </div>
+        <form id="address-form" style="max-width: 540px;">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Shipping Address *</label>
+            <textarea id="acc-shipping-address" rows="3" required placeholder="Door / Flat No, Street, Landmark, City, State, PIN code" style="width:100%; padding:12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit; resize:vertical;"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="save-address-btn">Save Shipping Address</button>
+        </form>
       </div>
 
       <!-- TAB: INVOICES -->
@@ -341,7 +363,7 @@
         <form id="password-form" style="max-width: 540px;">
           <div class="form-group" style="margin-bottom: 16px;">
             <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Current Password *</label>
-            <input type="password" id="pass-current" required placeholder="••••••••" style="width:100%; padding:12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit;">
+            <input type="password" id="pass-current" required placeholder="••••••••" autocomplete="current-password" style="width:100%; padding:12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit;">
           </div>
           <div class="form-group" style="margin-bottom: 24px;">
             <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">New Password *</label>
@@ -355,7 +377,7 @@
 
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="/main.js?v=2"></script>
+  <script src="/main.js?v=3"></script>
   <script>
     let currentUser = null;
 
@@ -381,6 +403,12 @@
         document.getElementById('prof-name').value = currentUser.full_name || '';
         document.getElementById('prof-email').value = currentUser.email || '';
         document.getElementById('prof-phone').value = currentUser.phone || '';
+
+        if (currentUser.shipping_address) {
+          document.getElementById('address-display-text').textContent = currentUser.shipping_address;
+          const addrInput = document.getElementById('acc-shipping-address');
+          if (addrInput) addrInput.value = currentUser.shipping_address;
+        }
 
         // Init avatar initials
         const parts = (currentUser.full_name || currentUser.email).trim().split(' ');
@@ -440,6 +468,96 @@
           window.location.href = '/';
         }
       });
+
+      // 3. Profile Form Submit Handler
+      const profileForm = document.getElementById('profile-form');
+      if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const name = document.getElementById('prof-name').value.trim();
+          const phone = document.getElementById('prof-phone').value.trim();
+          const submitBtn = profileForm.querySelector('button[type="submit"]');
+          const origText = submitBtn.textContent;
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Saving...';
+          try {
+            const res = await fetch('/api/user/profile', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ full_name: name, phone })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to update profile');
+            showToast(data.message || 'Profile saved successfully!');
+            document.getElementById('acc-user-fullname').textContent = name;
+          } catch (err) {
+            showToast(err.message, 'error');
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = origText;
+          }
+        });
+      }
+
+      // 4. Address Form Submit Handler
+      const addressForm = document.getElementById('address-form');
+      if (addressForm) {
+        addressForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const address = document.getElementById('acc-shipping-address').value.trim();
+          const submitBtn = addressForm.querySelector('button[type="submit"]');
+          const origText = submitBtn.textContent;
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Saving...';
+          try {
+            const res = await fetch('/api/user/address', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ address })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to save address');
+            showToast(data.message || 'Shipping address saved successfully!');
+            document.getElementById('address-display-text').textContent = address || 'No saved address found.';
+          } catch (err) {
+            showToast(err.message, 'error');
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = origText;
+          }
+        });
+      }
+
+      // 5. Password Form Submit Handler
+      const passwordForm = document.getElementById('password-form');
+      if (passwordForm) {
+        passwordForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const currentPassword = document.getElementById('pass-current').value;
+          const newPassword = document.getElementById('pass-new').value;
+          const submitBtn = passwordForm.querySelector('button[type="submit"]');
+          const origText = submitBtn.textContent;
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Updating...';
+          try {
+            const res = await fetch('/api/user/password', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ currentPassword, newPassword })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to update password');
+            showToast(data.message || 'Password updated successfully!');
+            document.getElementById('pass-current').value = '';
+            document.getElementById('pass-new').value = '';
+          } catch (err) {
+            showToast(err.message, 'error');
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = origText;
+          }
+        });
+      }
     });
 
     async function loadCustomerOrders() {

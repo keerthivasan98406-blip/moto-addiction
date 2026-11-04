@@ -1,15 +1,27 @@
 {
-  "name": "moto-pitshop",
+  "name": "moto-addictor-pitshop",
   "version": "2.0.0",
   "description": "Production Motorcycle Spare Parts Ecommerce & Business Management Platform",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "init-db": "node database.js",
+    "migrate-mongo": "node migrate-to-mongo.js"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
+    "mongodb": "^6.12.0",
     "mongoose": "^8.9.0"
   },
-  "keywords": ["motorcycle", "parts", "ecommerce", "moto-pitshop"],
-  "author": "Moto Pitshop Development Team",
+  "keywords": [
+    "motorcycle",
+    "parts",
+    "ecommerce",
+    "moto-addictor-pitshop",
+    "owner-portal",
+    "mongodb"
+  ],
+  "author": "Moto Addictor Pitshop Development Team",
   "license": "ISC"
 }

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/owner.css?v=3" />
+  <link rel="stylesheet" href="/owner.css?v=4" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
 </head>
 <body>
@@ -31,6 +31,10 @@
         </div>
       </a>
       <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button class="sidebar-close-mobile-btn" id="sidebar-close-mobile" title="Close Sidebar" aria-label="Close Sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m15 18-6-6 6-6"/></svg>
       </button>
     </div>
@@ -126,6 +130,7 @@
       </div>
     </div>
   </aside>
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
   <!-- ==========================================
        MAIN APP WORKSPACE
@@ -142,6 +147,10 @@
           <div class="page-subtitle-row">
             <span class="page-subtitle" id="page-subtitle">Real-time performance indicators and operational management</span>
             <span class="live-badge"><span class="live-dot"></span>LIVE STORE: TN-33</span>
+            <span class="live-badge" id="mongo-top-badge" style="cursor:pointer;" onclick="navigateTo('settings');" title="Click to view MongoDB cluster details">
+              <span class="live-dot" id="mongo-top-dot" style="background:#f59e0b;"></span>
+              <span id="mongo-top-text">MongoDB: Connecting...</span>
+            </span>
           </div>
         </div>
       </div>
@@ -327,10 +336,11 @@
                     <th>Amount</th>
                     <th>Status</th>
                     <th>Date</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="recent-online-orders-body">
-                  <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading recent orders...</td></tr>
+                  <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Loading recent orders...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -353,12 +363,101 @@
                     <th>Amount</th>
                     <th>Payment</th>
                     <th>Time</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="recent-pos-bills-body">
-                  <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Loading counter bills...</td></tr>
+                  <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading counter bills...</td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- MongoDB Atlas Cluster Management -->
+          <div class="card-panel" style="grid-column: 1 / -1; margin-top: 15px;">
+            <div class="panel-header" style="margin-bottom: 12px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <h2 class="panel-title" style="margin:0;">MongoDB Atlas Cloud Cluster Data Store</h2>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect" onclick="triggerMongoReconnect()">Retry Connection</button>
+                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to MongoDB</button>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Status</span>
+                <span id="mongo-card-status" style="font-size:1.05rem; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-top:4px;">
+                  <span class="live-dot" id="mongo-card-dot" style="background:#f59e0b;"></span>
+                  <span id="mongo-card-status-text">Checking connection...</span>
+                </span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Host</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopit.c8x6ms0.mongodb.net</span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Database Name</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopitshop</span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Data Flow</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px;">Live Realtime Sync</span>
+              </div>
+            </div>
+
+            <!-- Whitelist Banner -->
+            <div id="mongo-whitelist-banner" style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="font-size:1.2rem;">⚠️</span>
+                <div>
+                  <strong style="color:#f59e0b;">MongoDB Atlas Network Access Whitelist Action Required:</strong>
+                  <p style="margin:4px 0 0 0; font-size:0.85rem; color:var(--text-main); line-height:1.4;">
+                    Your cluster rejected the TLS connection (SSL alert 80). In your MongoDB Atlas dashboard, go to <strong>Network Access</strong> &rarr; click <strong>Add IP Address</strong> &rarr; select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> or add your current IP <code style="background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">42.109.144.22</code>. Then click "Retry Connection" above.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Synced Collections Grid -->
+            <div>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">MongoDB Synced Collections Data</span>
+              <div id="mongo-counts-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Products</span>
+                  <span id="cnt-products" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Orders</span>
+                  <span id="cnt-orders" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Invoices</span>
+                  <span id="cnt-invoices" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Customers</span>
+                  <span id="cnt-customers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Purchases</span>
+                  <span id="cnt-purchases" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Suppliers</span>
+                  <span id="cnt-suppliers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Expenses</span>
+                  <span id="cnt-expenses" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Settings</span>
+                  <span id="cnt-settings" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -490,6 +589,8 @@
               </button>
             </div>
           </div>
+
+          
         </div>
       </section>
 
@@ -931,6 +1032,94 @@
               </table>
             </div>
           </div>
+
+          <!-- MongoDB Atlas Cluster Management -->
+          <div class="card-panel" style="grid-column: 1 / -1; margin-top: 15px;">
+            <div class="panel-header" style="margin-bottom: 12px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <h2 class="panel-title" style="margin:0;">MongoDB Atlas Cloud Cluster Data Store</h2>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect" onclick="triggerMongoReconnect()">Retry Connection</button>
+                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to MongoDB</button>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Status</span>
+                <span id="mongo-card-status" style="font-size:1.05rem; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-top:4px;">
+                  <span class="live-dot" id="mongo-card-dot" style="background:#f59e0b;"></span>
+                  <span id="mongo-card-status-text">Checking connection...</span>
+                </span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Host</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopit.c8x6ms0.mongodb.net</span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Database Name</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopitshop</span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Data Flow</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px;">Live Realtime Sync</span>
+              </div>
+            </div>
+
+            <!-- Whitelist Banner -->
+            <div id="mongo-whitelist-banner" style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="font-size:1.2rem;">⚠️</span>
+                <div>
+                  <strong style="color:#f59e0b;">MongoDB Atlas Network Access Whitelist Action Required:</strong>
+                  <p style="margin:4px 0 0 0; font-size:0.85rem; color:var(--text-main); line-height:1.4;">
+                    Your cluster rejected the TLS connection (SSL alert 80). In your MongoDB Atlas dashboard, go to <strong>Network Access</strong> &rarr; click <strong>Add IP Address</strong> &rarr; select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> or add your current IP <code style="background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">42.109.144.22</code>. Then click "Retry Connection" above.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Synced Collections Grid -->
+            <div>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">MongoDB Synced Collections Data</span>
+              <div id="mongo-counts-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Products</span>
+                  <span id="cnt-products" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Orders</span>
+                  <span id="cnt-orders" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Invoices</span>
+                  <span id="cnt-invoices" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Customers</span>
+                  <span id="cnt-customers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Purchases</span>
+                  <span id="cnt-purchases" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Suppliers</span>
+                  <span id="cnt-suppliers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Expenses</span>
+                  <span id="cnt-expenses" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Settings</span>
+                  <span id="cnt-settings" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1058,12 +1247,163 @@
                     <th>Email</th>
                     <th>Role</th>
                     <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="staff-users-body">
                   <!-- Populated by JS -->
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- MongoDB Atlas Cluster Management -->
+          <div class="card-panel" style="grid-column: 1 / -1; margin-top: 15px;">
+            <div class="panel-header" style="margin-bottom: 12px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <h2 class="panel-title" style="margin:0;">MongoDB Atlas Cloud Cluster Data Store</h2>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect" onclick="triggerMongoReconnect()">Retry Connection</button>
+                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to MongoDB</button>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Status</span>
+                <span id="mongo-card-status" style="font-size:1.05rem; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-top:4px;">
+                  <span class="live-dot" id="mongo-card-dot" style="background:#f59e0b;"></span>
+                  <span id="mongo-card-status-text">Checking connection...</span>
+                </span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Host</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopit.c8x6ms0.mongodb.net</span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Database Name</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopitshop</span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Data Flow</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px;">Live Realtime Sync</span>
+              </div>
+            </div>
+
+            <div id="mongo-whitelist-banner" style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="font-size:1.2rem;">⚠️</span>
+                <div>
+                  <strong style="color:#f59e0b;">MongoDB Atlas Network Access Whitelist Action Required:</strong>
+                  <p style="margin:4px 0 0 0; font-size:0.85rem; color:var(--text-main); line-height:1.4;">
+                    Your cluster rejected the connection (SSL alert 80). In your MongoDB Atlas dashboard, go to <strong>Network Access</strong> &rarr; click <strong>Add IP Address</strong> &rarr; select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> or add your current IP <code style="background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">42.109.144.22</code>. Then click 'Retry Connection' above.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">MongoDB Synced Collections Data</span>
+              <div id="mongo-counts-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:0.7rem; color:var(--text-muted);">Products</span><span id="cnt-products" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span></div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:0.7rem; color:var(--text-muted);">Orders</span><span id="cnt-orders" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span></div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:0.7rem; color:var(--text-muted);">Invoices</span><span id="cnt-invoices" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span></div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:0.7rem; color:var(--text-muted);">Customers</span><span id="cnt-customers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span></div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:0.7rem; color:var(--text-muted);">Purchases</span><span id="cnt-purchases" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span></div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:0.7rem; color:var(--text-muted);">Suppliers</span><span id="cnt-suppliers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span></div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:0.7rem; color:var(--text-muted);">Expenses</span><span id="cnt-expenses" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span></div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:0.7rem; color:var(--text-muted);">Settings</span><span id="cnt-settings" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MongoDB Atlas Cluster Management -->
+          <div class="card-panel" style="grid-column: 1 / -1; margin-top: 15px;">
+            <div class="panel-header" style="margin-bottom: 12px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <h2 class="panel-title" style="margin:0;">MongoDB Atlas Cloud Cluster Data Store</h2>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect" onclick="triggerMongoReconnect()">Retry Connection</button>
+                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to MongoDB</button>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Status</span>
+                <span id="mongo-card-status" style="font-size:1.05rem; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-top:4px;">
+                  <span class="live-dot" id="mongo-card-dot" style="background:#f59e0b;"></span>
+                  <span id="mongo-card-status-text">Checking connection...</span>
+                </span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Host</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopit.c8x6ms0.mongodb.net</span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Database Name</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopitshop</span>
+              </div>
+              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Data Flow</span>
+                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px;">Live Realtime Sync</span>
+              </div>
+            </div>
+
+            <!-- Whitelist Banner -->
+            <div id="mongo-whitelist-banner" style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="font-size:1.2rem;">⚠️</span>
+                <div>
+                  <strong style="color:#f59e0b;">MongoDB Atlas Network Access Whitelist Action Required:</strong>
+                  <p style="margin:4px 0 0 0; font-size:0.85rem; color:var(--text-main); line-height:1.4;">
+                    Your cluster rejected the TLS connection (SSL alert 80). In your MongoDB Atlas dashboard, go to <strong>Network Access</strong> &rarr; click <strong>Add IP Address</strong> &rarr; select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> or add your current IP <code style="background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">42.109.144.22</code>. Then click "Retry Connection" above.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Synced Collections Grid -->
+            <div>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">MongoDB Synced Collections Data</span>
+              <div id="mongo-counts-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Products</span>
+                  <span id="cnt-products" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Orders</span>
+                  <span id="cnt-orders" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Invoices</span>
+                  <span id="cnt-invoices" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Customers</span>
+                  <span id="cnt-customers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Purchases</span>
+                  <span id="cnt-purchases" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Suppliers</span>
+                  <span id="cnt-suppliers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Expenses</span>
+                  <span id="cnt-expenses" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+                <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Settings</span>
+                  <span id="cnt-settings" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

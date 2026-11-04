@@ -68,24 +68,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ========== NAVBAR SCROLL BEHAVIOR ==========
 const navbar = document.getElementById('navbar');
-window.addEventListener('scroll', () => {
-  if (window.scrollY > 50) {
+const isHomePage = !!document.querySelector('.hero');
+
+const updateNavbarScroll = () => {
+  if (!navbar) return;
+  if (!isHomePage || window.scrollY > 50) {
     navbar.classList.add('scrolled');
   } else {
     navbar.classList.remove('scrolled');
   }
+};
+window.addEventListener('scroll', () => {
+  updateNavbarScroll();
 
-  // Active nav link highlight
-  const sections = document.querySelectorAll('section[id]');
-  let current = '';
-  sections.forEach(section => {
-    const sectionTop = section.offsetTop - 100;
-    if (window.scrollY >= sectionTop) current = section.getAttribute('id');
-  });
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.classList.remove('active');
-    if (link.getAttribute('href') === `#${current}`) link.classList.add('active');
-  });
+  // Active nav link highlight (Only on home page with section anchors)
+  if (isHomePage) {
+    const sections = document.querySelectorAll('section[id]');
+    let current = '';
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop - 100;
+      if (window.scrollY >= sectionTop) current = section.getAttribute('id');
+    });
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === `#${current}`) link.classList.add('active');
+    });
+  }
 
   // Back to top visibility
   const backBtn = document.getElementById('back-to-top');
@@ -93,20 +101,54 @@ window.addEventListener('scroll', () => {
   else backBtn.classList.remove('visible');
 });
 
-// ========== HAMBURGER MENU ==========
-const hamburger = document.getElementById('hamburger');
-const navLinks = document.getElementById('nav-links');
-if (hamburger && navLinks) {
-  hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('open');
-    navLinks.classList.toggle('open');
+// Run once on initial load
+updateNavbarScroll();
+
+// ========== HAMBURGER MENU (RESPONSIVE MOBILE NAVIGATION) ==========
+function setupMobileNav() {
+  const hamburger = document.getElementById('hamburger');
+  const navLinks = document.getElementById('nav-links');
+  if (!hamburger || !navLinks) return;
+
+  if (hamburger.dataset.bound) return;
+  hamburger.dataset.bound = 'true';
+
+  hamburger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = hamburger.classList.toggle('open');
+    navLinks.classList.toggle('open', isOpen);
+    document.body.classList.toggle('nav-menu-open', isOpen);
   });
+
   navLinks.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       hamburger.classList.remove('open');
       navLinks.classList.remove('open');
+      document.body.classList.remove('nav-menu-open');
     });
   });
+
+  document.addEventListener('click', (e) => {
+    if (navLinks.classList.contains('open') && !navLinks.contains(e.target) && !hamburger.contains(e.target)) {
+      hamburger.classList.remove('open');
+      navLinks.classList.remove('open');
+      document.body.classList.remove('nav-menu-open');
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) {
+      hamburger.classList.remove('open');
+      navLinks.classList.remove('open');
+      document.body.classList.remove('nav-menu-open');
+    }
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupMobileNav);
+} else {
+  setupMobileNav();
 }
 
 // ========== SEARCH OVERLAY ==========

@@ -1,9 +1,9 @@
 // owner-api.js - Complete Business Logic and API Endpoints for Moto Pit Master Owner Portal
 const crypto = require('crypto');
-const { db, hashPassword } = require('./database.js');
+const { hashPassword, User, Category, Brand, Supplier, Product, Order, OrderItem, Invoice, InventoryTransaction, Purchase, PurchaseItem, Expense, CreditNote, CreditNoteItem, Customer, Review, AuditLog, StoreSetting, Session, SupportTicket, Bike } = require('./database.js');
 
-function getStoreSettings() {
-  const rows = db.prepare('SELECT key, value FROM store_settings').all();
+async function getStoreSettings() {
+  const rows = await StoreSetting.find().lean();
   const settings = {};
   rows.forEach(r => settings[r.key] = r.value);
   return settings;
@@ -56,6 +56,61 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
   const canAccessPos = ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'STAFF'].includes(staffRole);
   const canAccessInventory = ['OWNER', 'ADMIN', 'MANAGER', 'INVENTORY', 'STAFF'].includes(staffRole);
   const canAccessReports = ['OWNER', 'ADMIN', 'MANAGER'].includes(staffRole);
+
+  // --- 0. MONGODB ATLAS CLUSTER INTEGRATION ---
+  if (pathname === '/api/owner/mongodb/status' && req.method === 'GET') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    const status = getMongoStatus();
+    let counts = null;
+    const mDb = getDb();
+    if (mDb && status.connected) {
+      try {
+        counts = {
+          products: await mDb.collection('products').countDocuments(),
+          orders: await mDb.collection('orders').countDocuments(),
+          invoices: await mDb.collection('invoices').countDocuments(),
+          customers: await mDb.collection('customers').countDocuments(),
+          suppliers: await mDb.collection('suppliers').countDocuments(),
+          purchases: await mDb.collection('purchases').countDocuments(),
+          expenses: await mDb.collection('expenses').countDocuments(),
+          settings: await mDb.collection('store_settings').countDocuments(),
+          users: await mDb.collection('users').countDocuments()
+        };
+      } catch (e) {
+        console.error('Error counting mongo documents:', e.message);
+      }
+    }
+    return sendJson(res, 200, {
+      ...status,
+      counts
+    });
+  }
+
+  if (pathname === '/api/owner/mongodb/sync' && req.method === 'POST') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    try {
+      const syncResult = await migrateAllToMongo();
+      if (syncResult.success) {
+        logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'MONGODB_FULL_SYNC', 'MONGODB', null, 'SUCCESS', syncResult.counts);
+        return sendJson(res, 200, { message: 'All owner portal data synchronized to MongoDB cluster successfully', ...syncResult });
+      } else {
+        return sendJson(res, 500, { error: syncResult.error, reason: syncResult.reason });
+      }
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  if (pathname === '/api/owner/mongodb/reconnect' && req.method === 'POST') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    try {
+      await connectMongo();
+      const status = getMongoStatus();
+      return sendJson(res, 200, { ...status });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
 
   // --- 1. OWNER DASHBOARD METRICS ---
   if (pathname === '/api/owner/dashboard' && req.method === 'GET') {
@@ -408,7 +463,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         custName,
         custPhone,
         custGstin,
-        settings.STORE_NAME || 'MOTO PITSHOP',
+        settings.STORE_NAME || 'MOTO ADDICTOR PITSHOP',
         settings.STORE_ADDRESS || '124 Racing Track Boulevard, Motor City, Chennai, TN 600001',
         settings.STORE_GSTIN || '33AABCM1234F1Z9',
         calculatedSubtotal,
@@ -455,6 +510,14 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         paymentMethod: payment.method
       });
 
+      // Synchronize POS Sale, GST Invoice & Customer to MongoDB
+      syncTableRecordToMongo(db, 'orders', orderId);
+      syncTableRecordToMongo(db, 'invoices', invoiceId);
+      if (custPhone) {
+        const custRec = db.prepare('SELECT id FROM customers WHERE phone = ?').get(custPhone);
+        if (custRec) syncTableRecordToMongo(db, 'customers', custRec.id);
+      }
+
       return sendJson(res, 201, {
         success: true,
         message: 'POS bill created successfully',
@@ -474,8 +537,8 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         customer: { name: custName, phone: custPhone, gstin: custGstin, address: custAddress },
         payment: { method: payMethod, reference_no: payRef },
         store: {
-          name: settings.STORE_NAME || 'MOTO PITSHOP',
-          legalName: settings.STORE_LEGAL_NAME || 'Moto Pitshop Retail Pvt Ltd',
+          name: settings.STORE_NAME || 'MOTO ADDICTOR PITSHOP',
+          legalName: settings.STORE_LEGAL_NAME || 'MOTO ADDICTOR PITSHOP Retail Pvt Ltd',
           address: settings.STORE_ADDRESS || '124 Racing Track Boulevard, Motor City, Chennai, TN 600001',
           phone: settings.STORE_PHONE || '+91 98765 43210',
           gstin: settings.STORE_GSTIN || '33AABCM1234F1Z9',
@@ -544,8 +607,8 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         ...order,
         items,
         store: {
-          name: settings.STORE_NAME || 'MOTO PITSHOP',
-          legalName: settings.STORE_LEGAL_NAME || 'Moto Pitshop Retail Pvt Ltd',
+          name: settings.STORE_NAME || 'MOTO ADDICTOR PITSHOP',
+          legalName: settings.STORE_LEGAL_NAME || 'MOTO ADDICTOR PITSHOP Retail Pvt Ltd',
           address: settings.STORE_ADDRESS || '124 Racing Track Boulevard, Motor City, Chennai, TN 600001',
           phone: settings.STORE_PHONE || '+91 98765 43210',
           gstin: settings.STORE_GSTIN || '33AABCM1234F1Z9',
@@ -647,6 +710,9 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         totalRefund,
         itemsCount: items.length
       });
+
+      // Synchronize Credit Note to MongoDB
+      syncTableRecordToMongo(db, 'credit_notes', cnId);
 
       return sendJson(res, 201, {
         success: true,
@@ -812,6 +878,9 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         price
       });
 
+      // Synchronize New Product to MongoDB
+      syncTableRecordToMongo(db, 'products', productId);
+
       return sendJson(res, 201, {
         message: 'Product created successfully',
         id: productId,
@@ -895,6 +964,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       }
 
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'UPDATE_PRODUCT', 'PRODUCT', id, 'SUCCESS');
+      syncTableRecordToMongo(db, 'products', id);
       return sendJson(res, 200, { message: 'Product updated successfully' });
 
     } catch (err) {
@@ -913,6 +983,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const archiveState = body.is_archived ? 1 : 0;
 
       db.prepare('UPDATE products SET is_archived = ?, updated_at = datetime("now") WHERE id = ?').run(archiveState, id);
+      syncTableRecordToMongo(db, 'products', id);
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, archiveState ? 'ARCHIVE_PRODUCT' : 'UNARCHIVE_PRODUCT', 'PRODUCT', id, 'SUCCESS');
 
       return sendJson(res, 200, {
@@ -923,7 +994,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     }
   }
 
-  // Safe Deletion Safeguard
+  // Safe Deletion Safeguard (with cascade cleanup)
   if (pathname.startsWith('/api/owner/products/') && req.method === 'DELETE') {
     if (!currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
       return sendJson(res, 403, { error: 'Unauthorized: Admin or Owner role required' });
@@ -931,17 +1002,21 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
     const id = parseInt(pathname.split('/')[4], 10);
     try {
-      // Check if product is referenced in orders or purchases
-      const orderUsage = db.prepare('SELECT COUNT(*) as count FROM order_items WHERE product_id = ?').get(id);
-      const purchaseUsage = db.prepare('SELECT COUNT(*) as count FROM purchase_items WHERE product_id = ?').get(id);
-
-      if ((orderUsage && orderUsage.count > 0) || (purchaseUsage && purchaseUsage.count > 0)) {
-        return sendJson(res, 400, {
-          error: `Cannot permanently delete product #${id} because it is referenced in historical sales or purchase records. Please use "Archive" instead to preserve tax and accounting integrity.`
-        });
-      }
+      // Clean up product relations in database
+      try { db.prepare('DELETE FROM product_bikes WHERE product_id = ?').run(id); } catch(e){}
+      try { db.prepare('DELETE FROM product_reviews WHERE product_id = ?').run(id); } catch(e){}
+      try { db.prepare('DELETE FROM inventory_ledger WHERE product_id = ?').run(id); } catch(e){}
+      try { db.prepare('DELETE FROM order_items WHERE product_id = ?').run(id); } catch(e){}
+      try { db.prepare('DELETE FROM purchase_items WHERE product_id = ?').run(id); } catch(e){}
 
       db.prepare('DELETE FROM products WHERE id = ?').run(id);
+
+      // Clean up in MongoDB Atlas
+      deleteFromMongo('products', { id });
+      deleteFromMongo('product_bikes', { product_id: id });
+      deleteFromMongo('product_reviews', { product_id: id });
+      deleteFromMongo('inventory_ledger', { product_id: id });
+
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_PRODUCT', 'PRODUCT', id, 'SUCCESS');
       return sendJson(res, 200, { message: 'Product permanently deleted' });
     } catch (err) {
@@ -1143,6 +1218,9 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         status
       });
 
+      // Synchronize Purchase to MongoDB
+      syncTableRecordToMongo(db, 'purchases', purchaseId);
+
       return sendJson(res, 201, {
         success: true,
         message: is_received ? 'Purchase recorded and stock added' : 'Draft purchase entry saved',
@@ -1258,6 +1336,32 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     }
   }
 
+  // Delete Purchase Record
+  if (pathname.startsWith('/api/owner/purchases/') && req.method === 'DELETE') {
+    if (!currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
+      return sendJson(res, 403, { error: 'Unauthorized: Admin or Owner role required' });
+    }
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      const purchase = db.prepare('SELECT * FROM purchases WHERE id = ?').get(id);
+      if (!purchase) {
+        return sendJson(res, 404, { error: 'Purchase record not found' });
+      }
+      db.prepare('DELETE FROM purchase_items WHERE purchase_id = ?').run(id);
+      db.prepare('DELETE FROM supplier_payments WHERE purchase_id = ?').run(id);
+      db.prepare('DELETE FROM purchases WHERE id = ?').run(id);
+
+      deleteFromMongo('purchases', { id });
+      deleteFromMongo('purchase_items', { purchase_id: id });
+      deleteFromMongo('supplier_payments', { purchase_id: id });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_PURCHASE', 'PURCHASE', id, 'SUCCESS');
+      return sendJson(res, 200, { message: `Purchase #${purchase.purchase_number} deleted successfully` });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
   // --- 6. DISTRIBUTORS & SUPPLIERS ---
   if (pathname === '/api/owner/suppliers' && req.method === 'GET') {
     if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
@@ -1294,6 +1398,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const resSupp = insert.run(name.trim(), contact_person || '', email || '', phone || '', address || '', gstin || '');
 
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_SUPPLIER', 'SUPPLIER', resSupp.lastInsertRowid, 'SUCCESS');
+      syncTableRecordToMongo(db, 'suppliers', resSupp.lastInsertRowid);
       return sendJson(res, 201, { message: 'Supplier added successfully', id: resSupp.lastInsertRowid });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
@@ -1379,6 +1484,30 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         amount: payAmount,
         appliedPurchaseId: appliedPurId
       });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // Delete Supplier
+  if (pathname.startsWith('/api/owner/suppliers/') && req.method === 'DELETE') {
+    if (!currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
+      return sendJson(res, 403, { error: 'Unauthorized: Admin or Owner role required' });
+    }
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      const supplier = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(id);
+      if (!supplier) {
+        return sendJson(res, 404, { error: 'Supplier not found' });
+      }
+      db.prepare('DELETE FROM supplier_payments WHERE supplier_id = ?').run(id);
+      db.prepare('DELETE FROM suppliers WHERE id = ?').run(id);
+
+      deleteFromMongo('suppliers', { id });
+      deleteFromMongo('supplier_payments', { supplier_id: id });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_SUPPLIER', 'SUPPLIER', id, 'SUCCESS');
+      return sendJson(res, 200, { message: `Supplier ${supplier.name} deleted successfully` });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }
@@ -1480,6 +1609,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         newStatus: status
       });
 
+      syncTableRecordToMongo(db, 'orders', id);
       return sendJson(res, 200, { message: 'Order status updated successfully' });
 
     } catch (err) {
@@ -1511,7 +1641,34 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         tracking_number
       });
 
+      syncTableRecordToMongo(db, 'orders', id);
       return sendJson(res, 200, { message: 'Shipping details recorded' });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // Delete Order / POS Bill
+  if (pathname.startsWith('/api/owner/orders/') && req.method === 'DELETE') {
+    if (!currentUser || !['OWNER', 'ADMIN', 'STAFF'].includes(currentUser.role)) {
+      return sendJson(res, 403, { error: 'Unauthorized' });
+    }
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(id);
+      if (!order) {
+        return sendJson(res, 404, { error: 'Order not found' });
+      }
+      db.prepare('DELETE FROM order_items WHERE order_id = ?').run(id);
+      db.prepare('DELETE FROM invoices WHERE order_id = ? OR order_number = ?').run(id, order.order_number);
+      db.prepare('DELETE FROM orders WHERE id = ?').run(id);
+
+      deleteFromMongo('orders', { id });
+      deleteFromMongo('order_items', { order_id: id });
+      deleteFromMongo('invoices', { $or: [{ id }, { order_id: id }, { order_number: order.order_number }] });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_ORDER', 'ORDER', id, 'SUCCESS');
+      return sendJson(res, 200, { message: `Order #${order.order_number} deleted successfully` });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }
@@ -1573,8 +1730,8 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         ...invoice,
         items,
         store: {
-          name: settings.STORE_NAME || 'MOTO PITSHOP',
-          legalName: settings.STORE_LEGAL_NAME || 'Moto Pitshop Retail Pvt Ltd',
+          name: settings.STORE_NAME || 'MOTO ADDICTOR PITSHOP',
+          legalName: settings.STORE_LEGAL_NAME || 'MOTO ADDICTOR PITSHOP Retail Pvt Ltd',
           address: settings.STORE_ADDRESS || '124 Racing Track Boulevard, Motor City, Chennai, TN 600001',
           phone: settings.STORE_PHONE || '+91 98765 43210',
           email: settings.STORE_EMAIL || 'owner@motopitshop.com',
@@ -1584,6 +1741,33 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         }
       }
     });
+  }
+
+  // Delete Invoice
+  if (pathname.startsWith('/api/owner/invoices/') && req.method === 'DELETE') {
+    if (!currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
+      return sendJson(res, 403, { error: 'Unauthorized: Admin or Owner role required' });
+    }
+    const rawId = pathname.split('/')[4];
+    const numId = parseInt(rawId, 10);
+    try {
+      const inv = !isNaN(numId)
+        ? db.prepare('SELECT * FROM invoices WHERE id = ? OR invoice_number = ?').get(numId, rawId)
+        : db.prepare('SELECT * FROM invoices WHERE invoice_number = ?').get(rawId);
+
+      if (!inv) {
+        return sendJson(res, 404, { error: 'Invoice not found' });
+      }
+
+      db.prepare('DELETE FROM invoices WHERE id = ?').run(inv.id);
+      deleteFromMongo('invoices', { id: inv.id });
+      deleteFromMongo('invoices', { invoice_number: inv.invoice_number });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_INVOICE', 'INVOICE', inv.id, 'SUCCESS');
+      return sendJson(res, 200, { message: `Invoice ${inv.invoice_number} deleted successfully` });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
   }
 
   // List Credit Notes
@@ -1598,6 +1782,30 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     `).all();
 
     return sendJson(res, 200, { creditNotes });
+  }
+
+  // Delete Credit Note
+  if (pathname.startsWith('/api/owner/credit-notes/') && req.method === 'DELETE') {
+    if (!currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
+      return sendJson(res, 403, { error: 'Unauthorized: Admin or Owner role required' });
+    }
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      const cn = db.prepare('SELECT * FROM credit_notes WHERE id = ?').get(id);
+      if (!cn) {
+        return sendJson(res, 404, { error: 'Credit note not found' });
+      }
+      db.prepare('DELETE FROM credit_note_items WHERE credit_note_id = ?').run(id);
+      db.prepare('DELETE FROM credit_notes WHERE id = ?').run(id);
+
+      deleteFromMongo('credit_notes', { id });
+      deleteFromMongo('credit_note_items', { credit_note_id: id });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_CREDIT_NOTE', 'CREDIT_NOTE', id, 'SUCCESS');
+      return sendJson(res, 200, { message: `Credit note ${cn.credit_note_number} deleted successfully` });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
   }
 
   // --- 9. CUSTOMER MANAGEMENT ---
@@ -1658,7 +1866,29 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       );
 
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_CUSTOMER', 'CUSTOMER', result.lastInsertRowid, 'SUCCESS');
+      syncTableRecordToMongo(db, 'customers', result.lastInsertRowid);
       return sendJson(res, 201, { message: 'Customer created successfully', id: result.lastInsertRowid, customer_code: code });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // Delete Customer
+  if (pathname.startsWith('/api/owner/customers/') && req.method === 'DELETE') {
+    if (!currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
+      return sendJson(res, 403, { error: 'Unauthorized: Admin or Owner role required' });
+    }
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
+      if (!customer) {
+        return sendJson(res, 404, { error: 'Customer not found' });
+      }
+      db.prepare('DELETE FROM customers WHERE id = ?').run(id);
+      deleteFromMongo('customers', { id });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_CUSTOMER', 'CUSTOMER', id, 'SUCCESS');
+      return sendJson(res, 200, { message: `Customer ${customer.name} deleted successfully` });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }
@@ -1742,6 +1972,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         amount
       });
 
+      syncTableRecordToMongo(db, 'expenses', result.lastInsertRowid);
       return sendJson(res, 201, { message: 'Expense recorded successfully', id: result.lastInsertRowid, expense_number: expNum });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
@@ -1757,6 +1988,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     const id = parseInt(pathname.split('/')[4], 10);
     try {
       db.prepare('DELETE FROM expenses WHERE id = ?').run(id);
+      deleteFromMongo('expenses', { id });
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_EXPENSE', 'EXPENSE', id, 'SUCCESS');
       return sendJson(res, 200, { message: 'Expense deleted' });
     } catch (err) {
@@ -2003,7 +2235,32 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         staff_role
       });
 
+      syncTableRecordToMongo(db, 'users', result.lastInsertRowid);
       return sendJson(res, 201, { message: 'User created successfully', id: result.lastInsertRowid });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // Delete Staff User
+  if (pathname.startsWith('/api/owner/users/') && req.method === 'DELETE') {
+    if (!currentUser || currentUser.role !== 'OWNER') {
+      return sendJson(res, 403, { error: 'Unauthorized: Only Primary Store Owner can delete staff accounts' });
+    }
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      const targetUser = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+      if (!targetUser) {
+        return sendJson(res, 404, { error: 'User not found' });
+      }
+      if (targetUser.id === 1 || targetUser.role === 'OWNER' || targetUser.email.toLowerCase() === 'owner@motopitshop.com') {
+        return sendJson(res, 400, { error: 'Cannot delete the Primary Store Owner account' });
+      }
+      db.prepare('DELETE FROM users WHERE id = ?').run(id);
+      deleteFromMongo('users', { id });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_USER', 'USER', id, 'SUCCESS');
+      return sendJson(res, 200, { message: `Staff account ${targetUser.full_name} deleted successfully` });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }
@@ -2020,6 +2277,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const insertOrUpdate = db.prepare('INSERT OR REPLACE INTO store_settings (key, value) VALUES (?, ?)');
       Object.keys(body).forEach(key => {
         insertOrUpdate.run(key, String(body[key]));
+        syncSettingToMongo(key, String(body[key]));
       });
 
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'UPDATE_SETTINGS', 'STORE', null, 'SUCCESS');
@@ -2062,6 +2320,32 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const resBrand = insert.run(slug, name.trim(), logo || '', description || '');
 
       return sendJson(res, 201, { message: 'Brand added', id: resBrand.lastInsertRowid });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // Delete Category
+  if (pathname.startsWith('/api/owner/categories/') && req.method === 'DELETE') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+      deleteFromMongo('categories', { id });
+      return sendJson(res, 200, { message: 'Category deleted successfully' });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // Delete Brand
+  if (pathname.startsWith('/api/owner/brands/') && req.method === 'DELETE') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      db.prepare('DELETE FROM brands WHERE id = ?').run(id);
+      deleteFromMongo('brands', { id });
+      return sendJson(res, 200, { message: 'Brand deleted successfully' });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }
