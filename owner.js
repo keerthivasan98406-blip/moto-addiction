@@ -164,7 +164,10 @@ function navigateTo(viewId) {
 
   // Close mobile sidebar if open
   const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
   if (sidebar) sidebar.classList.remove('mobile-open');
+  if (backdrop) backdrop.classList.remove('active');
+  document.body.classList.remove('mobile-nav-open');
 
   // Trigger View-Specific Data Refresh
   refreshViewData(viewId);
@@ -241,27 +244,77 @@ function setupSidebarToggle() {
   const toggleBtn = document.getElementById('sidebar-toggle-btn');
   const sidebar = document.getElementById('sidebar');
   const mobileHamburger = document.getElementById('mobile-hamburger');
+  const mobileClose = document.getElementById('sidebar-close-mobile');
+  const backdrop = document.getElementById('sidebar-backdrop');
 
+  // Desktop sidebar collapse toggle
   if (toggleBtn && sidebar) {
-    toggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       sidebar.classList.toggle('collapsed');
     });
   }
 
-  if (mobileHamburger && sidebar) {
-    mobileHamburger.addEventListener('click', () => {
-      sidebar.classList.toggle('mobile-open');
-    });
+  // Mobile Drawer Open / Close Helpers
+  function openMobileNav() {
+    if (sidebar) sidebar.classList.add('mobile-open');
+    if (backdrop) backdrop.classList.add('active');
+    document.body.classList.add('mobile-nav-open');
+  }
 
-    // Close mobile sidebar on outside click
-    document.addEventListener('click', (e) => {
-      if (sidebar.classList.contains('mobile-open')) {
-        if (!sidebar.contains(e.target) && !mobileHamburger.contains(e.target)) {
-          sidebar.classList.remove('mobile-open');
-        }
-      }
+  function closeMobileNav() {
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.classList.remove('mobile-nav-open');
+  }
+
+  // Mobile Hamburger Open
+  if (mobileHamburger) {
+    mobileHamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openMobileNav();
     });
   }
+
+  // Mobile Close X Button
+  if (mobileClose) {
+    mobileClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeMobileNav();
+    });
+  }
+
+  // Mobile Backdrop Click
+  if (backdrop) {
+    backdrop.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeMobileNav();
+    });
+  }
+
+  // Close drawer when any nav-item is tapped on mobile
+  const navItems = document.querySelectorAll('#sidebar-nav .nav-item');
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        closeMobileNav();
+      }
+    });
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar && sidebar.classList.contains('mobile-open')) {
+      closeMobileNav();
+    }
+  });
+
+  // Close drawer if window is resized above mobile breakpoint
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768 && sidebar && sidebar.classList.contains('mobile-open')) {
+      closeMobileNav();
+    }
+  });
 
   // Logout
   const logoutBtn = document.getElementById('logout-btn');
@@ -350,17 +403,80 @@ function populateCategoryDropdowns() {
 
   if (filter) {
     filter.innerHTML = '<option value="all">All Categories</option>' +
-      cachedCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      cachedCategories.map(c => `<option value="${c.id || c._id}">${c.name}</option>`).join('');
   }
   if (formSelect) {
-    formSelect.innerHTML = cachedCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    const curVal = formSelect.value;
+    formSelect.innerHTML = '<option value="">-- Select Category --</option>' +
+      cachedCategories.map(c => `<option value="${c.id || c._id}">${c.icon ? c.icon + ' ' : ''}${c.name}</option>`).join('') +
+      '<option value="__new__" style="color:var(--accent-orange); font-weight:600;">+ Add New Category...</option>';
+    if (curVal && curVal !== '__new__') formSelect.value = curVal;
+    
+    // Wire change handler to open custom category modal
+    formSelect.onchange = function() {
+      if (this.value === '__new__') {
+        this.value = '';
+        openInlineAddCategoryModal();
+      }
+    };
   }
 }
 
 function populateBrandDropdowns() {
   const formSelect = document.getElementById('prod-form-brand');
   if (formSelect) {
-    formSelect.innerHTML = cachedBrands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+    const curVal = formSelect.value;
+    formSelect.innerHTML = '<option value="">-- Select Brand --</option>' +
+      cachedBrands.map(b => `<option value="${b.id || b._id}">${b.name}</option>`).join('') +
+      '<option value="__new__" style="color:var(--accent-orange); font-weight:600;">+ Add New Brand...</option>';
+    if (curVal && curVal !== '__new__') formSelect.value = curVal;
+
+    formSelect.onchange = function() {
+      if (this.value === '__new__') {
+        this.value = '';
+        openInlineAddBrandModal();
+      }
+    };
+  }
+}
+
+async function createQuickCategory(name, selectEl) {
+  try {
+    const res = await fetch('/api/owner/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-') })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create category');
+    // Add to cache and repopulate
+    cachedCategories.push({ id: data.id, _id: data.id, name });
+    populateCategoryDropdowns();
+    // Select the new one
+    if (selectEl) selectEl.value = data.id;
+    showToast(`Category "${name}" created`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+    if (selectEl) selectEl.value = '';
+  }
+}
+
+async function createQuickBrand(name, selectEl) {
+  try {
+    const res = await fetch('/api/owner/brands', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-') })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create brand');
+    cachedBrands.push({ id: data.id, _id: data.id, name });
+    populateBrandDropdowns();
+    if (selectEl) selectEl.value = data.id;
+    showToast(`Brand "${name}" created`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+    if (selectEl) selectEl.value = '';
   }
 }
 
@@ -1142,6 +1258,20 @@ function openAddProductModal() {
   document.getElementById('prod-form-minstock').value = '5';
   document.getElementById('prod-form-desc').value = '';
   document.getElementById('modal-product-title').textContent = 'Add New Motorcycle Product';
+
+  // Always refresh category and brand dropdowns fresh from server
+  Promise.all([
+    fetch('/api/categories').then(r => r.json()).then(d => { cachedCategories = d.categories || []; }),
+    fetch('/api/brands').then(r => r.json()).then(d => { cachedBrands = d.brands || []; })
+  ]).then(() => {
+    populateCategoryDropdowns();
+    populateBrandDropdowns();
+  }).catch(() => {
+    // Fallback to cache
+    populateCategoryDropdowns();
+    populateBrandDropdowns();
+  });
+
   openModal('modal-product');
 }
 
@@ -1256,7 +1386,7 @@ async function loadInventoryData() {
       const tbody = document.getElementById('inventory-ledger-body');
       if (tbody) {
         if (ledger.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">No stock transactions logged yet.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">No stock transactions logged yet.</td></tr>';
           return;
         }
 
@@ -1272,6 +1402,7 @@ async function loadInventoryData() {
               <td><strong>${l.new_stock}</strong></td>
               <td>${l.notes || '—'}</td>
               <td><small>${l.user_name || 'System'}</small></td>
+              <td><div style="display:flex; justify-content:flex-end;"><button class="btn btn-danger btn-sm" onclick="deleteInventoryTxn(${l.id})">Delete</button></div></td>
             </tr>
           `;
         }).join('');
@@ -1906,9 +2037,127 @@ async function loadSettingsData() {
     // Load Staff Accounts
     loadStaffUsers();
     loadMongoStatus();
+    loadCategoriesManager();
+    loadBrandsManager();
   } catch (err) {
     console.error('Settings load error:', err);
   }
+}
+
+async function loadCategoriesManager() {
+  const container = document.getElementById('categories-manager-list');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/categories');
+    const data = await res.json();
+    const cats = data.categories || [];
+    container.innerHTML = cats.length === 0
+      ? '<p style="color:var(--text-muted);font-size:0.85rem;">No categories yet.</p>'
+      : cats.map(c => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-primary);border-radius:6px;margin-bottom:6px;">
+          <span style="display:flex;align-items:center;gap:8px;">${c.icon || '📦'} <strong>${c.name}</strong> <small style="color:var(--text-muted);">${c.slug}</small></span>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">✕</button>
+        </div>`).join('');
+  } catch (err) { console.error('Categories manager error:', err); }
+}
+
+async function loadBrandsManager() {
+  const container = document.getElementById('brands-manager-list');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/brands');
+    const data = await res.json();
+    const brands = data.brands || [];
+    container.innerHTML = brands.length === 0
+      ? '<p style="color:var(--text-muted);font-size:0.85rem;">No brands yet.</p>'
+      : brands.map(b => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-primary);border-radius:6px;margin-bottom:6px;">
+          <span><strong>${b.name}</strong> <small style="color:var(--text-muted);">${b.slug}</small></span>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id},'${(b.name||'').replace(/'/g,"\\'")}')">✕</button>
+        </div>`).join('');
+  } catch (err) { console.error('Brands manager error:', err); }
+}
+
+async function addCategory() {
+  const nameEl = document.getElementById('new-category-name');
+  const iconEl = document.getElementById('new-category-icon');
+  const name = nameEl?.value?.trim();
+  if (!name) return showToast('Enter a category name', 'error');
+  const icon = iconEl?.value?.trim() || '📦';
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  try {
+    const res = await fetch('/api/owner/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, slug, icon })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create category');
+    showToast(`Category "${name}" created`, 'success');
+    if (nameEl) nameEl.value = '';
+    if (iconEl) iconEl.value = '';
+    // Refresh both the manager and dropdowns
+    const catRes = await fetch('/api/categories');
+    const catData = await catRes.json();
+    cachedCategories = catData.categories || [];
+    populateCategoryDropdowns();
+    loadCategoriesManager();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+async function addBrand() {
+  const nameEl = document.getElementById('new-brand-name');
+  const name = nameEl?.value?.trim();
+  if (!name) return showToast('Enter a brand name', 'error');
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  try {
+    const res = await fetch('/api/owner/brands', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, slug })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create brand');
+    showToast(`Brand "${name}" created`, 'success');
+    if (nameEl) nameEl.value = '';
+    const brandRes = await fetch('/api/brands');
+    const brandData = await brandRes.json();
+    cachedBrands = brandData.brands || [];
+    populateBrandDropdowns();
+    loadBrandsManager();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function confirmDeleteCategory(id, name) {
+  showConfirmDialog(`Delete category "${name}"?`, 'Products in this category will keep their category reference but it will no longer appear in filters.', async () => {
+    try {
+      const res = await fetch(`/api/owner/categories/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      showToast('Category deleted', 'success');
+      const catRes = await fetch('/api/categories');
+      const catData = await catRes.json();
+      cachedCategories = catData.categories || [];
+      populateCategoryDropdowns();
+      loadCategoriesManager();
+    } catch (err) { showToast(err.message, 'error'); }
+  });
+}
+
+function confirmDeleteBrand(id, name) {
+  showConfirmDialog(`Delete brand "${name}"?`, 'Products linked to this brand will keep their reference.', async () => {
+    try {
+      const res = await fetch(`/api/owner/brands/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      showToast('Brand deleted', 'success');
+      const brandRes = await fetch('/api/brands');
+      const brandData = await brandRes.json();
+      cachedBrands = brandData.brands || [];
+      populateBrandDropdowns();
+      loadBrandsManager();
+    } catch (err) { showToast(err.message, 'error'); }
+  });
 }
 
 async function loadStaffUsers() {
@@ -2617,4 +2866,126 @@ async function deleteStaffUser(id, name) {
 
 function confirmDeleteStaff(id, name) {
   showConfirmDialog(`Delete staff account "${name}"?`, 'This action cannot be undone.', () => deleteStaffUser(id, name));
+}
+
+// ==========================================
+// INVENTORY LEDGER DELETE CONTROLLER
+// ==========================================
+async function deleteInventoryTxn(txnId) {
+  if (!confirm(`Are you sure you want to delete this inventory ledger transaction (ID #${txnId})?`)) return;
+  try {
+    const res = await fetch(`/api/owner/inventory/ledger/${txnId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete inventory record');
+    showToast(data.message || 'Inventory record deleted', 'success');
+    if (typeof loadInventoryData === 'function') loadInventoryData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// Global window bindings for table action buttons and modals
+window.deleteExpense = typeof deleteExpense !== 'undefined' ? deleteExpense : null;
+window.deleteProductItem = typeof deleteProductItem !== 'undefined' ? deleteProductItem : null;
+window.deleteOrderItem = typeof deleteOrderItem !== 'undefined' ? deleteOrderItem : null;
+window.deletePurchaseItem = typeof deletePurchaseItem !== 'undefined' ? deletePurchaseItem : null;
+window.deleteInvoiceItem = typeof deleteInvoiceItem !== 'undefined' ? deleteInvoiceItem : null;
+window.deleteCreditNoteItem = typeof deleteCreditNoteItem !== 'undefined' ? deleteCreditNoteItem : null;
+window.deleteCustomerItem = typeof deleteCustomerItem !== 'undefined' ? deleteCustomerItem : null;
+window.deleteSupplierItem = typeof deleteSupplierItem !== 'undefined' ? deleteSupplierItem : null;
+window.deleteStaffUser = typeof deleteStaffUser !== 'undefined' ? deleteStaffUser : null;
+window.deleteInventoryTxn = deleteInventoryTxn;
+window.openModal = typeof openModal !== 'undefined' ? openModal : null;
+window.closeModal = typeof closeModal !== 'undefined' ? closeModal : null;
+window.showToast = typeof showToast !== 'undefined' ? showToast : null;
+
+
+// Quick Custom Category & Brand Modal Handlers
+function openInlineAddCategoryModal() {
+  const input = document.getElementById('quick-cat-name');
+  if (input) input.value = '';
+  const desc = document.getElementById('quick-cat-desc');
+  if (desc) desc.value = '';
+  const icon = document.getElementById('quick-cat-icon');
+  if (icon) icon.value = '📦';
+  openModal('modal-quick-category');
+  setTimeout(() => { if (input) input.focus(); }, 100);
+}
+
+async function handleQuickCategorySubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('quick-cat-name').value.trim();
+  const icon = document.getElementById('quick-cat-icon').value.trim() || '📦';
+  const description = document.getElementById('quick-cat-desc').value.trim();
+  if (!name) return;
+
+  const btn = document.getElementById('btn-save-quick-cat');
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/owner/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, icon, description })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create category');
+
+    const newId = data.id || (data.category && data.category.id);
+    cachedCategories.push({ id: newId, _id: newId, name, icon, description });
+    populateCategoryDropdowns();
+
+    const prodCatSelect = document.getElementById('prod-form-category');
+    if (prodCatSelect) prodCatSelect.value = newId;
+
+    closeModal('modal-quick-category');
+    showToast(`Category "${name}" created and selected!`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function openInlineAddBrandModal() {
+  const input = document.getElementById('quick-brand-name');
+  if (input) input.value = '';
+  const desc = document.getElementById('quick-brand-desc');
+  if (desc) desc.value = '';
+  openModal('modal-quick-brand');
+  setTimeout(() => { if (input) input.focus(); }, 100);
+}
+
+async function handleQuickBrandSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('quick-brand-name').value.trim();
+  const description = document.getElementById('quick-brand-desc').value.trim();
+  if (!name) return;
+
+  const btn = document.getElementById('btn-save-quick-brand');
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/owner/brands', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create brand');
+
+    const newId = data.id || (data.brand && data.brand.id);
+    cachedBrands.push({ id: newId, _id: newId, name, description });
+    populateBrandDropdowns();
+
+    const prodBrandSelect = document.getElementById('prod-form-brand');
+    if (prodBrandSelect) prodBrandSelect.value = newId;
+
+    closeModal('modal-quick-brand');
+    showToast(`Brand "${name}" created and selected!`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }

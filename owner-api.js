@@ -1,14 +1,19 @@
 // owner-api.js - Complete Business Logic and API Endpoints for Moto Pit Master Owner Portal
 const crypto = require('crypto');
-const { hashPassword, User, Category, Brand, Supplier, Product, Order, OrderItem, Invoice, InventoryTransaction, Purchase, PurchaseItem, Expense, CreditNote, CreditNoteItem, Customer, Review, AuditLog, StoreSetting, Session, SupportTicket, Bike } = require('./database.js');
+const { db, hashPassword } = require('./database.js');
+const { syncTableRecordToMongo, deleteFromMongo, getMongoStatus, connectMongo } = require('./mongodb.js');
+const { migrateAllToMongo } = require('./migrate-to-mongo.js');
 
-async function getStoreSettings() {
-  const rows = await StoreSetting.find().lean();
-  const settings = {};
-  rows.forEach(r => settings[r.key] = r.value);
-  return settings;
+function getStoreSettings() {
+  try {
+    const rows = db.prepare('SELECT * FROM store_settings').all();
+    const settings = {};
+    rows.forEach(r => settings[r.key] = r.value);
+    return settings;
+  } catch (err) {
+    return {};
+  }
 }
-
 function parseDateRange(range, start, end) {
   const now = new Date();
   let startDate = '';
@@ -48,38 +53,22 @@ function parseDateRange(range, start, end) {
 }
 
 async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJsonBody, sendJson, logAudit) {
-  const staffRole = (currentUser && (currentUser.staff_role || currentUser.role)) || 'GUEST';
-  const isOwnerStaff = currentUser && ['OWNER', 'ADMIN', 'STAFF'].includes(currentUser.role);
+  const isOwnerStaff = currentUser && (currentUser.role === 'OWNER' || currentUser.role === 'ADMIN' || currentUser.role === 'STAFF');
 
-  // Granular role permission checks (Section 15: Server-side role checks)
-  const isOwner = ['OWNER', 'ADMIN'].includes(staffRole);
-  const canAccessPos = ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'STAFF'].includes(staffRole);
-  const canAccessInventory = ['OWNER', 'ADMIN', 'MANAGER', 'INVENTORY', 'STAFF'].includes(staffRole);
-  const canAccessReports = ['OWNER', 'ADMIN', 'MANAGER'].includes(staffRole);
-
-  // --- 0. MONGODB ATLAS CLUSTER INTEGRATION ---
   if (pathname === '/api/owner/mongodb/status' && req.method === 'GET') {
-    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
     const status = getMongoStatus();
-    let counts = null;
-    const mDb = getDb();
-    if (mDb && status.connected) {
-      try {
-        counts = {
-          products: await mDb.collection('products').countDocuments(),
-          orders: await mDb.collection('orders').countDocuments(),
-          invoices: await mDb.collection('invoices').countDocuments(),
-          customers: await mDb.collection('customers').countDocuments(),
-          suppliers: await mDb.collection('suppliers').countDocuments(),
-          purchases: await mDb.collection('purchases').countDocuments(),
-          expenses: await mDb.collection('expenses').countDocuments(),
-          settings: await mDb.collection('store_settings').countDocuments(),
-          users: await mDb.collection('users').countDocuments()
-        };
-      } catch (e) {
-        console.error('Error counting mongo documents:', e.message);
-      }
-    }
+    let counts = {};
+    try {
+      counts = {
+        products: db.prepare('SELECT COUNT(*) as c FROM products').get().c,
+        orders: db.prepare('SELECT COUNT(*) as c FROM orders').get().c,
+        purchases: db.prepare('SELECT COUNT(*) as c FROM purchases').get().c,
+        invoices: db.prepare('SELECT COUNT(*) as c FROM invoices').get().c,
+        customers: db.prepare('SELECT COUNT(*) as c FROM customers').get().c,
+        suppliers: db.prepare('SELECT COUNT(*) as c FROM suppliers').get().c,
+        expenses: db.prepare('SELECT COUNT(*) as c FROM expenses').get().c
+      };
+    } catch(e) {}
     return sendJson(res, 200, {
       ...status,
       counts
@@ -110,6 +99,94 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }
+  }
+
+  // --- CATEGORY & BRAND MANAGEMENT ---
+  if (pathname === '/api/owner/categories' && req.method === 'POST') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    try {
+      const body = await parseJsonBody(req);
+      const { name, slug, icon, description } = body;
+      if (!name || !name.trim()) return sendJson(res, 400, { error: 'Category name is required' });
+      const generatedSlug = (slug || name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const maxOrder = db.prepare('SELECT MAX(display_order) as mo FROM categories').get();
+      const nextOrder = ((maxOrder && maxOrder.mo) || 0) + 1;
+      const existing = db.prepare('SELECT id FROM categories WHERE slug = ?').get(generatedSlug);
+      if (existing) return sendJson(res, 400, { error: `Category with slug "${generatedSlug}" already exists` });
+      const result = db.prepare('INSERT INTO categories (slug, name, icon, description, display_order) VALUES (?, ?, ?, ?, ?)').run(generatedSlug, name.trim(), icon || '📦', description || '', nextOrder);
+      try { syncTableRecordToMongo(db, 'categories', result.lastInsertRowid); } catch(e) {}
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_CATEGORY', 'CATEGORY', result.lastInsertRowid, 'SUCCESS', { name, slug: generatedSlug });
+      return sendJson(res, 201, { 
+        message: 'Category created successfully', 
+        id: result.lastInsertRowid,
+        category: {
+          id: result.lastInsertRowid,
+          name: name.trim(),
+          slug: generatedSlug,
+          icon: icon || '📦',
+          description: description || ''
+        }
+      });
+    } catch (err) { return sendJson(res, 500, { error: err.message }); }
+  }
+
+  if (pathname === '/api/owner/categories' && req.method === 'GET') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    const categories = db.prepare('SELECT * FROM categories ORDER BY display_order ASC').all();
+    return sendJson(res, 200, { categories });
+  }
+
+  if (pathname.match(/^\/api\/owner\/categories\/\d+$/) && req.method === 'DELETE') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+      try { deleteFromMongo('categories', id); } catch(e) {}
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_CATEGORY', 'CATEGORY', id, 'SUCCESS');
+      return sendJson(res, 200, { message: 'Category deleted successfully' });
+    } catch (err) { return sendJson(res, 500, { error: err.message }); }
+  }
+
+  if (pathname === '/api/owner/brands' && req.method === 'POST') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    try {
+      const body = await parseJsonBody(req);
+      const { name, slug, logo, description } = body;
+      if (!name || !name.trim()) return sendJson(res, 400, { error: 'Brand name is required' });
+      const generatedSlug = (slug || name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const existing = db.prepare('SELECT id FROM brands WHERE slug = ?').get(generatedSlug);
+      if (existing) return sendJson(res, 400, { error: `Brand with slug "${generatedSlug}" already exists` });
+      const result = db.prepare('INSERT INTO brands (slug, name, logo, description) VALUES (?, ?, ?, ?)').run(generatedSlug, name.trim(), logo || '', description || '');
+      try { syncTableRecordToMongo(db, 'brands', result.lastInsertRowid); } catch(e) {}
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_BRAND', 'BRAND', result.lastInsertRowid, 'SUCCESS', { name, slug: generatedSlug });
+      return sendJson(res, 201, { 
+        message: 'Brand created successfully', 
+        id: result.lastInsertRowid,
+        brand: {
+          id: result.lastInsertRowid,
+          name: name.trim(),
+          slug: generatedSlug,
+          logo: logo || '',
+          description: description || ''
+        }
+      });
+    } catch (err) { return sendJson(res, 500, { error: err.message }); }
+  }
+
+  if (pathname === '/api/owner/brands' && req.method === 'GET') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    const brands = db.prepare('SELECT * FROM brands ORDER BY name ASC').all();
+    return sendJson(res, 200, { brands });
+  }
+
+  if (pathname.match(/^\/api\/owner\/brands\/\d+$/) && req.method === 'DELETE') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    const id = parseInt(pathname.split('/')[4], 10);
+    try {
+      db.prepare('DELETE FROM brands WHERE id = ?').run(id);
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_BRAND', 'BRAND', id, 'SUCCESS');
+      return sendJson(res, 200, { message: 'Brand deleted successfully' });
+    } catch (err) { return sendJson(res, 500, { error: err.message }); }
   }
 
   // --- 1. OWNER DASHBOARD METRICS ---
@@ -1085,6 +1162,26 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     `).all();
 
     return sendJson(res, 200, { valuation, lowStockList });
+  }
+
+  // Delete Inventory Transaction / Ledger Record
+  if ((pathname.startsWith('/api/owner/inventory/ledger/') || pathname.startsWith('/api/owner/inventory-ledger/')) && req.method === 'DELETE') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    const parts = pathname.split('/');
+    const id = parseInt(parts[parts.length - 1], 10);
+    if (!id) return sendJson(res, 400, { error: 'Invalid transaction ID' });
+
+    try {
+      const existing = db.prepare('SELECT * FROM inventory_transactions WHERE id = ?').get(id);
+      if (!existing) return sendJson(res, 404, { error: 'Inventory record not found' });
+
+      db.prepare('DELETE FROM inventory_transactions WHERE id = ?').run(id);
+      deleteFromMongo('inventory_transactions', { id });
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_INVENTORY_TXN', 'INVENTORY', id, 'SUCCESS', existing);
+      return sendJson(res, 200, { success: true, message: `Inventory ledger entry #${id} deleted successfully.` });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
   }
 
   // --- 5. DISTRIBUTOR / PURCHASE ENTRY ---
