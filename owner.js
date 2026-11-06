@@ -1248,16 +1248,21 @@ async function loadProductsData() {
 }
 
 function openAddProductModal() {
-  document.getElementById('prod-form-id').value = '';
-  document.getElementById('prod-form-name').value = '';
-  document.getElementById('prod-form-sku').value = `MPS-PROD-${Date.now().toString().slice(-4)}`;
-  generateRandomBarcode();
-  document.getElementById('prod-form-cost').value = '';
-  document.getElementById('prod-form-price').value = '';
-  document.getElementById('prod-form-stock').value = '10';
-  document.getElementById('prod-form-minstock').value = '5';
-  document.getElementById('prod-form-desc').value = '';
-  document.getElementById('modal-product-title').textContent = 'Add New Motorcycle Product';
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  setVal('prod-form-id', '');
+  setVal('prod-form-name', '');
+  setVal('prod-form-sku', `MPS-PROD-${Date.now().toString().slice(-4)}`);
+  if (typeof generateRandomBarcode === 'function') generateRandomBarcode();
+  setVal('prod-form-barcode', '');
+  setVal('prod-form-cost', '');
+  setVal('prod-form-price', '');
+  setVal('prod-form-stock', '10');
+  setVal('prod-form-minstock', '5');
+  setVal('prod-form-desc', '');
+  setVal('prod-form-image', 'hero1.png');
+  setText('modal-product-title', 'Add New Motorcycle Product');
 
   // Always refresh category and brand dropdowns fresh from server
   Promise.all([
@@ -1267,7 +1272,6 @@ function openAddProductModal() {
     populateCategoryDropdowns();
     populateBrandDropdowns();
   }).catch(() => {
-    // Fallback to cache
     populateCategoryDropdowns();
     populateBrandDropdowns();
   });
