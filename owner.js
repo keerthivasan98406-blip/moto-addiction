@@ -485,7 +485,18 @@ async function createQuickBrand(name, selectEl) {
 function populateSupplierDropdowns() {
   const purSelect = document.getElementById('pur-form-supplier');
   if (purSelect) {
-    purSelect.innerHTML = cachedSuppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    const curVal = purSelect.value;
+    purSelect.innerHTML = '<option value="">-- Select Supplier / Distributor --</option>' +
+      cachedSuppliers.map(s => `<option value="${s.id}">${s.name} (GSTIN: ${s.gstin || 'Unreg'})</option>`).join('') +
+      '<option value="__new_supp__" style="color:var(--accent-orange); font-weight:600;">+ Add New Supplier...</option>';
+    if (curVal && curVal !== '__new_supp__') purSelect.value = curVal;
+
+    purSelect.onchange = function() {
+      if (this.value === '__new_supp__') {
+        this.value = '';
+        openInlineAddSupplierModal();
+      }
+    };
   }
 }
 
@@ -1485,24 +1496,41 @@ async function loadPurchasesData() {
 }
 
 function openAddPurchaseModal() {
+  const form = document.getElementById('purchase-entry-form');
+  if (form) form.reset();
+  
+  const today = new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById('pur-date');
+  if (dateInput) dateInput.value = today;
+  
   const tbody = document.getElementById('pur-items-table-body');
   if (tbody) tbody.innerHTML = '';
-
-  // Ensure products are loaded before adding line item
+  
   const doOpen = () => {
+    populateSupplierDropdowns();
     addPurchaseLineItem();
-    const dateEl = document.getElementById('pur-form-date');
-    if (dateEl) dateEl.value = new Date().toISOString().slice(0, 10);
+    calculatePurchaseTotals();
     openModal('modal-purchase');
   };
 
-  if (!cachedProducts || cachedProducts.length === 0) {
-    fetch('/api/products').then(r => r.json()).then(d => {
-      cachedProducts = d.products || [];
+  const checkProducts = () => {
+    if (!cachedProducts || cachedProducts.length === 0) {
+      fetch('/api/products').then(r => r.json()).then(d => {
+        cachedProducts = d.products || [];
+        doOpen();
+      }).catch(() => doOpen());
+    } else {
       doOpen();
-    }).catch(() => doOpen());
+    }
+  };
+
+  if (!cachedSuppliers || cachedSuppliers.length === 0) {
+    fetch('/api/owner/suppliers').then(r => r.json()).then(d => {
+      cachedSuppliers = d.suppliers || [];
+      checkProducts();
+    }).catch(() => checkProducts());
   } else {
-    doOpen();
+    checkProducts();
   }
 }
 
@@ -1512,16 +1540,25 @@ function addPurchaseLineItem() {
 
   const row = document.createElement('tr');
   row.className = 'pur-item-row';
+  
+  let prodOptions = '<option value="">-- Select Product --</option>';
+  if (cachedProducts && cachedProducts.length > 0) {
+    prodOptions += cachedProducts.map(p => `<option value="${p.id}" data-cost="${p.purchase_price || 0}" data-gst="${p.gst_rate || 18}">${p.name} (SKU: ${p.sku})</option>`).join('');
+  } else {
+    prodOptions += '<option value="" disabled>(No products in catalog yet)</option>';
+  }
+  prodOptions += '<option value="__new_prod__" style="color:var(--accent-orange); font-weight:600;">+ Create New Product...</option>';
+
   row.innerHTML = `
     <td>
-      <select class="form-input pur-line-prod" style="padding:4px; font-size:0.8rem;" required>
-        ${cachedProducts.map(p => `<option value="${p.id}" data-cost="${p.purchase_price || 0}" data-gst="${p.gst_rate || 18}">${p.name} (SKU: ${p.sku})</option>`).join('')}
+      <select class="form-input pur-line-prod" style="width:100%; padding:6px; font-size:0.8rem;" required>
+        ${prodOptions}
       </select>
     </td>
-    <td><input type="number" class="form-input pur-line-qty" value="5" min="1" style="width:60px; padding:4px;" required /></td>
-    <td><input type="number" class="form-input pur-line-cost" value="1000" min="0" style="width:90px; padding:4px;" required /></td>
+    <td><input type="number" class="form-input pur-line-qty" value="1" min="1" style="width:65px; padding:6px; text-align:center;" required /></td>
+    <td><input type="number" class="form-input pur-line-cost" value="1000" min="0" style="width:105px; padding:6px;" required /></td>
     <td>
-      <select class="form-input pur-line-gst" style="width:70px; padding:4px;">
+      <select class="form-input pur-line-gst" style="width:85px; padding:6px;">
         <option value="18">18%</option>
         <option value="28">28%</option>
         <option value="12">12%</option>
@@ -1529,20 +1566,26 @@ function addPurchaseLineItem() {
         <option value="0">0%</option>
       </select>
     </td>
-    <td class="pur-line-total" style="font-weight:700; color:var(--accent-orange);">₹0</td>
-    <td><button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="this.closest('tr').remove(); calculatePurchaseTotals();">✕</button></td>
+    <td class="pur-line-total" style="font-weight:700; color:var(--accent-orange); white-space:nowrap; vertical-align:middle;">₹0</td>
+    <td style="text-align:center; vertical-align:middle;">
+      <button type="button" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#ef4444; border-radius:4px; padding:4px 8px; cursor:pointer;" onclick="this.closest('tr').remove(); calculatePurchaseTotals();">✕</button>
+    </td>
   `;
 
   tbody.appendChild(row);
 
-  // Hook product change to auto-fill cost
   const prodSelect = row.querySelector('.pur-line-prod');
   const costInput = row.querySelector('.pur-line-cost');
   const gstSelect = row.querySelector('.pur-line-gst');
 
   prodSelect.addEventListener('change', () => {
+    if (prodSelect.value === '__new_prod__') {
+      prodSelect.value = '';
+      openAddProductModal();
+      return;
+    }
     const opt = prodSelect.selectedOptions[0];
-    if (opt) {
+    if (opt && opt.value) {
       costInput.value = opt.getAttribute('data-cost') || 1000;
       gstSelect.value = Math.round(Number(opt.getAttribute('data-gst') || 18));
       calculatePurchaseTotals();
@@ -1558,15 +1601,38 @@ function addPurchaseLineItem() {
 
 function calculatePurchaseTotals() {
   const rows = document.querySelectorAll('.pur-item-row');
-  let grandTotal = 0;
+  let taxableSubtotal = 0;
+  let totalGst = 0;
+
   rows.forEach(r => {
-    const qty = parseInt(r.querySelector('.pur-line-qty').value, 10) || 0;
-    const cost = parseFloat(r.querySelector('.pur-line-cost').value) || 0;
-    const gstRate = parseFloat(r.querySelector('.pur-line-gst').value) || 0;
-    const lineTotal = (qty * cost) * (1 + (gstRate / 100));
-    r.querySelector('.pur-line-total').textContent = formatINR(lineTotal);
-    grandTotal += lineTotal;
+    const qty = parseInt(r.querySelector('.pur-line-qty')?.value, 10) || 0;
+    const cost = parseFloat(r.querySelector('.pur-line-cost')?.value) || 0;
+    const gstRate = parseFloat(r.querySelector('.pur-line-gst')?.value) || 0;
+
+    const lineCost = qty * cost;
+    const lineGst = lineCost * (gstRate / 100);
+    const lineTotal = lineCost + lineGst;
+
+    const totalEl = r.querySelector('.pur-line-total');
+    if (totalEl) totalEl.textContent = formatINR(lineTotal);
+
+    taxableSubtotal += lineCost;
+    totalGst += lineGst;
   });
+
+  const grandTotal = Math.round(taxableSubtotal + totalGst);
+  const paid = parseFloat(document.getElementById('pur-form-paid')?.value) || 0;
+  const balance = Math.max(0, grandTotal - paid);
+
+  const taxEl = document.getElementById('pur-summary-taxable');
+  const gstEl = document.getElementById('pur-summary-gst');
+  const grandEl = document.getElementById('pur-summary-grand');
+  const balEl = document.getElementById('pur-summary-balance');
+
+  if (taxEl) taxEl.textContent = formatINR(taxableSubtotal);
+  if (gstEl) gstEl.textContent = formatINR(totalGst);
+  if (grandEl) grandEl.textContent = formatINR(grandTotal);
+  if (balEl) balEl.textContent = formatINR(balance);
 }
 
 async function confirmPurchaseReceipt(purchaseId) {
@@ -3003,6 +3069,68 @@ async function handleQuickBrandSubmit(e) {
 
     closeModal('modal-quick-brand');
     showToast(`Brand "${name}" created and selected!`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+
+// Quick Supplier Modal Handlers
+function openInlineAddSupplierModal() {
+  const name = document.getElementById('quick-supp-name');
+  if (name) name.value = '';
+  const contact = document.getElementById('quick-supp-contact');
+  if (contact) contact.value = '';
+  const phone = document.getElementById('quick-supp-phone');
+  if (phone) phone.value = '';
+  const gstin = document.getElementById('quick-supp-gstin');
+  if (gstin) gstin.value = '';
+  const email = document.getElementById('quick-supp-email');
+  if (email) email.value = '';
+  const addr = document.getElementById('quick-supp-address');
+  if (addr) addr.value = '';
+
+  openModal('modal-quick-supplier');
+  setTimeout(() => { if (name) name.focus(); }, 100);
+}
+
+async function handleQuickSupplierSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('quick-supp-name').value.trim();
+  const contact_person = document.getElementById('quick-supp-contact').value.trim();
+  const phone = document.getElementById('quick-supp-phone').value.trim();
+  const gstin = document.getElementById('quick-supp-gstin').value.trim();
+  const email = document.getElementById('quick-supp-email').value.trim();
+  const address = document.getElementById('quick-supp-address').value.trim();
+
+  if (!name || !phone) {
+    showToast('Supplier Name and Phone are required', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-quick-supp');
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/owner/suppliers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, contact_person, phone, gstin, email, address })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to add supplier');
+
+    const newId = data.id;
+    cachedSuppliers.push({ id: newId, name, gstin, phone });
+    populateSupplierDropdowns();
+
+    const purSupplierSelect = document.getElementById('pur-form-supplier');
+    if (purSupplierSelect) purSupplierSelect.value = newId;
+
+    closeModal('modal-quick-supplier');
+    showToast(`Supplier "${name}" added and selected!`, 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {

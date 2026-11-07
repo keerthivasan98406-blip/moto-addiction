@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/owner.css?v=7" />
+  <link rel="stylesheet" href="/owner.css?v=8" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
 </head>
 <body>
@@ -1212,14 +1212,150 @@
            ========================================== -->
       <section class="view-section" id="view-settings">
         <div class="dashboard-grid-2">
-          <!-- Business & GST Profile Form -->
+          <!-- Left Column: Business & GST Profile Form -->
           <div class="card-panel">
             <h2 class="panel-title" style="margin-bottom:18px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
               Business Details & GST Setup
             </h2>
             <form id="store-settings-form">
-                        <div class="form-grid-2">
+              <div class="form-grid-2">
+                <div class="form-field">
+                  <label class="form-label">Store Brand Name *</label>
+                  <input type="text" id="set-store-name" class="form-input" required />
+                </div>
+                <div class="form-field">
+                  <label class="form-label">Registered Legal Entity Name *</label>
+                  <input type="text" id="set-legal-name" class="form-input" required />
+                </div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-field">
+                  <label class="form-label">GSTIN (15 Digits) *</label>
+                  <input type="text" id="set-store-gstin" class="form-input" maxlength="15" required />
+                </div>
+                <div class="form-field">
+                  <label class="form-label">Operating State & Code</label>
+                  <input type="text" id="set-store-state" class="form-input" value="Tamil Nadu (33)" readonly />
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label class="form-label">Registered Showroom / Warehouse Address</label>
+                <textarea id="set-store-address" class="form-input" rows="2"></textarea>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-field">
+                  <label class="form-label">Official Support Phone</label>
+                  <input type="text" id="set-store-phone" class="form-input" />
+                </div>
+                <div class="form-field">
+                  <label class="form-label">Official Business Email</label>
+                  <input type="email" id="set-store-email" class="form-input" />
+                </div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-field">
+                  <label class="form-label">B2B GST Invoice Prefix</label>
+                  <input type="text" id="set-invoice-prefix" class="form-input" />
+                </div>
+                <div class="form-field">
+                  <label class="form-label">POS Counter Invoice Prefix</label>
+                  <input type="text" id="set-pos-prefix" class="form-input" />
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="margin-top:12px;">Save Store Settings</button>
+            </form>
+          </div>
+
+          <!-- Right Column: MongoDB Atlas Cluster & Categories/Brands Management -->
+          <div style="display:flex; flex-direction:column; gap:20px;">
+            <!-- MongoDB Cluster Status Card -->
+            <div class="card-panel">
+              <div class="panel-header" style="margin-bottom:12px;">
+                <h2 class="panel-title" style="font-size:1.05rem;">
+                  <span class="live-dot" id="mongo-card-dot" style="background:#10b981;"></span>
+                  MongoDB Atlas Cluster
+                </h2>
+                <span id="mongo-card-status" style="font-size:0.8rem; font-weight:700; color:#10b981;">
+                  <span id="mongo-card-status-text">Connected</span>
+                </span>
+              </div>
+              <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:14px;">
+                Cloud Cluster: <strong>motopit.c8x6ms0.mongodb.net / motopitshop</strong>
+              </p>
+              <div id="mongo-whitelist-banner" style="display:none; padding:10px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); border-radius:6px; margin-bottom:12px; font-size:0.78rem; color:#f59e0b;">
+                ⚠️ IP whitelist required. Ensure 0.0.0.0/0 is permitted in Atlas Network Access.
+              </div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect" onclick="triggerMongoReconnect()">Retry Connection</button>
+                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to MongoDB</button>
+              </div>
+            </div>
+
+            <!-- Categories & Brands Manager Card -->
+            <div class="card-panel">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h2 class="panel-title" style="font-size:1.05rem;">Categories & Brands</h2>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-outline-orange btn-xs" onclick="openInlineAddCategoryModal()">+ Add Category</button>
+                  <button class="btn btn-outline-orange btn-xs" onclick="openInlineAddBrandModal()">+ Add Brand</button>
+                </div>
+              </div>
+              <div style="max-height:220px; overflow-y:auto; padding-right:4px;" id="categories-manager-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+
+  <!-- 1. Add / Edit Product Modal -->
+  <div class="modal-overlay" id="modal-product">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-product-title">Add New Motorcycle Product</h3>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-product')">✕</button>
+      </div>
+      <form id="form-product">
+        <input type="hidden" id="prod-form-id" value="" />
+        <div class="modal-body">
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="form-label">Product Name *</label>
+              <input type="text" id="prod-form-name" class="form-input" placeholder="e.g. AGV K6 S Carbon Helmet" required />
+            </div>
+            <div class="form-field">
+              <label class="form-label">SKU (Unique Code) *</label>
+              <input type="text" id="prod-form-sku" class="form-input" placeholder="e.g. MPS-AGV-K6S" required />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="form-label">Barcode (EAN-13 / UPC)</label>
+              <div style="display:flex; gap:6px;">
+                <input type="text" id="prod-form-barcode" class="form-input" placeholder="e.g. 890123456789" />
+                <button type="button" class="btn btn-secondary btn-sm" onclick="generateRandomBarcode()">Gen</button>
+              </div>
+            </div>
+            <div class="form-field">
+              <label class="form-label">HSN Code</label>
+              <input type="text" id="prod-form-hsn" class="form-input" value="8714" placeholder="8714 / 6506" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
             <div class="form-field">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <label class="form-label" style="margin-bottom:0;">Category *</label>
@@ -1333,14 +1469,19 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-header">
         <h3 class="modal-title">New Distributor Purchase Entry</h3>
-        <button class="modal-close-btn" onclick="closeModal('modal-purchase')">✕</button>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-purchase')">✕</button>
       </div>
       <form id="form-purchase">
         <div class="modal-body">
           <div class="form-grid-2">
             <div class="form-field">
-              <label class="form-label">Distributor / Supplier *</label>
-              <select id="pur-form-supplier" class="form-input" required></select>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <label class="form-label" style="margin-bottom:0;">Distributor / Supplier *</label>
+                <button type="button" class="btn btn-outline-orange btn-xs" onclick="openInlineAddSupplierModal()" title="Add New Distributor">+ New Supplier</button>
+              </div>
+              <select id="pur-form-supplier" class="form-input" required>
+                <option value="">-- Select Supplier / Distributor --</option>
+              </select>
             </div>
             <div class="form-field">
               <label class="form-label">Supplier Invoice # *</label>
@@ -1364,20 +1505,26 @@
 
           <!-- Line Items Table -->
           <div style="margin: 16px 0;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span class="form-label">Purchased Product Line Items</span>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="addPurchaseLineItem()">+ Add Item</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+              <div>
+                <span class="form-label" style="font-weight:700;">Purchased Product Line Items *</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); margin-left:8px;">(Select catalog SKU or create product)</span>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn btn-outline-orange btn-xs" onclick="openAddProductModal()" title="Create New Product in Catalog">+ New Product</button>
+                <button type="button" class="btn btn-primary btn-xs" onclick="addPurchaseLineItem()">+ Add Line Item</button>
+              </div>
             </div>
             <div class="table-responsive">
-              <table class="data-table">
+              <table class="data-table" style="font-size:0.82rem;">
                 <thead>
                   <tr>
-                    <th>Product</th>
-                    <th>Qty</th>
-                    <th>Unit Cost (₹)</th>
-                    <th>GST %</th>
-                    <th>Total (₹)</th>
-                    <th>Del</th>
+                    <th style="min-width:200px;">Product / SKU</th>
+                    <th style="width:75px;">Qty</th>
+                    <th style="width:110px;">Unit Cost (₹)</th>
+                    <th style="width:90px;">GST %</th>
+                    <th style="width:110px;">Line Total</th>
+                    <th style="width:40px; text-align:center;">Del</th>
                   </tr>
                 </thead>
                 <tbody id="pur-items-table-body">
@@ -1387,15 +1534,35 @@
             </div>
           </div>
 
+          <!-- Financial Breakdown Summary Box -->
+          <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:8px; padding:12px 18px; margin:14px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Subtotal (Taxable)</div>
+              <div id="pur-summary-taxable" style="font-size:1.05rem; font-weight:700; color:#fff;">₹0</div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Total GST</div>
+              <div id="pur-summary-gst" style="font-size:1.05rem; font-weight:700; color:var(--accent-orange);">₹0</div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Grand Total</div>
+              <div id="pur-summary-grand" style="font-size:1.25rem; font-weight:800; color:#10b981;">₹0</div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Outstanding Dues</div>
+              <div id="pur-summary-balance" style="font-size:1.05rem; font-weight:700; color:#ef4444;">₹0</div>
+            </div>
+          </div>
+
           <div class="form-grid-2">
             <div class="form-field">
               <label class="form-label">Amount Paid Now (₹)</label>
-              <input type="number" id="pur-form-paid" class="form-input" value="0" min="0" />
+              <input type="number" id="pur-form-paid" class="form-input" value="0" min="0" oninput="calculatePurchaseTotals()" />
             </div>
             <div class="form-field">
               <label class="form-label">Payment Mode</label>
               <select id="pur-form-paymethod" class="form-input">
-                <option value="BANK_TRANSFER">Bank Transfer / NEFT</option>
+                <option value="BANK_TRANSFER">Bank Transfer / NEFT / RTGS</option>
                 <option value="UPI">UPI Payment</option>
                 <option value="CHEQUE">Cheque</option>
                 <option value="CASH">Cash</option>
@@ -1405,7 +1572,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-purchase')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Purchase Entry</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-purchase">Save Purchase Entry</button>
         </div>
       </form>
     </div>
@@ -1669,7 +1836,7 @@
           </div>
           <div class="form-field">
             <label class="form-label">Login Email *</label>
-            <input type="email" id="user-form-email" class="form-input" placeholder="ramesh@motopitshop.com" required />
+            <input type="email" id="user-form-email" class="form-input" placeholder="ramesh@motopitshop.com" required autocomplete="username" />
           </div>
           <div class="form-grid-2">
             <div class="form-field">
@@ -1756,10 +1923,57 @@
     </div>
   </div>
 
+  
+  <!-- Quick Custom Supplier Modal -->
+  <div class="modal-overlay" id="modal-quick-supplier" style="z-index: 100060;">
+    <div class="modal-dialog" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3 class="modal-title">➕ Add New Distributor / Supplier</h3>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-quick-supplier')">✕</button>
+      </div>
+      <form id="form-quick-supplier" onsubmit="handleQuickSupplierSubmit(event)">
+        <div class="modal-body" style="padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <div class="form-field">
+            <label class="form-label">Distributor / Company Name *</label>
+            <input type="text" id="quick-supp-name" class="form-input" placeholder="e.g. Brembo India Spares Distribution" required />
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="form-label">Contact Person</label>
+              <input type="text" id="quick-supp-contact" class="form-input" placeholder="e.g. Ramesh Kumar" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Phone Number *</label>
+              <input type="text" id="quick-supp-phone" class="form-input" placeholder="e.g. +91 9876543210" required />
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="form-label">GSTIN (Optional)</label>
+              <input type="text" id="quick-supp-gstin" class="form-input" placeholder="e.g. 33AAPCA1234F1Z1" maxlength="15" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Email (Optional)</label>
+              <input type="email" id="quick-supp-email" class="form-input" placeholder="sales@distributor.com" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Operating Address / City</label>
+            <input type="text" id="quick-supp-address" class="form-input" placeholder="e.g. Ambattur Industrial Estate, Chennai, TN" />
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-quick-supplier')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-quick-supp">Save & Select Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Global Toast Notification Element -->
   <div id="toast" class="toast"></div>
 
   <!-- Owner Portal Controller Script -->
-  <script src="/owner.js?v=7"></script>
+  <script src="/owner.js?v=9"></script>
 </body>
 </html>

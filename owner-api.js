@@ -927,14 +927,14 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
           sku, barcode, product_code, name, slug, brand_id, category_id, supplier_id,
           description, price, old_price, purchase_price, discount, gst_rate, hsn,
           stock, min_stock, primary_image, images_json, variants_json, warranty, weight, is_archived
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const result = insert.run(
-        genSku, genBarcode, genSku, name.trim(), slug, brand_id || 1, category_id || 1, supplier_id || 1,
+        genSku, genBarcode, genSku, name.trim(), slug, brand_id || null, category_id || null, supplier_id || null,
         description || '', price, old_price || null, purPrice, discount, gst_rate || 18.0, hsn || '8714',
         initialStock, min_stock || 5, img, JSON.stringify(images_json || [img]),
-        JSON.stringify(variants_json || []), warranty || '1 Year Manufacturer', weight || '1.0 kg'
+        JSON.stringify(variants_json || []), warranty || '1 Year Manufacturer', weight || '1.0 kg', 0
       );
 
       const productId = result.lastInsertRowid;
@@ -1283,8 +1283,8 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       `);
 
       for (const item of items) {
-        const qty = parseInt(item.quantity, 10);
-        const unitCost = parseInt(item.unit_cost, 10);
+        const qty = parseInt(item.quantity, 10) || 1;
+        const unitCost = parseFloat(item.unit_cost || item.purchase_price || 0);
         const lineTotal = qty * unitCost;
         const lineTax = Math.round(lineTotal * (parseFloat(item.gst_rate || 18.0) / 100));
 
@@ -1294,7 +1294,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
           const prod = db.prepare('SELECT stock FROM products WHERE id = ?').get(item.product_id);
           if (prod) {
             addStock.run(qty, unitCost, item.product_id);
-            logTxn.run(item.product_id, qty, prod.stock, prod.stock + qty, `Goods received purchase #${purchaseNumber}`, currentUser.id);
+            logTxn.run(item.product_id, qty, prod.stock, prod.stock + qty, `Goods received purchase #${purchaseNumber}`, currentUser ? currentUser.id : 1);
           }
         }
       }
@@ -1315,8 +1315,22 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         status
       });
 
-      // Synchronize Purchase to MongoDB
-      syncTableRecordToMongo(db, 'purchases', purchaseId);
+      // Synchronize Purchase, Updated Product Stocks & Supplier to MongoDB
+      try {
+        syncTableRecordToMongo(db, 'purchases', purchaseId);
+        if (is_received) {
+          items.forEach(i => {
+            if (i.product_id) {
+              try { syncTableRecordToMongo(db, 'products', i.product_id); } catch(e) {}
+            }
+          });
+        }
+        if (supplier_id) {
+          try { syncTableRecordToMongo(db, 'suppliers', supplier_id); } catch(e) {}
+        }
+      } catch (syncErr) {
+        console.warn('[PURCHASE SYNC WARNING]', syncErr.message);
+      }
 
       return sendJson(res, 201, {
         success: true,
@@ -1373,6 +1387,19 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         WHERE id = ?
       `).run(id);
 
+      // Sync confirmed purchase and updated products to MongoDB
+      try {
+        syncTableRecordToMongo(db, 'purchases', id);
+        items.forEach(item => {
+          if (item.product_id) {
+            try { syncTableRecordToMongo(db, 'products', item.product_id); } catch(e) {}
+          }
+        });
+        if (purchase.supplier_id) {
+          try { syncTableRecordToMongo(db, 'suppliers', purchase.supplier_id); } catch(e) {}
+        }
+      } catch(e) {}
+
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'RECEIVE_PURCHASE', 'PURCHASE', id, 'SUCCESS');
       return sendJson(res, 200, { message: 'Goods receipt confirmed. Stock successfully added to inventory.' });
 
@@ -1421,6 +1448,13 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         amount: payAmount,
         newOutstanding
       });
+
+      try {
+        syncTableRecordToMongo(db, 'purchases', id);
+        if (purchase.supplier_id) {
+          syncTableRecordToMongo(db, 'suppliers', purchase.supplier_id);
+        }
+      } catch(e) {}
 
       return sendJson(res, 201, {
         message: 'Supplier payment recorded successfully',

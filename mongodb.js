@@ -286,7 +286,10 @@ async function deleteFromMongo(collectionName, filter) {
 
   try {
     const col = dbInstance.collection(collectionName);
-    await col.deleteOne(filter);
+    const query = (typeof filter === 'number' || typeof filter === 'string') 
+      ? { $or: [{ id: Number(filter) || filter }, { _id: String(filter) }] }
+      : filter;
+    await col.deleteOne(query);
     return true;
   } catch (err) {
     console.warn(`[MONGODB DELETE] Error deleting from "${collectionName}":`, err.message);
