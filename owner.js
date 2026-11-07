@@ -41,13 +41,13 @@ function showToast(message, type = 'info') {
 
 // Confirm Dialog (no browser confirm() - no black overlay)
 function showConfirmDialog(title, message, onConfirm) {
-  let overlay = document.getElementById('confirm-dialog-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'confirm-dialog-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
-    document.body.appendChild(overlay);
-  }
+  // Remove any existing confirm dialog
+  const existing = document.getElementById('confirm-dialog-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'confirm-dialog-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
   overlay.innerHTML = `
     <div style="background:#202329;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
@@ -56,15 +56,17 @@ function showConfirmDialog(title, message, onConfirm) {
       </div>
       <p style="color:#A1A1AA;font-size:0.9rem;margin:0 0 24px;">${message}</p>
       <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button onclick="document.getElementById('confirm-dialog-overlay').style.display='none'" style="background:#374151;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:0.9rem;">Cancel</button>
+        <button id="confirm-dialog-cancel" style="background:#374151;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:0.9rem;">Cancel</button>
         <button id="confirm-dialog-yes" style="background:#EF4444;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600;">Delete</button>
       </div>
     </div>`;
-  overlay.style.display = 'flex';
-  document.getElementById('confirm-dialog-yes').onclick = () => {
-    overlay.style.display = 'none';
-    onConfirm();
-  };
+  document.body.appendChild(overlay);
+
+  const cleanup = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
+
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(); });
+  document.getElementById('confirm-dialog-cancel').addEventListener('click', cleanup);
+  document.getElementById('confirm-dialog-yes').addEventListener('click', () => { cleanup(); onConfirm(); });
 }
 
 // Format Currency INR
@@ -1485,9 +1487,23 @@ async function loadPurchasesData() {
 function openAddPurchaseModal() {
   const tbody = document.getElementById('pur-items-table-body');
   if (tbody) tbody.innerHTML = '';
-  addPurchaseLineItem();
-  document.getElementById('pur-form-date').value = new Date().toISOString().slice(0, 10);
-  openModal('modal-purchase');
+
+  // Ensure products are loaded before adding line item
+  const doOpen = () => {
+    addPurchaseLineItem();
+    const dateEl = document.getElementById('pur-form-date');
+    if (dateEl) dateEl.value = new Date().toISOString().slice(0, 10);
+    openModal('modal-purchase');
+  };
+
+  if (!cachedProducts || cachedProducts.length === 0) {
+    fetch('/api/products').then(r => r.json()).then(d => {
+      cachedProducts = d.products || [];
+      doOpen();
+    }).catch(() => doOpen());
+  } else {
+    doOpen();
+  }
 }
 
 function addPurchaseLineItem() {
