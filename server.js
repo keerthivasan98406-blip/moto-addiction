@@ -669,9 +669,9 @@ const server = http.createServer(async (req, res) => {
 
       const invoiceNum = `INV-${Date.now().toString().slice(-6)}`;
       db.prepare(`
-        INSERT INTO invoices (invoice_number, order_id, user_id, customer_name, taxable_value, cgst, sgst, igst, total_tax, grand_total)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
-      `).run(invoiceNum, orderId, userId, customer.name, subtotal, cgstTotal, sgstTotal, taxTotal, grandTotal);
+        INSERT INTO invoices (invoice_number, order_id, order_number, user_id, customer_name, taxable_value, cgst, sgst, igst, total_tax, grand_total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+      `).run(invoiceNum, orderId, orderNumber, userId, customer.name, subtotal, cgstTotal, sgstTotal, taxTotal, grandTotal);
 
       logAudit(userId, customer.name, currentUser ? currentUser.role : 'CUSTOMER', 'CREATE_ORDER', 'ORDER', orderId, 'SUCCESS', { orderNumber, grandTotal });
 
@@ -776,14 +776,38 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname.startsWith('/api/orders/') && req.method === 'DELETE') {
-    if (!currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
+    if (!currentUser || !['OWNER', 'ADMIN', 'STAFF'].includes(currentUser.role)) {
       return sendJson(res, 403, { error: 'Unauthorized: Admin/Owner role required' });
     }
-    const id = parseInt(pathname.split('/')[3], 10);
+    const rawId = pathname.split('/')[3];
+    const numId = parseInt(rawId, 10);
     try {
-      db.prepare('DELETE FROM orders WHERE id = ?').run(id);
-      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_ORDER', 'ORDER', id, 'SUCCESS');
-      return sendJson(res, 200, { message: 'Order deleted successfully' });
+      const order = !isNaN(numId)
+        ? db.prepare('SELECT * FROM orders WHERE id = ? OR order_number = ?').get(numId, rawId)
+        : db.prepare('SELECT * FROM orders WHERE order_number = ?').get(rawId);
+      if (!order) {
+        return sendJson(res, 404, { error: 'Order not found' });
+      }
+      const orderId = order.id;
+      try {
+        db.prepare('DELETE FROM credit_note_items WHERE credit_note_id IN (SELECT id FROM credit_notes WHERE order_id = ?)').run(orderId);
+        db.prepare('DELETE FROM credit_notes WHERE order_id = ?').run(orderId);
+      } catch (e) {}
+      try {
+        db.prepare('DELETE FROM payments WHERE order_id = ?').run(orderId);
+      } catch (e) {}
+      db.prepare('DELETE FROM order_items WHERE order_id = ?').run(orderId);
+      db.prepare('DELETE FROM invoices WHERE order_id = ?').run(orderId);
+      db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+
+      deleteFromMongo('orders', { id: orderId });
+      deleteFromMongo('order_items', { order_id: orderId });
+      deleteFromMongo('invoices', { $or: [{ id: orderId }, { order_id: orderId }, { order_number: order.order_number }] });
+      deleteFromMongo('payments', { order_id: orderId });
+      deleteFromMongo('credit_notes', { order_id: orderId });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_ORDER', 'ORDER', orderId, 'SUCCESS');
+      return sendJson(res, 200, { message: `Order #${order.order_number} deleted successfully` });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }

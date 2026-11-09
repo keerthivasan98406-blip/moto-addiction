@@ -613,7 +613,7 @@ async function loadDashboardData() {
             <td><span class="badge badge-${getOrderStatusBadge(o.status)}">${o.status}</span></td>
             <td style="color:var(--text-muted); font-size:0.74rem;">${new Date(o.created_at).toLocaleDateString('en-IN')}</td>
             <td>
-              <button class="btn btn-danger btn-sm" style="padding:2px 8px; font-size:0.75rem;" onclick="deleteOrderItem(${o.id}, '${o.order_number}')">Delete</button>
+              <button class="btn btn-danger btn-sm" style="padding:2px 8px; font-size:0.75rem;" onclick="confirmDeleteOrder(${o.id}, '${o.order_number}')">Delete</button>
             </td>
           </tr>
         `).join('');
@@ -634,7 +634,7 @@ async function loadDashboardData() {
             <td><span class="badge badge-neutral">${b.payment_method || 'CASH'}</span></td>
             <td style="color:var(--text-muted); font-size:0.74rem;">${new Date(b.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
             <td>
-              <button class="btn btn-danger btn-sm" style="padding:2px 8px; font-size:0.75rem;" onclick="deleteOrderItem(${b.id}, '${b.order_number}')">Delete</button>
+              <button class="btn btn-danger btn-sm" style="padding:2px 8px; font-size:0.75rem;" onclick="confirmDeleteOrder(${b.id}, '${b.order_number}')">Delete</button>
             </td>
           </tr>
         `).join('');
@@ -1028,7 +1028,7 @@ async function loadPosRecentBills() {
           <div style="display:flex; gap:6px;">
             <button class="btn btn-secondary btn-sm" onclick="reprintBill('${b.invoice_number || b.id}')">Reprint</button>
             <button class="btn btn-outline-orange btn-sm" onclick="openSalesReturnModal('${b.invoice_number}')">Return</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteOrderItem(${b.id}, '${b.invoice_number || b.order_number}')">Delete</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeleteOrder(${b.id}, '${b.invoice_number || b.order_number}')">Delete</button>
           </div>
         </td>
       </tr>
@@ -1773,7 +1773,7 @@ async function loadInvoicesData() {
         <td>
           <div style="display:flex; gap:6px;">
             <button class="btn btn-secondary btn-sm" onclick="viewGstInvoice('${i.invoice_number}')">View Tax Invoice</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteInvoiceItem(${i.id}, '${i.invoice_number}')">Delete</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeleteInvoice(${i.id}, '${i.invoice_number}')">Delete</button>
           </div>
         </td>
       </tr>
@@ -2921,12 +2921,15 @@ function confirmDeleteProduct(id, name) {
 
 async function deleteOrderItem(id, orderNum) {
   try {
-    const res = await fetch(`/api/owner/orders/${id}`, { method: 'DELETE' });
+    const target = id || orderNum;
+    const res = await fetch(`/api/owner/orders/${encodeURIComponent(target)}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to delete order');
     showToast(data.message || 'Order deleted successfully', 'success');
     if (typeof loadOrdersData === 'function') loadOrdersData();
     if (typeof loadDashboardData === 'function') loadDashboardData();
+    if (typeof loadPosRecentBills === 'function') loadPosRecentBills();
+    if (typeof loadInvoicesData === 'function') loadInvoicesData();
   } catch (err) { showToast(err.message, 'error'); }
 }
 
@@ -2951,11 +2954,15 @@ function confirmDeletePurchase(id, purchaseNum) {
 
 async function deleteInvoiceItem(id, invoiceNum) {
   try {
-    const res = await fetch(`/api/owner/invoices/${id || invoiceNum}`, { method: 'DELETE' });
+    const target = id || invoiceNum;
+    const res = await fetch(`/api/owner/invoices/${encodeURIComponent(target)}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to delete invoice');
     showToast(data.message || 'Invoice deleted successfully', 'success');
-    loadInvoicesData();
+    if (typeof loadInvoicesData === 'function') loadInvoicesData();
+    if (typeof loadOrdersData === 'function') loadOrdersData();
+    if (typeof loadDashboardData === 'function') loadDashboardData();
+    if (typeof loadPosRecentBills === 'function') loadPosRecentBills();
   } catch (err) { showToast(err.message, 'error'); }
 }
 

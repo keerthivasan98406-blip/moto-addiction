@@ -88,6 +88,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         return sendJson(res, 500, { error: syncResult.error, reason: syncResult.reason });
       }
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -99,6 +100,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const status = getMongoStatus();
       return sendJson(res, 200, { ...status });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -529,15 +531,16 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       // Generate Invoice
       const insertInvoice = db.prepare(`
         INSERT INTO invoices (
-          invoice_number, order_id, user_id, customer_name, customer_phone, customer_gstin,
+          invoice_number, order_id, order_number, user_id, customer_name, customer_phone, customer_gstin,
           store_name, store_address, store_gstin, taxable_value, cgst, sgst, igst,
           total_tax, grand_total, invoice_type, place_of_supply, state_code, payment_method, payment_status, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'POS', ?, ?, ?, 'PAID', ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'POS', ?, ?, ?, 'PAID', ?)
       `);
 
       const invRes = insertInvoice.run(
         billNumber,
         orderId,
+        billNumber,
         currentUser ? currentUser.id : 1,
         custName,
         custPhone,
@@ -1133,6 +1136,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         message: archiveState ? 'Product archived successfully' : 'Product restored from archive'
       });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1163,6 +1167,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_PRODUCT', 'PRODUCT', id, 'SUCCESS');
       return sendJson(res, 200, { message: 'Product permanently deleted' });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1246,6 +1251,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_INVENTORY_TXN', 'INVENTORY', id, 'SUCCESS', existing);
       return sendJson(res, 200, { success: true, message: `Inventory ledger entry #${id} deleted successfully.` });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1470,6 +1476,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       return sendJson(res, 200, { message: 'Goods receipt confirmed. Stock successfully added to inventory.' });
 
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1529,6 +1536,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       });
 
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1555,6 +1563,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_PURCHASE', 'PURCHASE', id, 'SUCCESS');
       return sendJson(res, 200, { message: `Purchase #${purchase.purchase_number} deleted successfully` });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1598,6 +1607,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       syncTableRecordToMongo(db, 'suppliers', resSupp.lastInsertRowid);
       return sendJson(res, 201, { message: 'Supplier added successfully', id: resSupp.lastInsertRowid });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1682,6 +1692,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         appliedPurchaseId: appliedPurId
       });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1706,6 +1717,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_SUPPLIER', 'SUPPLIER', id, 'SUCCESS');
       return sendJson(res, 200, { message: `Supplier ${supplier.name} deleted successfully` });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1815,6 +1827,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       return sendJson(res, 200, { message: 'Order status updated successfully' });
 
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1846,6 +1859,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       syncTableRecordToMongo(db, 'orders', id);
       return sendJson(res, 200, { message: 'Shipping details recorded' });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1855,23 +1869,42 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     if (!currentUser || !['OWNER', 'ADMIN', 'STAFF'].includes(currentUser.role)) {
       return sendJson(res, 403, { error: 'Unauthorized' });
     }
-    const id = parseInt(pathname.split('/')[4], 10);
+    const rawId = decodeURIComponent(pathname.split('/')[4] || '');
+    const numId = parseInt(rawId, 10);
     try {
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(id);
+      const order = !isNaN(numId)
+        ? db.prepare('SELECT * FROM orders WHERE id = ? OR order_number = ?').get(numId, rawId)
+        : db.prepare('SELECT * FROM orders WHERE order_number = ?').get(rawId);
+
       if (!order) {
         return sendJson(res, 404, { error: 'Order not found' });
       }
-      db.prepare('DELETE FROM order_items WHERE order_id = ?').run(id);
-      db.prepare('DELETE FROM invoices WHERE order_id = ?').run(id);
-      db.prepare('DELETE FROM orders WHERE id = ?').run(id);
+      const orderId = order.id;
 
-      deleteFromMongo('orders', { id });
-      deleteFromMongo('order_items', { order_id: id });
-      deleteFromMongo('invoices', { $or: [{ id }, { order_id: id }, { order_number: order.order_number }] });
+      // Clean up child records to ensure no foreign key restriction prevents deletion
+      try {
+        db.prepare('DELETE FROM credit_note_items WHERE credit_note_id IN (SELECT id FROM credit_notes WHERE order_id = ?)').run(orderId);
+        db.prepare('DELETE FROM credit_notes WHERE order_id = ?').run(orderId);
+      } catch (e) {}
 
-      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_ORDER', 'ORDER', id, 'SUCCESS');
+      try {
+        db.prepare('DELETE FROM payments WHERE order_id = ?').run(orderId);
+      } catch (e) {}
+
+      db.prepare('DELETE FROM order_items WHERE order_id = ?').run(orderId);
+      db.prepare('DELETE FROM invoices WHERE order_id = ?').run(orderId);
+      db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+
+      deleteFromMongo('orders', { id: orderId });
+      deleteFromMongo('order_items', { order_id: orderId });
+      deleteFromMongo('invoices', { $or: [{ id: orderId }, { order_id: orderId }, { order_number: order.order_number }] });
+      deleteFromMongo('payments', { order_id: orderId });
+      deleteFromMongo('credit_notes', { order_id: orderId });
+
+      logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_ORDER', 'ORDER', orderId, 'SUCCESS');
       return sendJson(res, 200, { message: `Order #${order.order_number} deleted successfully` });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -1947,10 +1980,10 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
   // Delete Invoice
   if (pathname.startsWith('/api/owner/invoices/') && req.method === 'DELETE') {
-    if (!currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
-      return sendJson(res, 403, { error: 'Unauthorized: Admin or Owner role required' });
+    if (!currentUser || !['OWNER', 'ADMIN', 'STAFF'].includes(currentUser.role)) {
+      return sendJson(res, 403, { error: 'Unauthorized: Admin, Owner, or Staff role required' });
     }
-    const rawId = pathname.split('/')[4];
+    const rawId = decodeURIComponent(pathname.split('/')[4] || '');
     const numId = parseInt(rawId, 10);
     try {
       const inv = !isNaN(numId)
@@ -1961,6 +1994,11 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         return sendJson(res, 404, { error: 'Invoice not found' });
       }
 
+      try {
+        db.prepare('DELETE FROM credit_note_items WHERE credit_note_id IN (SELECT id FROM credit_notes WHERE invoice_id = ?)').run(inv.id);
+        db.prepare('DELETE FROM credit_notes WHERE invoice_id = ?').run(inv.id);
+      } catch (e) {}
+
       db.prepare('DELETE FROM invoices WHERE id = ?').run(inv.id);
       deleteFromMongo('invoices', { id: inv.id });
       deleteFromMongo('invoices', { invoice_number: inv.invoice_number });
@@ -1968,6 +2006,8 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_INVOICE', 'INVOICE', inv.id, 'SUCCESS');
       return sendJson(res, 200, { message: `Invoice ${inv.invoice_number} deleted successfully` });
     } catch (err) {
+      console.error('DELETE INVOICE ERROR STACK:', err);
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2006,6 +2046,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_CREDIT_NOTE', 'CREDIT_NOTE', id, 'SUCCESS');
       return sendJson(res, 200, { message: `Credit note ${cn.credit_note_number} deleted successfully` });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2071,6 +2112,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       syncTableRecordToMongo(db, 'customers', result.lastInsertRowid);
       return sendJson(res, 201, { message: 'Customer created successfully', id: result.lastInsertRowid, customer_code: code });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2092,6 +2134,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_CUSTOMER', 'CUSTOMER', id, 'SUCCESS');
       return sendJson(res, 200, { message: `Customer ${customer.name} deleted successfully` });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2177,6 +2220,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       syncTableRecordToMongo(db, 'expenses', result.lastInsertRowid);
       return sendJson(res, 201, { message: 'Expense recorded successfully', id: result.lastInsertRowid, expense_number: expNum });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2194,6 +2238,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_EXPENSE', 'EXPENSE', id, 'SUCCESS');
       return sendJson(res, 200, { message: 'Expense deleted' });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2440,6 +2485,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       syncTableRecordToMongo(db, 'users', result.lastInsertRowid);
       return sendJson(res, 201, { message: 'User created successfully', id: result.lastInsertRowid });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2464,6 +2510,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_USER', 'USER', id, 'SUCCESS');
       return sendJson(res, 200, { message: `Staff account ${targetUser.full_name} deleted successfully` });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2485,6 +2532,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'UPDATE_SETTINGS', 'STORE', null, 'SUCCESS');
       return sendJson(res, 200, { message: 'Shop and GST settings saved successfully' });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2505,6 +2553,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
       return sendJson(res, 201, { message: 'Category added', id: resCat.lastInsertRowid });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2523,6 +2572,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
       return sendJson(res, 201, { message: 'Brand added', id: resBrand.lastInsertRowid });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2536,6 +2586,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       deleteFromMongo('categories', { id });
       return sendJson(res, 200, { message: 'Category deleted successfully' });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }
@@ -2549,6 +2600,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       deleteFromMongo('brands', { id });
       return sendJson(res, 200, { message: 'Brand deleted successfully' });
     } catch (err) {
+      console.error('DELETE ORDER ERROR STACK:', err);
       return sendJson(res, 500, { error: err.message });
     }
   }

@@ -471,6 +471,7 @@ function runSchemaMigrations() {
   addColumnIfNotExists('purchase_items', 'tax_amount', 'INTEGER DEFAULT 0');
 
   // 5. Upgrade Invoices Table
+  addColumnIfNotExists('invoices', 'order_number', 'TEXT');
   addColumnIfNotExists('invoices', 'invoice_type', "TEXT DEFAULT 'ONLINE'");
   addColumnIfNotExists('invoices', 'customer_phone', 'TEXT');
   addColumnIfNotExists('invoices', 'place_of_supply', "TEXT DEFAULT 'Tamil Nadu (33)'");
@@ -478,6 +479,11 @@ function runSchemaMigrations() {
   addColumnIfNotExists('invoices', 'payment_method', "TEXT DEFAULT 'UPI'");
   addColumnIfNotExists('invoices', 'payment_status', "TEXT DEFAULT 'PAID'");
   addColumnIfNotExists('invoices', 'notes', 'TEXT');
+
+  // Backfill order_number in invoices if matching order exists
+  try {
+    db.exec("UPDATE invoices SET order_number = (SELECT order_number FROM orders WHERE orders.id = invoices.order_id) WHERE (order_number IS NULL OR order_number = '') AND order_id IS NOT NULL;");
+  } catch (e) {}
 
   // 6. Upgrade Users Table
   addColumnIfNotExists('users', 'staff_role', "TEXT DEFAULT 'STAFF'");
