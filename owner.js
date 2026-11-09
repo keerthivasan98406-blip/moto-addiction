@@ -413,9 +413,9 @@ function populateCategoryDropdowns() {
       cachedCategories.map(c => `<option value="${c.id || c._id}">${c.icon ? c.icon + ' ' : ''}${c.name}</option>`).join('') +
       '<option value="__new__" style="color:var(--accent-orange); font-weight:600;">+ Add New Category...</option>';
     if (curVal && curVal !== '__new__') formSelect.value = curVal;
-    
+
     // Wire change handler to open custom category modal
-    formSelect.onchange = function() {
+    formSelect.onchange = function () {
       if (this.value === '__new__') {
         this.value = '';
         openInlineAddCategoryModal();
@@ -433,7 +433,7 @@ function populateBrandDropdowns() {
       '<option value="__new__" style="color:var(--accent-orange); font-weight:600;">+ Add New Brand...</option>';
     if (curVal && curVal !== '__new__') formSelect.value = curVal;
 
-    formSelect.onchange = function() {
+    formSelect.onchange = function () {
       if (this.value === '__new__') {
         this.value = '';
         openInlineAddBrandModal();
@@ -491,7 +491,7 @@ function populateSupplierDropdowns() {
       '<option value="__new_supp__" style="color:var(--accent-orange); font-weight:600;">+ Add New Supplier...</option>';
     if (curVal && curVal !== '__new_supp__') purSelect.value = curVal;
 
-    purSelect.onchange = function() {
+    purSelect.onchange = function () {
       if (this.value === '__new_supp__') {
         this.value = '';
         openInlineAddSupplierModal();
@@ -551,7 +551,7 @@ async function loadDashboardData() {
         topFeed.innerHTML = prods.map((p, idx) => `
           <div class="top-prod-row">
             <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
-              <span style="font-size:0.72rem; font-weight:800; color:${idx === 0 ? '#F59E0B' : (idx === 1 ? '#E2E8F0' : '#94A3B8')}; background:rgba(255,255,255,0.06); width:20px; height:20px; border-radius:3px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${idx+1}</span>
+              <span style="font-size:0.72rem; font-weight:800; color:${idx === 0 ? '#F59E0B' : (idx === 1 ? '#E2E8F0' : '#94A3B8')}; background:rgba(255,255,255,0.06); width:20px; height:20px; border-radius:3px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${idx + 1}</span>
               <div style="min-width:0; overflow:hidden;">
                 <div style="font-size:0.78rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.product_name}</div>
                 <div style="font-size:0.68rem; color:var(--text-muted); font-family:var(--font-mono);">${p.product_sku || 'SKU'}</div>
@@ -1274,7 +1274,11 @@ function openAddProductModal() {
   setVal('prod-form-stock', '10');
   setVal('prod-form-minstock', '5');
   setVal('prod-form-desc', '');
-  setVal('prod-form-image', 'hero1.png');
+  setVal('prod-form-image-1', 'hero1.png');
+  setVal('prod-form-image-2', '');
+  setVal('prod-form-image-3', '');
+  if (typeof updateSlotPreview === 'function') { updateSlotPreview(1); updateSlotPreview(2); updateSlotPreview(3); }
+  setProductImagePreset('hero1.png');
   setText('modal-product-title', 'Add New Motorcycle Product');
 
   // Always refresh category and brand dropdowns fresh from server
@@ -1306,7 +1310,17 @@ function editProduct(productId) {
   document.getElementById('prod-form-gst').value = Math.round(p.gst_rate || 18);
   document.getElementById('prod-form-stock').value = p.stock;
   document.getElementById('prod-form-minstock').value = p.min_stock || 5;
-  document.getElementById('prod-form-image').value = p.primary_image || 'hero1.png';
+  let pImages = [];
+  try { pImages = typeof p.images_json === 'string' ? JSON.parse(p.images_json || '[]') : (p.images_json || []); } catch (e) { pImages = []; }
+  if (!pImages.length && p.primary_image) pImages = [p.primary_image];
+
+  const fImg1 = document.getElementById('prod-form-image-1');
+  const fImg2 = document.getElementById('prod-form-image-2');
+  const fImg3 = document.getElementById('prod-form-image-3');
+  if (fImg1) fImg1.value = pImages[0] || p.primary_image || 'hero1.png';
+  if (fImg2) fImg2.value = pImages[1] || '';
+  if (fImg3) fImg3.value = pImages[2] || '';
+  if (typeof updateSlotPreview === 'function') { updateSlotPreview(1); updateSlotPreview(2); updateSlotPreview(3); }
   document.getElementById('prod-form-desc').value = p.description || '';
   document.getElementById('modal-product-title').textContent = `Edit Product: ${p.name}`;
 
@@ -1498,14 +1512,14 @@ async function loadPurchasesData() {
 function openAddPurchaseModal() {
   const form = document.getElementById('purchase-entry-form');
   if (form) form.reset();
-  
+
   const today = new Date().toISOString().split('T')[0];
   const dateInput = document.getElementById('pur-date');
   if (dateInput) dateInput.value = today;
-  
+
   const tbody = document.getElementById('pur-items-table-body');
   if (tbody) tbody.innerHTML = '';
-  
+
   const doOpen = () => {
     populateSupplierDropdowns();
     addPurchaseLineItem();
@@ -1540,7 +1554,7 @@ function addPurchaseLineItem() {
 
   const row = document.createElement('tr');
   row.className = 'pur-item-row';
-  
+
   let prodOptions = '<option value="">-- Select Product --</option>';
   if (cachedProducts && cachedProducts.length > 0) {
     prodOptions += cachedProducts.map(p => `<option value="${p.id}" data-cost="${p.purchase_price || 0}" data-gst="${p.gst_rate || 18}">${p.name} (SKU: ${p.sku})</option>`).join('');
@@ -2142,7 +2156,7 @@ async function loadCategoriesManager() {
       : cats.map(c => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-primary);border-radius:6px;margin-bottom:6px;">
           <span style="display:flex;align-items:center;gap:8px;">${c.icon || '📦'} <strong>${c.name}</strong> <small style="color:var(--text-muted);">${c.slug}</small></span>
-          <button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">✕</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id},'${(c.name || '').replace(/'/g, "\\'")}')">✕</button>
         </div>`).join('');
   } catch (err) { console.error('Categories manager error:', err); }
 }
@@ -2159,7 +2173,7 @@ async function loadBrandsManager() {
       : brands.map(b => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-primary);border-radius:6px;margin-bottom:6px;">
           <span><strong>${b.name}</strong> <small style="color:var(--text-muted);">${b.slug}</small></span>
-          <button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id},'${(b.name||'').replace(/'/g,"\\'")}')">✕</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id},'${(b.name || '').replace(/'/g, "\\'")}')">✕</button>
         </div>`).join('');
   } catch (err) { console.error('Brands manager error:', err); }
 }
@@ -2294,6 +2308,7 @@ function closeAllModals() {
 }
 
 function setupEventListeners() {
+  setupProductImageUploadListener();
   // POS Scan input
   const scanInput = document.getElementById('pos-scan-input');
   if (scanInput) {
@@ -2315,7 +2330,7 @@ function setupEventListeners() {
               return;
             }
           }
-        } catch (err) {}
+        } catch (err) { }
 
         // Fallback to local catalog search
         renderPosCatalog();
@@ -2407,7 +2422,12 @@ function setupEventListeners() {
         gst_rate: parseFloat(document.getElementById('prod-form-gst').value),
         stock: parseInt(document.getElementById('prod-form-stock').value, 10),
         min_stock: parseInt(document.getElementById('prod-form-minstock').value, 10),
-        primary_image: document.getElementById('prod-form-image').value.trim(),
+        primary_image: (document.getElementById('prod-form-image-1')?.value.trim() || document.getElementById('prod-form-image-2')?.value.trim() || document.getElementById('prod-form-image-3')?.value.trim() || 'hero1.png'),
+        images_json: [
+          document.getElementById('prod-form-image-1')?.value.trim(),
+          document.getElementById('prod-form-image-2')?.value.trim(),
+          document.getElementById('prod-form-image-3')?.value.trim()
+        ].filter(Boolean),
         description: document.getElementById('prod-form-desc').value.trim()
       };
 
@@ -3136,4 +3156,235 @@ async function handleQuickSupplierSubmit(e) {
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+
+
+// Product Image Upload & Preset Helpers
+function setProductImagePreset(filename) {
+  if (typeof applyPresetToActiveSlot === 'function') {
+    applyPresetToActiveSlot(filename);
+    return;
+  }
+  const input = document.getElementById('prod-form-image-1') || document.getElementById('prod-form-image');
+  const preview = document.getElementById('prod-img-preview-1') || document.getElementById('prod-img-preview');
+  if (input) input.value = filename;
+  if (preview) preview.src = filename;
+}
+
+function clearProductImage() {
+  if (typeof clearSlotImage === 'function') {
+    clearSlotImage(1);
+    clearSlotImage(2);
+    clearSlotImage(3);
+  }
+}
+
+function setupProductImageUploadListener() {
+  const fileInput = document.getElementById('prod-form-file');
+  if (fileInput && !fileInput.dataset.bound) {
+    fileInput.dataset.bound = 'true';
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('prod-img-upload-status');
+      if (statusEl) statusEl.textContent = 'Uploading: ' + file.name + '...';
+
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const base64Data = evt.target.result;
+        const preview = document.getElementById('prod-img-preview');
+        if (preview) preview.src = base64Data;
+
+        try {
+          const res = await fetch('/api/owner/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64Data, filename: file.name })
+          });
+          const data = await res.json();
+          if (res.ok && data.url) {
+            const input = document.getElementById('prod-form-image');
+            if (input) input.value = data.url;
+            if (preview) preview.src = data.url;
+            if (statusEl) statusEl.textContent = '✓ Ready: ' + file.name;
+            showToast('Image uploaded successfully!', 'success');
+          } else {
+            // Fallback to data URL
+            const input = document.getElementById('prod-form-image');
+            if (input) input.value = base64Data;
+            if (statusEl) statusEl.textContent = '✓ Local image ready: ' + file.name;
+          }
+        } catch (err) {
+          const input = document.getElementById('prod-form-image');
+          if (input) input.value = base64Data;
+          if (statusEl) statusEl.textContent = '✓ Image ready: ' + file.name;
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const textInput = document.getElementById('prod-form-image');
+  if (textInput && !textInput.dataset.bound) {
+    textInput.dataset.bound = 'true';
+    textInput.addEventListener('input', () => {
+      const preview = document.getElementById('prod-img-preview');
+      if (preview) preview.src = textInput.value.trim() || 'hero1.png';
+    });
+  }
+}
+
+
+// --- 3 IMAGE SLOTS CONTROLLERS ---
+function updateSlotPreview(slot) {
+  const input = document.getElementById('prod-form-image-' + slot);
+  const preview = document.getElementById('prod-img-preview-' + slot);
+  const empty = document.getElementById('prod-img-empty-' + slot);
+  const val = input ? input.value.trim() : '';
+
+  if (val) {
+    if (preview) { preview.src = val; preview.style.display = 'block'; }
+    if (empty) empty.style.display = 'none';
+  } else {
+    if (preview) { preview.src = ''; preview.style.display = 'none'; }
+    if (empty) empty.style.display = 'block';
+  }
+}
+
+function clearSlotImage(slot) {
+  const input = document.getElementById('prod-form-image-' + slot);
+  if (input) input.value = '';
+  updateSlotPreview(slot);
+}
+
+function applyPresetToActiveSlot(filename) {
+  let targetSlot = 1;
+  const val1 = document.getElementById('prod-form-image-1')?.value.trim();
+  const val2 = document.getElementById('prod-form-image-2')?.value.trim();
+  const val3 = document.getElementById('prod-form-image-3')?.value.trim();
+
+  if (!val1) targetSlot = 1;
+  else if (!val2) targetSlot = 2;
+  else if (!val3) targetSlot = 3;
+  else targetSlot = 1;
+
+  const input = document.getElementById('prod-form-image-' + targetSlot);
+  if (input) {
+    input.value = filename;
+    updateSlotPreview(targetSlot);
+    showToast('Loaded preset into Image ' + targetSlot, 'success');
+  }
+}
+
+async function handleSlotFileUpload(slot, fileInput) {
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return;
+
+  const input = document.getElementById('prod-form-image-' + slot);
+  const preview = document.getElementById('prod-img-preview-' + slot);
+  const empty = document.getElementById('prod-img-empty-' + slot);
+
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    const base64Data = evt.target.result;
+    if (preview) { preview.src = base64Data; preview.style.display = 'block'; }
+    if (empty) empty.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/owner/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Data, filename: file.name })
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        if (input) input.value = data.url;
+        if (preview) preview.src = data.url;
+        showToast('Image ' + slot + ' uploaded successfully!', 'success');
+      } else {
+        if (input) input.value = base64Data;
+      }
+    } catch (err) {
+      if (input) input.value = base64Data;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+
+// --- 3 IMAGE SLOTS CONTROLLERS ---
+function updateSlotPreview(slot) {
+  const input = document.getElementById('prod-form-image-' + slot);
+  const preview = document.getElementById('prod-img-preview-' + slot);
+  const empty = document.getElementById('prod-img-empty-' + slot);
+  const val = input ? input.value.trim() : '';
+
+  if (val) {
+    if (preview) { preview.src = val; preview.style.display = 'block'; }
+    if (empty) empty.style.display = 'none';
+  } else {
+    if (preview) { preview.src = ''; preview.style.display = 'none'; }
+    if (empty) empty.style.display = 'block';
+  }
+}
+
+function clearSlotImage(slot) {
+  const input = document.getElementById('prod-form-image-' + slot);
+  if (input) input.value = '';
+  updateSlotPreview(slot);
+}
+
+function applyPresetToActiveSlot(filename) {
+  let targetSlot = 1;
+  const val1 = document.getElementById('prod-form-image-1')?.value.trim();
+  const val2 = document.getElementById('prod-form-image-2')?.value.trim();
+  const val3 = document.getElementById('prod-form-image-3')?.value.trim();
+
+  if (!val1) targetSlot = 1;
+  else if (!val2) targetSlot = 2;
+  else if (!val3) targetSlot = 3;
+  else targetSlot = 1;
+
+  const input = document.getElementById('prod-form-image-' + targetSlot);
+  if (input) {
+    input.value = filename;
+    updateSlotPreview(targetSlot);
+    showToast('Loaded preset into Image ' + targetSlot, 'success');
+  }
+}
+
+async function handleSlotFileUpload(slot, fileInput) {
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return;
+
+  const input = document.getElementById('prod-form-image-' + slot);
+  const preview = document.getElementById('prod-img-preview-' + slot);
+  const empty = document.getElementById('prod-img-empty-' + slot);
+
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    const base64Data = evt.target.result;
+    if (preview) { preview.src = base64Data; preview.style.display = 'block'; }
+    if (empty) empty.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/owner/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Data, filename: file.name })
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        if (input) input.value = data.url;
+        if (preview) preview.src = data.url;
+        showToast('Image ' + slot + ' uploaded successfully!', 'success');
+      } else {
+        if (input) input.value = base64Data;
+      }
+    } catch (err) {
+      if (input) input.value = base64Data;
+    }
+  };
+  reader.readAsDataURL(file);
 }

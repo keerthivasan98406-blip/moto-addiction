@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 // owner-api.js - Complete Business Logic and API Endpoints for Moto Pit Master Owner Portal
 const crypto = require('crypto');
 const { db, hashPassword } = require('./database.js');
@@ -805,6 +807,52 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     }
   }
 
+  
+  // Image Upload Endpoint for Owner Portal
+  if (pathname === '/api/owner/upload' && req.method === 'POST') {
+    if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+
+    try {
+      const body = await parseJsonBody(req);
+      const { image, filename } = body;
+      if (!image) {
+        return sendJson(res, 400, { error: 'No image data provided' });
+      }
+
+      let base64Data = image;
+      let ext = '.png';
+      if (image.startsWith('data:image/')) {
+        const matches = image.match(/^data:image\/([a-zA-Z0-9-+]+);base64,(.+)$/);
+        if (matches) {
+          ext = '.' + (matches[1] === 'jpeg' ? 'jpg' : matches[1]);
+          base64Data = matches[2];
+        }
+      } else if (filename && filename.includes('.')) {
+        ext = path.extname(filename);
+      }
+
+      const uploadsFolder = path.join(__dirname, 'uploads');
+      if (!fs.existsSync(uploadsFolder)) {
+        fs.mkdirSync(uploadsFolder, { recursive: true });
+      }
+
+      const safeName = 'prod-' + Date.now() + '-' + Math.floor(Math.random() * 1000) + ext;
+      const targetFilePath = path.join(uploadsFolder, safeName);
+      const buffer = Buffer.from(base64Data, 'base64');
+      fs.writeFileSync(targetFilePath, buffer);
+
+      const publicUrl = '/uploads/' + safeName;
+      return sendJson(res, 200, {
+        success: true,
+        url: publicUrl,
+        filename: safeName
+      });
+    } catch (err) {
+      console.error('Image upload error:', err);
+      return sendJson(res, 500, { error: 'Failed to upload image: ' + err.message });
+    }
+  }
+
   // --- 3. PRODUCT MANAGEMENT & BARCODES ---
   if (pathname === '/api/owner/products' && req.method === 'GET') {
     if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
@@ -939,7 +987,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         genSku, genBarcode, genSku, name.trim(), slug,
         safeBrandId, safeCatId, safeSuppId,
         description || '', safePrice, safeOldPrice, purPrice, safeDiscount, safeGstRate, hsn || '8714',
-        initialStock, safeMinStock, img, JSON.stringify(images_json || [img]),
+        initialStock, safeMinStock, img, (typeof images_json === 'string' ? images_json : JSON.stringify(images_json || [img])),
         JSON.stringify(variants_json || []), warranty || '1 Year Manufacturer', weight || '1.0 kg', 0
       );
 
@@ -1024,6 +1072,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
           stock = COALESCE(?, stock),
           min_stock = COALESCE(?, min_stock),
           primary_image = COALESCE(?, primary_image),
+          images_json = COALESCE(?, images_json),
           variants_json = COALESCE(?, variants_json),
           warranty = COALESCE(?, warranty),
           weight = COALESCE(?, weight),
@@ -1032,7 +1081,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       `).run(
         name, barcode, brand_id, category_id, supplier_id, description,
         price, old_price || null, purchase_price, discount, gst_rate, hsn,
-        stock, min_stock, primary_image, variants_json ? JSON.stringify(variants_json) : null,
+        stock, min_stock, primary_image, images_json ? (typeof images_json === 'string' ? images_json : JSON.stringify(images_json)) : null, variants_json ? JSON.stringify(variants_json) : null,
         warranty, weight, id
       );
 

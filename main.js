@@ -254,11 +254,11 @@ async function loadProductsFromAPI() {
     if (loadingEl) loadingEl.remove();
 
     if (products.length === 0) {
-      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#A1A1AA;"><p>No products available yet.</p></div>';
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px 20px; color:#A1A1AA;"><div style="font-size:2rem; margin-bottom:10px;">🏍️</div><p style="font-size:1.1rem; font-weight:600; color:#fff;">No products listed yet</p><p style="font-size:0.9rem; margin-top:6px;">Add products from the Owner Portal to display them here.</p></div>';
       return;
     }
 
-    // Show up to 8 on homepage, all on products page
+    // Determine if on homepage
     const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html' || window.location.pathname === '';
     const displayProducts = isHomePage ? products.slice(0, 8) : products;
 
@@ -267,30 +267,62 @@ async function loadProductsFromAPI() {
       const oldPrice = p.old_price;
       const discount = p.discount || 0;
       const rating = p.rating || 5.0;
-      const ratingCount = p.rating_count || 0;
-      const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+      const ratingCount = p.rating_count || 1;
+      const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(Math.max(0, 5 - Math.round(rating)));
       const brandName = p.brand_name || '';
-      const catSlug = p.category_slug || 'all';
-      const imgSrc = p.primary_image || 'hero1.png';
-      // Handle external URLs and local filenames
-      const imgUrl = imgSrc.startsWith('http') ? imgSrc : imgSrc;
+      const catSlug = (p.category_slug || p.category_name || 'all').toLowerCase();
+      
+      // Parse 3 images array from images_json or fallback to primary_image
+      let images = [];
+      try {
+        images = typeof p.images_json === 'string' ? JSON.parse(p.images_json || '[]') : (p.images_json || []);
+      } catch (e) { images = []; }
+      
+      if (!Array.isArray(images) || images.length === 0) {
+        if (p.primary_image) images = [p.primary_image];
+      }
+      if (images.length === 0) images = ['hero1.png'];
+
+      // Format image URLs
+      images = images.map(img => {
+        if (!img.startsWith('data:') && !img.startsWith('http://') && !img.startsWith('https://') && !img.startsWith('/')) {
+          return '/' + img;
+        }
+        return img;
+      });
 
       const badges = p.is_bestseller ? '<span class="badge badge-hot">BESTSELLER</span>' :
                      (p.is_featured ? '<span class="badge badge-new">FEATURED</span>' : '');
 
       return `
         <div class="product-card" id="prod-${p.id}" data-category="${catSlug}" data-id="${p.id}">
-          <div class="product-img-wrap">
-            <img src="${imgUrl}" alt="${p.name}" class="product-img" loading="lazy" onerror="this.src='hero1.png'" />
+          <!-- Product Image Slider (Multi-Image Slide Option) -->
+          <div class="product-img-wrap product-slider-wrap" data-current-slide="0" data-total-slides="${images.length}">
+            <div class="slider-track">
+              ${images.map((img, idx) => `
+                <img src="${img}" alt="${p.name} - view ${idx + 1}" class="product-img slide-img" loading="lazy" onerror="this.src='/hero1.png'" />
+              `).join('')}
+            </div>
             ${badges ? `<div class="product-badges">${badges}</div>` : ''}
             <button class="overlay-wish" aria-label="Wishlist" data-id="${p.id}">♡</button>
+
+            ${images.length > 1 ? `
+              <button type="button" class="slide-nav-btn prev-btn" aria-label="Previous image" onclick="event.stopPropagation(); changeCardSlide(this, -1)">‹</button>
+              <button type="button" class="slide-nav-btn next-btn" aria-label="Next image" onclick="event.stopPropagation(); changeCardSlide(this, 1)">›</button>
+              <div class="slide-dots">
+                ${images.map((_, idx) => `
+                  <span class="slide-dot ${idx === 0 ? 'active' : ''}" onclick="event.stopPropagation(); setCardSlide(this, ${idx})"></span>
+                `).join('')}
+              </div>
+            ` : ''}
           </div>
+
           <div class="product-info">
             ${brandName ? `<span class="product-brand">${brandName}</span>` : ''}
             <h3 class="product-name">${p.name}</h3>
             <div class="product-rating">
               <span class="stars">${stars}</span>
-              ${ratingCount > 0 ? `<span class="rating-count">(${ratingCount})</span>` : ''}
+              <span class="rating-count">(${ratingCount})</span>
             </div>
             <div class="product-pricing">
               <span class="price-current">₹${price.toLocaleString('en-IN')}</span>
@@ -305,7 +337,7 @@ async function loadProductsFromAPI() {
         </div>`;
     }).join('');
 
-    // Bind cart and wishlist buttons
+    // Bind cart & wishlist buttons
     grid.querySelectorAll('.add-cart-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -315,6 +347,7 @@ async function loadProductsFromAPI() {
         setTimeout(() => { btn.textContent = 'Add to Cart'; btn.style.background = ''; }, 1500);
       });
     });
+
     grid.querySelectorAll('.overlay-wish').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -325,6 +358,12 @@ async function loadProductsFromAPI() {
       });
     });
 
+    // Setup Touch and Swipe on Card Image Sliders
+    setupCardSliderTouchEvents();
+
+    // Initialize category filters on newly rendered cards
+    initDynamicProductFilters();
+
   } catch (err) {
     console.error('Failed to load products:', err);
     const grid2 = document.getElementById('products-grid');
@@ -332,36 +371,106 @@ async function loadProductsFromAPI() {
   }
 }
 
+// Card Slider Navigation Functions
+function changeCardSlide(btn, direction) {
+  const sliderWrap = btn.closest('.product-slider-wrap');
+  if (!sliderWrap) return;
+  const total = parseInt(sliderWrap.dataset.totalSlides, 10) || 1;
+  let current = parseInt(sliderWrap.dataset.currentSlide, 10) || 0;
+  current = (current + direction + total) % total;
+  applySliderIndex(sliderWrap, current);
+}
+
+function setCardSlide(dot, index) {
+  const sliderWrap = dot.closest('.product-slider-wrap');
+  if (!sliderWrap) return;
+  applySliderIndex(sliderWrap, index);
+}
+
+function applySliderIndex(sliderWrap, index) {
+  sliderWrap.dataset.currentSlide = index;
+  const track = sliderWrap.querySelector('.slider-track');
+  if (track) {
+    track.style.transform = 'translateX(-' + (index * 100) + '%)';
+  }
+  const dots = sliderWrap.querySelectorAll('.slide-dot');
+  dots.forEach((d, i) => {
+    d.classList.toggle('active', i === index);
+  });
+}
+
+// Touch swipe support for card sliders
+function setupCardSliderTouchEvents() {
+  document.querySelectorAll('.product-slider-wrap').forEach(wrap => {
+    if (wrap.dataset.touchBound) return;
+    wrap.dataset.touchBound = 'true';
+    const total = parseInt(wrap.dataset.totalSlides, 10) || 1;
+    if (total <= 1) return;
+
+    let startX = 0;
+    let startY = 0;
+
+    wrap.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    wrap.addEventListener('touchend', (e) => {
+      const diffX = startX - e.changedTouches[0].clientX;
+      const diffY = startY - e.changedTouches[0].clientY;
+      if (Math.abs(diffX) > 30 && Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 0) {
+          // Swiped left -> Next
+          changeCardSlide(wrap.querySelector('.next-btn') || wrap, 1);
+        } else {
+          // Swiped right -> Previous
+          changeCardSlide(wrap.querySelector('.prev-btn') || wrap, -1);
+        }
+      }
+    }, { passive: true });
+  });
+}
+
+// Filter Tabs Handler for dynamically loaded cards
+function initDynamicProductFilters() {
+  const filterTabs = document.querySelectorAll('.filter-tab');
+  if (!filterTabs.length) return;
+
+  filterTabs.forEach(tab => {
+    if (tab.dataset.bound) return;
+    tab.dataset.bound = 'true';
+    tab.addEventListener('click', () => {
+      filterTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const filter = (tab.getAttribute('data-filter') || 'all').toLowerCase();
+      const productCards = document.querySelectorAll('.product-card');
+
+      productCards.forEach(card => {
+        const cardCat = (card.getAttribute('data-category') || '').toLowerCase();
+        if (filter === 'all' || cardCat === filter || cardCat.includes(filter)) {
+          card.style.display = '';
+          card.style.animation = 'fadeInUp 0.4s ease forwards';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      if (typeof applyProductDisplayLimit === 'function') applyProductDisplayLimit();
+    });
+  });
+
+  // Check URL category parameter (e.g. ?category=helmets)
+  const urlParams = new URLSearchParams(window.location.search);
+  const catParam = urlParams.get('category');
+  if (catParam) {
+    const matchingTab = Array.from(filterTabs).find(t => t.getAttribute('data-filter')?.toLowerCase() === catParam.toLowerCase());
+    if (matchingTab) matchingTab.click();
+  }
+}
+
 // Load products on page load
 if (document.getElementById('products-grid')) {
   loadProductsFromAPI();
 }
-
-// ========== PRODUCT FILTER TABS ==========
-const filterTabs = document.querySelectorAll('.filter-tab');
-const productCards = document.querySelectorAll('.product-card');
-
-filterTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    filterTabs.forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const filter = tab.getAttribute('data-filter');
-    productCards.forEach(card => {
-      if (filter === 'all' || card.getAttribute('data-category') === filter) {
-        card.style.display = '';
-        card.style.animation = 'fadeInUp 0.4s ease forwards';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-    applyProductDisplayLimit();
-  });
-});
-
-// Add fadeInUp animation for filter
-const style = document.createElement('style');
-style.textContent = `@keyframes fadeInUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }`;
-document.head.appendChild(style);
 
 // ========== CART FUNCTIONALITY ==========
 let cart = [];
@@ -458,99 +567,140 @@ document.querySelectorAll('.add-cart-btn').forEach(btn => {
   });
 });
 
-// Checkout Modal Elements
+// ========== 2-STEP CHECKOUT FLOW ==========
 const checkoutModal = document.getElementById('checkout-modal');
-const checkoutClose = document.getElementById('checkout-close');
 const checkoutForm = document.getElementById('checkout-form');
-const summaryItemsEl = document.getElementById('summary-items-count');
-const summaryTotalEl = document.getElementById('summary-total-amount');
-
-// Payment screenshot and button elements
-const custPaySelect = document.getElementById('cust-pay');
-const onlinePayDetails = document.getElementById('online-pay-details');
 const custScreenshotInput = document.getElementById('cust-screenshot');
 const checkoutSubmitBtn = document.getElementById('checkout-submit-btn');
 
-let activeCheckoutItem = null; // Stored if buying directly (Buy Now)
+const UPI_ID = '9894703254@upi'; // Store UPI ID
+let activeCheckoutItem = null;
+let checkoutDeliveryData = null;
 
 function openCheckout(directItem = null) {
   if (directItem) {
     activeCheckoutItem = directItem;
   } else {
     activeCheckoutItem = null;
-    if (cart.length === 0) {
-      showToast('🛒 Your cart is empty!');
-      return;
-    }
+    if (cart.length === 0) { showToast('🛒 Your cart is empty!'); return; }
   }
-  
   closeCart();
+  showCheckoutStep1();
   checkoutModal.classList.add('active');
-  
-  // Update summary totals
-  if (activeCheckoutItem) {
-    summaryItemsEl.textContent = '1';
-    summaryTotalEl.textContent = `₹${activeCheckoutItem.price.toLocaleString('en-IN')}`;
-  } else {
-    const count = cart.reduce((acc, item) => acc + item.qty, 0);
-    const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-    summaryItemsEl.textContent = count;
-    summaryTotalEl.textContent = `₹${total.toLocaleString('en-IN')}`;
-  }
-
-  // Reset payment method details on open
-  if (custPaySelect) {
-    custPaySelect.value = 'cod';
-    if (onlinePayDetails) onlinePayDetails.style.display = 'none';
-    if (checkoutSubmitBtn) checkoutSubmitBtn.style.display = 'block';
-  }
 }
 
 function closeCheckout() {
   checkoutModal.classList.remove('active');
   activeCheckoutItem = null;
+  checkoutDeliveryData = null;
+  showCheckoutStep1();
 }
 
-// Bind checkout buttons
-document.getElementById('checkout-btn').addEventListener('click', () => openCheckout());
-if (checkoutClose) {
-  checkoutClose.addEventListener('click', closeCheckout);
-  checkoutModal.addEventListener('click', (e) => {
-    if (e.target === checkoutModal) closeCheckout();
+function showCheckoutStep1() {
+  document.getElementById('checkout-step-1').style.display = 'block';
+  document.getElementById('checkout-step-2').style.display = 'none';
+  updateStep1Summary();
+}
+
+function showCheckoutStep2() {
+  document.getElementById('checkout-step-1').style.display = 'none';
+  document.getElementById('checkout-step-2').style.display = 'block';
+  updatePaymentStep();
+}
+
+function updateStep1Summary() {
+  let items = [], total = 0;
+  if (activeCheckoutItem) {
+    items = [activeCheckoutItem];
+    total = activeCheckoutItem.price;
+  } else {
+    items = cart;
+    total = cart.reduce((a, i) => a + i.price * i.qty, 0);
+  }
+  const previewEl = document.getElementById('checkout-items-preview');
+  const totalEl = document.getElementById('summary-total-amount');
+  if (previewEl) {
+    previewEl.innerHTML = items.map(i => `<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>${i.name}${i.qty > 1 ? ' x' + i.qty : ''}</span><span>₹${(i.price * (i.qty || 1)).toLocaleString('en-IN')}</span></div>`).join('') + `<div style="display:flex;justify-content:space-between;color:#4ade80;font-size:0.8rem;"><span>Shipping</span><span>FREE</span></div>`;
+  }
+  if (totalEl) totalEl.textContent = `₹${total.toLocaleString('en-IN')}`;
+}
+
+function updatePaymentStep() {
+  let items = [], total = 0;
+  if (activeCheckoutItem) {
+    items = [{ name: activeCheckoutItem.name, price: activeCheckoutItem.price, qty: 1 }];
+    total = activeCheckoutItem.price;
+  } else {
+    items = cart.map(i => ({ name: i.name, price: i.price, qty: i.qty }));
+    total = cart.reduce((a, i) => a + i.price * i.qty, 0);
+  }
+
+  const totalFmt = `₹${total.toLocaleString('en-IN')}`;
+  document.getElementById('payment-total').textContent = totalFmt;
+  document.getElementById('qr-amount-label').textContent = totalFmt;
+  document.getElementById('instr-amount').textContent = totalFmt;
+  document.getElementById('payment-items-count').textContent = `${items.reduce((a,i)=>a+(i.qty||1),0)} item(s)`;
+  document.getElementById('qr-upi-label').textContent = UPI_ID;
+  document.getElementById('instr-upi').textContent = UPI_ID;
+
+  // List items
+  const listEl = document.getElementById('payment-items-list');
+  if (listEl) listEl.innerHTML = items.map(i => `<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>${i.name}${i.qty>1?' x'+i.qty:''}</span><span>₹${(i.price*(i.qty||1)).toLocaleString('en-IN')}</span></div>`).join('');
+
+  // Generate QR code using Google Charts API (UPI deep link)
+  const upiUrl = `upi://pay?pa=${UPI_ID}&pn=MOTO+PIT&am=${total}&cu=INR&tn=MotoOrder`;
+  const qrUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(upiUrl)}&choe=UTF-8`;
+  const qrImg = document.getElementById('payment-qr-img');
+  if (qrImg) { qrImg.src = qrUrl; qrImg.onerror = () => { qrImg.style.display='none'; }; }
+
+  // Update WhatsApp link
+  const waBtn = document.getElementById('whatsapp-help-btn');
+  if (waBtn) waBtn.href = `https://wa.me/919894703254?text=Hi%2C+I+need+help+with+my+Moto+Pit+order.+Total%3A+${totalFmt}`;
+
+  // Reset screenshot
+  document.getElementById('screenshot-preview').style.display = 'none';
+  if (checkoutSubmitBtn) checkoutSubmitBtn.style.display = 'none';
+  if (custScreenshotInput) custScreenshotInput.value = '';
+}
+
+function openUPIApp(app) {
+  let items = activeCheckoutItem ? [activeCheckoutItem] : cart;
+  const total = activeCheckoutItem ? activeCheckoutItem.price : cart.reduce((a,i)=>a+i.price*i.qty,0);
+  const note = encodeURIComponent('Moto Pit Order');
+  let url = '';
+  if (app === 'gpay') url = `tez://upi/pay?pa=${UPI_ID}&pn=MotoPit&am=${total}&cu=INR&tn=${note}`;
+  else if (app === 'phonepe') url = `phonepe://pay?pa=${UPI_ID}&pn=MotoPit&am=${total}&cu=INR&tn=${note}`;
+  else if (app === 'paytm') url = `paytmmp://pay?pa=${UPI_ID}&pn=MotoPit&am=${total}&cu=INR&tn=${note}`;
+  window.location.href = url;
+  setTimeout(() => showToast('If the app didn\'t open, please scan the QR code'), 2000);
+}
+
+// Close buttons
+document.getElementById('checkout-close')?.addEventListener('click', closeCheckout);
+document.getElementById('checkout-close-2')?.addEventListener('click', closeCheckout);
+document.getElementById('btn-back-to-delivery')?.addEventListener('click', showCheckoutStep1);
+checkoutModal?.addEventListener('click', (e) => { if (e.target === checkoutModal) closeCheckout(); });
+
+// Checkout button from cart
+document.getElementById('checkout-btn')?.addEventListener('click', () => openCheckout());
+
+// Step 1 form submit → go to payment step
+if (checkoutForm) {
+  checkoutForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    checkoutDeliveryData = {
+      name: document.getElementById('cust-name').value.trim(),
+      email: document.getElementById('cust-email').value.trim(),
+      phone: document.getElementById('cust-phone').value.trim(),
+      address: document.getElementById('cust-address').value.trim(),
+      city: document.getElementById('cust-city').value.trim(),
+      pincode: document.getElementById('cust-pincode').value.trim(),
+    };
+    showCheckoutStep2();
   });
 }
 
-// Payment method change listener
-if (custPaySelect) {
-  custPaySelect.addEventListener('change', () => {
-    if (custPaySelect.value === 'online') {
-      if (onlinePayDetails) onlinePayDetails.style.display = 'block';
-      // Hide submit button until a screenshot is uploaded
-      if (checkoutSubmitBtn) {
-        checkoutSubmitBtn.style.display = (custScreenshotInput && custScreenshotInput.files.length > 0) ? 'block' : 'none';
-      }
-    } else {
-      if (onlinePayDetails) onlinePayDetails.style.display = 'none';
-      if (checkoutSubmitBtn) checkoutSubmitBtn.style.display = 'block';
-    }
-  });
-}
-
-// Screenshot upload listener
-if (custScreenshotInput) {
-  custScreenshotInput.addEventListener('change', () => {
-    if (custScreenshotInput.files && custScreenshotInput.files.length > 0) {
-      if (checkoutSubmitBtn) checkoutSubmitBtn.style.display = 'block';
-      showToast('📸 Screenshot uploaded successfully!');
-    } else {
-      if (custPaySelect && custPaySelect.value === 'online') {
-        if (checkoutSubmitBtn) checkoutSubmitBtn.style.display = 'none';
-      }
-    }
-  });
-}
-
-// Bind Buy Now clicks (using delegation)
+// Buy Now click (event delegation)
 document.addEventListener('click', (e) => {
   const buyBtn = e.target.closest('.buy-btn');
   if (buyBtn) {
@@ -558,45 +708,65 @@ document.addEventListener('click', (e) => {
     const id = buyBtn.getAttribute('data-id');
     const name = buyBtn.getAttribute('data-name');
     const price = parseInt(buyBtn.getAttribute('data-price'), 10);
-    openCheckout({ id, name, price, qty: 1 });
+    const img = buyBtn.closest('.product-card')?.querySelector('.product-img')?.src || '';
+    openCheckout({ id, name, price, qty: 1, image: img });
   }
 });
 
-if (checkoutForm) {
-  checkoutForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const name = document.getElementById('cust-name').value.trim();
-    const email = document.getElementById('cust-email').value.trim();
-    const phone = document.getElementById('cust-phone').value.trim();
-    const payment = document.getElementById('cust-pay').value;
-    const address = document.getElementById('cust-address').value.trim();
-    
-    const screenshotFile = custScreenshotInput && custScreenshotInput.files[0];
-    
-    const saveOrder = async (screenshotDataUrl = null) => {
-      let itemsList = [];
-      let total = 0;
-      
+// Screenshot upload
+if (custScreenshotInput) {
+  custScreenshotInput.addEventListener('change', () => {
+    const file = custScreenshotInput.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const preview = document.getElementById('screenshot-preview');
+        const imgEl = document.getElementById('screenshot-img-preview');
+        if (preview && imgEl) { imgEl.src = ev.target.result; preview.style.display = 'block'; }
+        if (checkoutSubmitBtn) checkoutSubmitBtn.style.display = 'block';
+        showToast('📸 Screenshot uploaded!');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+// Confirm Order button
+if (checkoutSubmitBtn) {
+  checkoutSubmitBtn.addEventListener('click', async () => {
+    if (!checkoutDeliveryData) return showToast('Please fill delivery details first');
+    const screenshotFile = custScreenshotInput?.files[0];
+    if (!screenshotFile) return showToast('Please upload payment screenshot first');
+
+    checkoutSubmitBtn.disabled = true;
+    checkoutSubmitBtn.textContent = 'Placing Order...';
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const screenshotDataUrl = ev.target.result;
+
+      let itemsList = [], total = 0;
       if (activeCheckoutItem) {
-        itemsList = [{ product_id: activeCheckoutItem.id, name: activeCheckoutItem.name, price: activeCheckoutItem.price, quantity: 1 }];
+        itemsList = [{ product_id: activeCheckoutItem.id, name: activeCheckoutItem.name, price: activeCheckoutItem.price, quantity: 1, image: activeCheckoutItem.image || '' }];
         total = activeCheckoutItem.price;
       } else {
-        itemsList = cart.map(item => ({ product_id: item.id, name: item.name, price: item.price, quantity: item.qty }));
-        total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+        itemsList = cart.map(i => ({ product_id: i.id, name: i.name, price: i.price, quantity: i.qty, image: i.image || '' }));
+        total = cart.reduce((a, i) => a + i.price * i.qty, 0);
       }
-      
+
+      const fullAddress = `${checkoutDeliveryData.address}, ${checkoutDeliveryData.city} - ${checkoutDeliveryData.pincode}`;
+
       const payload = {
         customer: {
-          name,
-          email,
-          phone,
-          address,
-          payment: payment === 'online' ? 'ONLINE' : payment.toUpperCase(),
+          name: checkoutDeliveryData.name,
+          email: checkoutDeliveryData.email,
+          phone: checkoutDeliveryData.phone,
+          address: { line1: checkoutDeliveryData.address, city: checkoutDeliveryData.city, pincode: checkoutDeliveryData.pincode, full: fullAddress },
+          payment: 'UPI',
           screenshot: screenshotDataUrl
         },
         items: itemsList,
-        payment: { status: payment === 'online' ? 'SUCCESS' : 'PENDING' }
+        payment: { status: 'SUCCESS', method: 'UPI', transactionRef: `UPI-${Date.now()}` }
       };
 
       try {
@@ -606,46 +776,26 @@ if (checkoutForm) {
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        const orderId = data.orderNumber || ('MPS-' + Date.now());
+        if (!res.ok) throw new Error(data.error || 'Order failed');
 
-        // Also dual-save to localStorage for fallback compatibility
-        const existingOrders = JSON.parse(localStorage.getItem('moto_orders') || '[]');
-        existingOrders.unshift({
-          id: orderId,
-          date: new Date().toLocaleString('en-IN'),
-          customer: { name, email, phone, payment: payment === 'online' ? 'ONLINE (PAID)' : payment.toUpperCase(), address, screenshot: screenshotDataUrl },
-          items: itemsList.map(i => ({ name: i.name, price: i.price, qty: i.quantity })),
-          total: total,
-          status: 'Placed'
-        });
-        localStorage.setItem('moto_orders', JSON.stringify(existingOrders));
+        const orderNum = data.orderNumber || ('MPS-' + Date.now());
 
-        if (!activeCheckoutItem) {
-          cart = [];
-          updateCartUI();
-        }
+        if (!activeCheckoutItem) { cart = []; updateCartUI(); }
 
         closeCheckout();
-        checkoutForm.reset();
+        showToast(`🏁 Order Placed! #${orderNum} — We'll confirm via WhatsApp/Email`);
 
-        showToast(`🏁 Order Placed Successfully! Order #${orderId}`);
       } catch (err) {
-        console.error('Order creation error:', err);
-        showToast(`❌ Error placing order: ${err.message}`);
+        showToast(`❌ Error: ${err.message}`);
+        checkoutSubmitBtn.disabled = false;
+        checkoutSubmitBtn.textContent = '✅ Confirm Order';
       }
     };
-    
-    if (payment === 'online' && screenshotFile) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        saveOrder(event.target.result);
-      };
-      reader.readAsDataURL(screenshotFile);
-    } else {
-      saveOrder(null);
-    }
+    reader.readAsDataURL(screenshotFile);
   });
 }
+
+// Legacy checkout functions removed - handled by 2-step flow above
 
 // ========== AUTHENTICATION & USER ACCOUNT SYSTEM ==========
 const accountBtn = document.getElementById('account-btn');
