@@ -1737,7 +1737,12 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
     const orders = db.prepare(query).all(...params);
     const result = orders.map(o => {
-      const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(o.id);
+      const items = db.prepare(`
+        SELECT oi.*, p.primary_image, p.slug as product_slug
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?
+      `).all(o.id);
       return {
         ...o,
         items,

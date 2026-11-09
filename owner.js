@@ -1108,7 +1108,11 @@ async function loadOrdersData() {
       return;
     }
 
-    tbody.innerHTML = orders.map(o => `
+    tbody.innerHTML = orders.map(o => {
+      const addr = typeof o.shipping_address_json === 'string' ? JSON.parse(o.shipping_address_json || '{}') : (o.shipping_address_json || {});
+      const addrText = addr.full || addr.line1 || (addr.address ? `${addr.address}, ${addr.city || ''} ${addr.pincode || ''}` : JSON.stringify(addr));
+      const screenshot = o.payment_screenshot;
+      return `
       <tr>
         <td>
           <strong style="color:var(--accent-orange); font-family:var(--font-heading); font-size:1.05rem;">${o.order_number}</strong>
@@ -1116,17 +1120,23 @@ async function loadOrdersData() {
         </td>
         <td>
           <strong>${o.customer_name}</strong><br/>
-          <small style="color:var(--text-muted);">${o.customer_phone || ''} • ${o.customer_email || ''}</small>
+          <small style="color:var(--text-muted);">${o.customer_phone || ''}</small><br/>
+          <small style="color:var(--text-muted); font-size:0.7rem;">${addrText ? addrText.substring(0,50) : ''}</small>
         </td>
         <td>
-          <div style="font-size:0.8rem; max-width:240px;">
-            ${(o.items || []).map(i => `<div>• ${i.product_name} × ${i.quantity}</div>`).join('')}
+          <div style="font-size:0.8rem; max-width:220px;">
+            ${(o.items || []).map(i => `
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                ${i.primary_image ? `<img src="${i.primary_image}" style="width:32px;height:32px;object-fit:cover;border-radius:4px;border:1px solid rgba(255,255,255,0.1);" onerror="this.style.display='none'" alt="" />` : ''}
+                <span>• ${i.product_name} × ${i.quantity}</span>
+              </div>`).join('')}
           </div>
         </td>
         <td><strong style="color:var(--accent-orange);">${formatINR(o.grand_total)}</strong></td>
         <td>
           <span class="badge badge-neutral">${o.payment_method || 'UPI'}</span><br/>
           <small style="font-size:0.68rem; color:${o.payment_status === 'SUCCESS' ? 'var(--success)' : 'var(--warning)'}; font-weight:700;">${o.payment_status}</small>
+          ${screenshot ? `<br/><button onclick="viewPaymentScreenshot('${o.order_number}')" style="margin-top:4px; background:rgba(245,158,11,0.15); border:1px solid var(--accent-orange); color:var(--accent-orange); padding:2px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">📸 Screenshot</button>` : ''}
         </td>
         <td>
           <select class="form-input" style="padding:4px 6px; font-size:0.75rem;" onchange="updateOrderStatus(${o.id}, this.value)">
@@ -1147,13 +1157,13 @@ async function loadOrdersData() {
         </td>
         <td>${new Date(o.created_at).toLocaleDateString('en-IN')}</td>
         <td>
-          <div style="display:flex; gap:6px;">
-            <button class="btn btn-secondary btn-sm" onclick="viewGstInvoice('${o.invoice_number || o.order_number}')">View Tax Invoice</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteOrderItem(${o.id}, '${o.order_number}')">Delete</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="viewGstInvoice('${o.invoice_number || o.order_number}')">Invoice</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeleteOrder(${o.id}, '${o.order_number}')">Delete</button>
           </div>
         </td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   } catch (err) {
     console.error('Orders load error:', err);
   }
@@ -1171,6 +1181,29 @@ async function updateOrderStatus(orderId, status) {
     loadOrdersData();
   } catch (err) {
     showToast(err.message, 'error');
+  }
+}
+
+async function viewPaymentScreenshot(orderNumber) {
+  try {
+    const res = await fetch(`/api/owner/orders?search=${encodeURIComponent(orderNumber)}`);
+    const data = await res.json();
+    const order = (data.orders || []).find(o => o.order_number === orderNumber);
+    if (!order || !order.payment_screenshot) return showToast('No screenshot available', 'error');
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;cursor:pointer;';
+    overlay.innerHTML = `
+      <div style="max-width:90vw;max-height:85vh;background:#202329;border-radius:12px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span style="color:#fff;font-weight:700;">Payment Screenshot — ${orderNumber}</span>
+          <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:#A1A1AA;font-size:1.5rem;cursor:pointer;">✕</button>
+        </div>
+        <img src="${order.payment_screenshot}" style="max-width:100%;max-height:70vh;border-radius:8px;object-fit:contain;" alt="Payment Screenshot" />
+      </div>`;
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+  } catch (err) {
+    showToast('Failed to load screenshot', 'error');
   }
 }
 
