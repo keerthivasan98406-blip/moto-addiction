@@ -29,14 +29,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Toast Notifications
+let toastTimer = null;
 function showToast(message, type = 'info') {
   const toast = document.getElementById('toast');
   if (!toast) return;
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+
+  const icons = {
+    success: '✓',
+    error: '✕',
+    warning: '⚠',
+    info: 'ℹ'
+  };
+  const icon = icons[type] || 'ℹ';
+
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${message}</span>`;
   toast.className = `toast ${type} show`;
-  toast.textContent = message;
-  setTimeout(() => {
-    toast.className = 'toast';
-  }, 4000);
+
+  toast.onclick = () => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (!toast.classList.contains('show')) {
+        toast.className = 'toast';
+        toast.innerHTML = '';
+      }
+    }, 260);
+  };
+
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (!toast.classList.contains('show')) {
+        toast.className = 'toast';
+        toast.innerHTML = '';
+      }
+    }, 260);
+  }, 3800);
 }
 
 // Confirm Dialog (no browser confirm() - no black overlay)
@@ -1121,7 +1153,7 @@ async function loadOrdersData() {
         <td>
           <strong>${o.customer_name}</strong><br/>
           <small style="color:var(--text-muted);">${o.customer_phone || ''}</small><br/>
-          <small style="color:var(--text-muted); font-size:0.7rem;">${addrText ? addrText.substring(0,50) : ''}</small>
+          <small style="color:var(--text-muted); font-size:0.7rem;">${addrText ? addrText.substring(0, 50) : ''}</small>
         </td>
         <td>
           <div style="font-size:0.8rem; max-width:220px;">

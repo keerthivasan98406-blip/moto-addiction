@@ -1036,7 +1036,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const {
         name, barcode, brand_id, category_id, supplier_id, description,
         price, old_price, purchase_price, gst_rate, hsn, stock, min_stock,
-        primary_image, variants_json, warranty, weight
+        primary_image, images_json, variants_json, warranty, weight
       } = body;
 
       const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
@@ -1080,6 +1080,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
           stock = COALESCE(?, stock),
           min_stock = COALESCE(?, min_stock),
           primary_image = COALESCE(?, primary_image),
+          images_json = COALESCE(?, images_json),
           variants_json = COALESCE(?, variants_json),
           warranty = COALESCE(?, warranty),
           weight = COALESCE(?, weight),
@@ -1090,6 +1091,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         description || null, safePrice, safeOldPrice, safePurchasePrice,
         safeDiscount, safeGstRate, hsn || null, safeStock, safeMinStock,
         primary_image || null,
+        images_json ? (typeof images_json === 'string' ? images_json : JSON.stringify(images_json)) : null,
         variants_json ? (typeof variants_json === 'string' ? variants_json : JSON.stringify(variants_json)) : null,
         warranty || null, weight || null, id
       );
@@ -1860,7 +1862,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         return sendJson(res, 404, { error: 'Order not found' });
       }
       db.prepare('DELETE FROM order_items WHERE order_id = ?').run(id);
-      db.prepare('DELETE FROM invoices WHERE order_id = ? OR order_number = ?').run(id, order.order_number);
+      db.prepare('DELETE FROM invoices WHERE order_id = ?').run(id);
       db.prepare('DELETE FROM orders WHERE id = ?').run(id);
 
       deleteFromMongo('orders', { id });

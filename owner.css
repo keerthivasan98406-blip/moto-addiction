@@ -97,7 +97,7 @@ body {
   min-height: 100%;
   width: 100%;
   overflow-x: hidden;
-  display: flex;
+  display: block;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -1704,4 +1704,111 @@ select.form-input option {
   background-color: #161A23 !important;
   color: #ffffff !important;
   padding: 6px !important;
+}
+
+/* ==========================================================================
+   10. GLOBAL FLOATING TOAST NOTIFICATIONS
+   Motorsport Carbon Glassmorphism Pill - Non-intrusive floating notification card
+   ========================================================================== */
+#toast, .toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 100050;
+  background: rgba(18, 21, 28, 0.96);
+  color: #FFFFFF;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.12));
+  border-left: 4px solid var(--accent-orange, #F59E0B);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-main, 'Outfit', sans-serif);
+  font-size: 0.88rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 440px;
+  min-width: 260px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(18px) scale(0.97);
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.25s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+#toast.show, .toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+#toast.success, .toast.success {
+  border-left-color: var(--success, #10B981);
+}
+#toast.success .toast-icon, .toast.success .toast-icon {
+  background: rgba(16, 185, 129, 0.18);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+#toast.error, .toast.error {
+  border-left-color: var(--danger, #EF4444);
+}
+#toast.error .toast-icon, .toast.error .toast-icon {
+  background: rgba(239, 68, 68, 0.18);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+#toast.warning, .toast.warning {
+  border-left-color: var(--warning, #F59E0B);
+}
+#toast.warning .toast-icon, .toast.warning .toast-icon {
+  background: rgba(245, 158, 11, 0.18);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+#toast.info, .toast.info {
+  border-left-color: var(--info, #3B82F6);
+}
+#toast.info .toast-icon, .toast.info .toast-icon {
+  background: rgba(59, 130, 246, 0.18);
+  color: #3B82F6;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.toast-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.toast-msg {
+  flex: 1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  #toast, .toast {
+    left: 16px;
+    right: 16px;
+    bottom: 18px;
+    max-width: calc(100% - 32px);
+    min-width: 0;
+  }
 }

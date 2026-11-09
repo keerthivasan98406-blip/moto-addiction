@@ -12,7 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="/owner.css?v=8" />
+  <link rel="stylesheet" href="/owner.css?v=9" />
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
 </head>
@@ -1719,87 +1719,126 @@
             </div>
             <div class="form-field">
               <label class="form-label">Warranty / Guarantee</label>
-              <input type="text" id="prod-form-warranty" class="form-input" value="1 Year Manufacturer" placeholder="e.g. 1 Year Official Warranty" />
+              <input type="text" id="prod-form-warranty" class="form-input" value="1 Year Manufacturer"
+                placeholder="e.g. 1 Year Official Warranty" />
             </div>
           </div>
 
           <!-- Product 3-Image Showcase Studio -->
-          <div class="form-field" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle, #2a2d36); border-radius: 8px; padding: 14px; margin-top: 6px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div class="form-field"
+            style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle, #2a2d36); border-radius: 8px; padding: 14px; margin-top: 6px;">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
               <div>
-                <label class="form-label" style="font-weight:700; margin-bottom:2px; font-size:0.95rem;">📸 Product Showcase Images (Up to 3 Images) *</label>
-                <div style="font-size:0.75rem; color:var(--text-muted);">Paste image URLs directly OR upload photos from your device. Customers can slide/swipe through images on the shop!</div>
+                <label class="form-label" style="font-weight:700; margin-bottom:2px; font-size:0.95rem;">📸 Product
+                  Showcase Images (Up to 3 Images) *</label>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Paste image URLs directly OR upload photos from
+                  your device. Customers can slide/swipe through images on the shop!</div>
               </div>
               <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                 <span style="font-size:0.75rem; color:var(--text-muted);">Quick Presets:</span>
-                <button type="button" class="btn btn-outline-orange btn-xs" onclick="applyPresetToActiveSlot('hero2.png')">🪖 Helmet</button>
-                <button type="button" class="btn btn-outline-orange btn-xs" onclick="applyPresetToActiveSlot('gloves.png')">🧤 Gloves</button>
-                <button type="button" class="btn btn-outline-orange btn-xs" onclick="applyPresetToActiveSlot('jacket.png')">🧥 Jacket</button>
-                <button type="button" class="btn btn-outline-orange btn-xs" onclick="applyPresetToActiveSlot('exhaust.png')">🏍️ Exhaust</button>
-                <button type="button" class="btn btn-outline-orange btn-xs" onclick="applyPresetToActiveSlot('hero1.png')">🔧 Bike Parts</button>
+                <button type="button" class="btn btn-outline-orange btn-xs"
+                  onclick="applyPresetToActiveSlot('hero2.png')">🪖 Helmet</button>
+                <button type="button" class="btn btn-outline-orange btn-xs"
+                  onclick="applyPresetToActiveSlot('gloves.png')">🧤 Gloves</button>
+                <button type="button" class="btn btn-outline-orange btn-xs"
+                  onclick="applyPresetToActiveSlot('jacket.png')">🧥 Jacket</button>
+                <button type="button" class="btn btn-outline-orange btn-xs"
+                  onclick="applyPresetToActiveSlot('exhaust.png')">🏍️ Exhaust</button>
+                <button type="button" class="btn btn-outline-orange btn-xs"
+                  onclick="applyPresetToActiveSlot('hero1.png')">🔧 Bike Parts</button>
               </div>
             </div>
 
             <!-- 3 Slots Grid -->
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-              
+
               <!-- Slot 1: Primary Image -->
-              <div class="img-slot-card" style="background:#0e1015; border:1px solid var(--accent-orange, #ff4d00); border-radius:8px; padding:10px;">
+              <div class="img-slot-card"
+                style="background:#0e1015; border:1px solid var(--accent-orange, #ff4d00); border-radius:8px; padding:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:0.78rem; font-weight:700; color:var(--accent-orange, #ff4d00);">★ Image 1 (Front / Primary) *</span>
+                  <span style="font-size:0.78rem; font-weight:700; color:var(--accent-orange, #ff4d00);">★ Image 1
+                    (Front / Primary) *</span>
                   <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(1)">Clear</button>
                 </div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                  <div style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px solid #333; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
-                    <img id="prod-img-preview-1" src="hero1.png" alt="Preview 1" style="width:100%; height:100%; object-fit:contain;" onerror="this.src='hero1.png'" />
+                  <div
+                    style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px solid #333; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+                    <img id="prod-img-preview-1" src="hero1.png" alt="Preview 1"
+                      style="width:100%; height:100%; object-fit:contain;" onerror="this.src='hero1.png'" />
                   </div>
                   <div style="flex:1;">
-                    <input type="text" id="prod-form-image-1" class="form-input" style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value="hero1.png" placeholder="Paste Image URL here..." oninput="updateSlotPreview(1)" />
+                    <input type="text" id="prod-form-image-1" class="form-input"
+                      style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value="hero1.png"
+                      placeholder="Paste Image URL here..." oninput="updateSlotPreview(1)" />
                     <div style="display:flex; gap:6px;">
-                      <input type="file" id="prod-form-file-1" accept="image/*" style="display:none;" onchange="handleSlotFileUpload(1, this)" />
-                      <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('prod-form-file-1').click()" style="width:100%; font-size:0.75rem;">📁 Upload File</button>
+                      <input type="file" id="prod-form-file-1" accept="image/*" style="display:none;"
+                        onchange="handleSlotFileUpload(1, this)" />
+                      <button type="button" class="btn btn-primary btn-xs"
+                        onclick="document.getElementById('prod-form-file-1').click()"
+                        style="width:100%; font-size:0.75rem;">📁 Upload File</button>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Slot 2: Side View -->
-              <div class="img-slot-card" style="background:#0e1015; border:1px solid var(--border-subtle, #2a2d36); border-radius:8px; padding:10px;">
+              <div class="img-slot-card"
+                style="background:#0e1015; border:1px solid var(--border-subtle, #2a2d36); border-radius:8px; padding:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main, #fff);">Image 2 (Side / Angle View)</span>
+                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main, #fff);">Image 2 (Side / Angle
+                    View)</span>
                   <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(2)">Clear</button>
                 </div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                  <div style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
-                    <img id="prod-img-preview-2" src="" alt="Preview 2" style="width:100%; height:100%; object-fit:contain; display:none;" onerror="this.style.display='none'; document.getElementById('prod-img-empty-2').style.display='block';" />
+                  <div
+                    style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+                    <img id="prod-img-preview-2" src="" alt="Preview 2"
+                      style="width:100%; height:100%; object-fit:contain; display:none;"
+                      onerror="this.style.display='none'; document.getElementById('prod-img-empty-2').style.display='block';" />
                     <span id="prod-img-empty-2" style="font-size:0.7rem; color:var(--text-muted);">Optional</span>
                   </div>
                   <div style="flex:1;">
-                    <input type="text" id="prod-form-image-2" class="form-input" style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value="" placeholder="Paste Image URL here..." oninput="updateSlotPreview(2)" />
+                    <input type="text" id="prod-form-image-2" class="form-input"
+                      style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value=""
+                      placeholder="Paste Image URL here..." oninput="updateSlotPreview(2)" />
                     <div style="display:flex; gap:6px;">
-                      <input type="file" id="prod-form-file-2" accept="image/*" style="display:none;" onchange="handleSlotFileUpload(2, this)" />
-                      <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('prod-form-file-2').click()" style="width:100%; font-size:0.75rem;">📁 Upload File</button>
+                      <input type="file" id="prod-form-file-2" accept="image/*" style="display:none;"
+                        onchange="handleSlotFileUpload(2, this)" />
+                      <button type="button" class="btn btn-primary btn-xs"
+                        onclick="document.getElementById('prod-form-file-2').click()"
+                        style="width:100%; font-size:0.75rem;">📁 Upload File</button>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Slot 3: Back / Detail View -->
-              <div class="img-slot-card" style="background:#0e1015; border:1px solid var(--border-subtle, #2a2d36); border-radius:8px; padding:10px;">
+              <div class="img-slot-card"
+                style="background:#0e1015; border:1px solid var(--border-subtle, #2a2d36); border-radius:8px; padding:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main, #fff);">Image 3 (Back / Detail View)</span>
+                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main, #fff);">Image 3 (Back / Detail
+                    View)</span>
                   <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(3)">Clear</button>
                 </div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                  <div style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
-                    <img id="prod-img-preview-3" src="" alt="Preview 3" style="width:100%; height:100%; object-fit:contain; display:none;" onerror="this.style.display='none'; document.getElementById('prod-img-empty-3').style.display='block';" />
+                  <div
+                    style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+                    <img id="prod-img-preview-3" src="" alt="Preview 3"
+                      style="width:100%; height:100%; object-fit:contain; display:none;"
+                      onerror="this.style.display='none'; document.getElementById('prod-img-empty-3').style.display='block';" />
                     <span id="prod-img-empty-3" style="font-size:0.7rem; color:var(--text-muted);">Optional</span>
                   </div>
                   <div style="flex:1;">
-                    <input type="text" id="prod-form-image-3" class="form-input" style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value="" placeholder="Paste Image URL here..." oninput="updateSlotPreview(3)" />
+                    <input type="text" id="prod-form-image-3" class="form-input"
+                      style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value=""
+                      placeholder="Paste Image URL here..." oninput="updateSlotPreview(3)" />
                     <div style="display:flex; gap:6px;">
-                      <input type="file" id="prod-form-file-3" accept="image/*" style="display:none;" onchange="handleSlotFileUpload(3, this)" />
-                      <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('prod-form-file-3').click()" style="width:100%; font-size:0.75rem;">📁 Upload File</button>
+                      <input type="file" id="prod-form-file-3" accept="image/*" style="display:none;"
+                        onchange="handleSlotFileUpload(3, this)" />
+                      <button type="button" class="btn btn-primary btn-xs"
+                        onclick="document.getElementById('prod-form-file-3').click()"
+                        style="width:100%; font-size:0.75rem;">📁 Upload File</button>
                     </div>
                   </div>
                 </div>
@@ -2238,7 +2277,7 @@
           </div>
           <div class="form-field">
             <label class="form-label">Login Email *</label>
-            <input type="email" id="user-form-email" class="form-input" placeholder="ramesh@motopitshop.com" required />
+            <input type="email" id="user-form-email" class="form-input" placeholder="ramesh@motopitshop.com" required autocomplete="username" />
           </div>
           <div class="form-grid-2">
             <div class="form-field">
@@ -2384,7 +2423,7 @@
   <div id="toast" class="toast"></div>
 
   <!-- Owner Portal Controller Script -->
-  <script src="/owner.js?v=12"></script>
+  <script src="/owner.js?v=13"></script>
 </body>
 
 </html>
