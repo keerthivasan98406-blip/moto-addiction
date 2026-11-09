@@ -164,121 +164,12 @@
         <p class="section-subtitle">Handpicked premium accessories for every serious rider</p>
       </div>
 
-      <!-- Products Grid -->
+      <!-- Products Grid — loaded dynamically from database -->
       <div class="products-grid" id="products-grid">
-
-        <!-- Product 1: Helmet -->
-        <div class="product-card" id="product-1" data-category="helmets" data-image2="https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&w=600&q=80">
-          <div class="product-img-wrap">
-            <img src="hero2.png" alt="Pro Racing Helmet Full Face" class="product-img" loading="lazy" />
-            <div class="product-badges">
-              <span class="badge badge-hot">HOT</span>
-            </div>
-            <button class="overlay-wish" id="wish-1" aria-label="Wishlist" data-id="1">♡</button>
-          </div>
-          <div class="product-info">
-            <span class="product-brand">Shoei × MotoForce</span>
-            <h3 class="product-name">Pro Racing Helmet – Full Face</h3>
-            <div class="product-rating">
-              <span class="stars">★★★★★</span>
-              <span class="rating-count">(248)</span>
-            </div>
-            <div class="product-pricing">
-              <span class="price-current">₹8,999</span>
-              <span class="price-old">₹12,999</span>
-              <span class="price-discount">31% OFF</span>
-            </div>
-            <div class="product-actions">
-              <button class="btn-buy buy-btn" data-id="1" data-name="Pro Racing Helmet" data-price="8999">Buy Now</button>
-              <button class="btn-cart add-cart-btn" data-id="1" data-name="Pro Racing Helmet" data-price="8999">Add to Cart</button>
-            </div>
-          </div>
+        <div id="products-loading" style="grid-column:1/-1; text-align:center; padding:40px; color:#A1A1AA;">
+          <div style="font-size:1.5rem; margin-bottom:8px;">🏍️</div>
+          <p>Loading products...</p>
         </div>
-
-        <!-- Product 2: Gloves -->
-        <div class="product-card" id="product-2" data-category="gear" data-image2="https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=600&q=80">
-          <div class="product-img-wrap">
-            <img src="gloves.png" alt="Carbon Fiber Racing Gloves" class="product-img" loading="lazy" />
-            <div class="product-badges">
-              <span class="badge badge-new">NEW</span>
-            </div>
-            <button class="overlay-wish" id="wish-2" aria-label="Wishlist" data-id="2">♡</button>
-          </div>
-          <div class="product-info">
-            <span class="product-brand">MotoForce Elite</span>
-            <h3 class="product-name">Carbon Fiber Racing Gloves</h3>
-            <div class="product-rating">
-              <span class="stars">★★★★★</span>
-              <span class="rating-count">(185)</span>
-            </div>
-            <div class="product-pricing">
-              <span class="price-current">₹2,499</span>
-              <span class="price-old">₹3,499</span>
-              <span class="price-discount">28% OFF</span>
-            </div>
-            <div class="product-actions">
-              <button class="btn-buy buy-btn" data-id="2" data-name="Carbon Fiber Racing Gloves" data-price="2499">Buy Now</button>
-              <button class="btn-cart add-cart-btn" data-id="2" data-name="Carbon Fiber Racing Gloves" data-price="2499">Add to Cart</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 3: Jacket -->
-        <div class="product-card" id="product-3" data-category="gear" data-image2="https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80">
-          <div class="product-img-wrap">
-            <img src="jacket.png" alt="Aerodynamic Racing Jacket" class="product-img" loading="lazy" />
-            <div class="product-badges">
-              <span class="badge badge-sale">SALE</span>
-            </div>
-            <button class="overlay-wish" id="wish-3" aria-label="Wishlist" data-id="3">♡</button>
-          </div>
-          <div class="product-info">
-            <span class="product-brand">MotoForce Pro</span>
-            <h3 class="product-name">Aerodynamic Racing Jacket</h3>
-            <div class="product-rating">
-              <span class="stars">★★★★☆</span>
-              <span class="rating-count">(312)</span>
-            </div>
-            <div class="product-pricing">
-              <span class="price-current">₹6,499</span>
-              <span class="price-old">₹9,999</span>
-              <span class="price-discount">35% OFF</span>
-            </div>
-            <div class="product-actions">
-              <button class="btn-buy buy-btn" data-id="3" data-name="Aerodynamic Racing Jacket" data-price="6499">Buy Now</button>
-              <button class="btn-cart add-cart-btn" data-id="3" data-name="Aerodynamic Racing Jacket" data-price="6499">Add to Cart</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 4: Exhaust -->
-        <div class="product-card" id="product-4" data-category="parts" data-image2="https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=600&q=80">
-          <div class="product-img-wrap">
-            <img src="exhaust.png" alt="Titanium Slip-On Exhaust" class="product-img" loading="lazy" />
-            <div class="product-badges">
-              <span class="badge badge-hot">POPULAR</span>
-            </div>
-            <button class="overlay-wish" id="wish-4" aria-label="Wishlist" data-id="4">♡</button>
-          </div>
-          <div class="product-info">
-            <span class="product-brand">Akrapovič × MotoForce</span>
-            <h3 class="product-name">Titanium Slip-On Exhaust</h3>
-            <div class="product-rating">
-              <span class="stars">★★★★★</span>
-              <span class="rating-count">(97)</span>
-            </div>
-            <div class="product-pricing">
-              <span class="price-current">₹14,999</span>
-              <span class="price-old">₹19,999</span>
-              <span class="price-discount">25% OFF</span>
-            </div>
-            <div class="product-actions">
-              <button class="btn-buy buy-btn" data-id="4" data-name="Titanium Slip-On Exhaust" data-price="14999">Buy Now</button>
-              <button class="btn-cart add-cart-btn" data-id="4" data-name="Titanium Slip-On Exhaust" data-price="14999">Add to Cart</button>
-            </div>
-          </div>
-        </div>
-
       </div>
 
 

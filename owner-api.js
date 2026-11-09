@@ -913,14 +913,19 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       }
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now().toString().slice(-4);
-      let discount = 0;
-      if (old_price && old_price > price) {
-        discount = Math.round(((old_price - price) / old_price) * 100);
-      }
 
-      const purPrice = purchase_price ? parseInt(purchase_price, 10) : Math.round(price * 0.70);
-      const initialStock = stock ? parseInt(stock, 10) : 0;
+      const safeBrandId = brand_id && !isNaN(parseInt(brand_id, 10)) ? parseInt(brand_id, 10) : null;
+      const safeCatId = category_id && !isNaN(parseInt(category_id, 10)) ? parseInt(category_id, 10) : null;
+      const safeSuppId = supplier_id && !isNaN(parseInt(supplier_id, 10)) ? parseInt(supplier_id, 10) : null;
+      const safePrice = parseInt(price, 10) || 0;
+      const safeOldPrice = old_price && !isNaN(parseInt(old_price, 10)) ? parseInt(old_price, 10) : null;
+      const safeGstRate = parseFloat(gst_rate) || 18.0;
+      const safeMinStock = parseInt(min_stock, 10) || 5;
+
+      const purPrice = purchase_price && !isNaN(parseInt(purchase_price, 10)) ? parseInt(purchase_price, 10) : Math.round(safePrice * 0.70);
+      const initialStock = stock && !isNaN(parseInt(stock, 10)) ? parseInt(stock, 10) : 0;
       const img = primary_image ? primary_image.trim() : 'hero1.png';
+      const safeDiscount = safeOldPrice && safeOldPrice > safePrice ? Math.round(((safeOldPrice - safePrice) / safeOldPrice) * 100) : 0;
 
       const insert = db.prepare(`
         INSERT INTO products (
@@ -931,9 +936,10 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       `);
 
       const result = insert.run(
-        genSku, genBarcode, genSku, name.trim(), slug, brand_id || null, category_id || null, supplier_id || null,
-        description || '', price, old_price || null, purPrice, discount, gst_rate || 18.0, hsn || '8714',
-        initialStock, min_stock || 5, img, JSON.stringify(images_json || [img]),
+        genSku, genBarcode, genSku, name.trim(), slug,
+        safeBrandId, safeCatId, safeSuppId,
+        description || '', safePrice, safeOldPrice, purPrice, safeDiscount, safeGstRate, hsn || '8714',
+        initialStock, safeMinStock, img, JSON.stringify(images_json || [img]),
         JSON.stringify(variants_json || []), warranty || '1 Year Manufacturer', weight || '1.0 kg', 0
       );
 

@@ -239,103 +239,103 @@ function applyProductDisplayLimit() {
   });
 }
 
-// ========== DYNAMIC OWNER PRODUCTS ==========
-function loadOwnerProducts() {
-  const productsGrid = document.getElementById('products-grid');
-  if (!productsGrid) return;
+// ========== DYNAMIC PRODUCTS FROM DATABASE ==========
+async function loadProductsFromAPI() {
+  const grid = document.getElementById('products-grid');
+  if (!grid) return;
 
-  // Only inject owner products on the products/shop page, not the homepage
-  if (window.location.pathname === '/' || window.location.pathname === '/index.html') return;
+  try {
+    const res = await fetch('/api/products');
+    if (!res.ok) throw new Error('Failed to load products');
+    const data = await res.json();
+    const products = (data.products || []).filter(p => p.status === 'ACTIVE' && !p.is_archived);
 
-  const ownerProducts = JSON.parse(localStorage.getItem('owner_products') || '[]');
-  
-  ownerProducts.forEach(prod => {
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    card.id = prod.id;
-    card.setAttribute('data-category', prod.category);
-    card.setAttribute('data-image2', prod.image2 || '');
-    
-    // Generate Stars
-    const fullStars = Math.floor(prod.rating);
-    const halfStar = prod.rating % 1 !== 0;
-    let starsHtml = '★'.repeat(fullStars) + (halfStar ? '☆' : '') + '☆'.repeat(5 - Math.ceil(prod.rating));
+    const loadingEl = document.getElementById('products-loading');
+    if (loadingEl) loadingEl.remove();
 
-    // Pricing HTML
-    let pricingHtml = `<span class="price-current">₹${prod.price.toLocaleString('en-IN')}</span>`;
-    if (prod.oldPrice) {
-      pricingHtml += `\n<span class="price-old">₹${prod.oldPrice.toLocaleString('en-IN')}</span>`;
-      if (prod.discount) pricingHtml += `\n<span class="price-discount">${prod.discount}% OFF</span>`;
+    if (products.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#A1A1AA;"><p>No products available yet.</p></div>';
+      return;
     }
 
-    // Badge HTML
-    let badgeHtml = '';
-    if (prod.badge) {
-      const badgeClass = prod.badge.toLowerCase() === 'sale' ? 'badge-sale' : (prod.badge.toLowerCase() === 'hot' ? 'badge-hot' : 'badge-new');
-      badgeHtml = `<div class="product-badges"><span class="badge ${badgeClass}">${prod.badge}</span></div>`;
-    }
+    // Show up to 8 on homepage, all on products page
+    const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html' || window.location.pathname === '';
+    const displayProducts = isHomePage ? products.slice(0, 8) : products;
 
-    card.innerHTML = `
-      <div class="product-img-wrap">
-        <img src="${prod.image}" alt="${prod.name}" class="product-img" loading="lazy" />
-        ${badgeHtml}
-        <button class="overlay-wish" aria-label="Wishlist" data-id="${prod.id}">♡</button>
-      </div>
-      <div class="product-info">
-        <span class="product-brand">${prod.brand}</span>
-        <h3 class="product-name">${prod.name}</h3>
-        <div class="product-rating">
-          <span class="stars">${starsHtml}</span>
-          <span class="rating-count">(New)</span>
-        </div>
-        <div class="product-pricing">
-          ${pricingHtml}
-        </div>
-        <div class="product-actions">
-          <button class="btn-buy buy-btn" data-id="${prod.id}" data-name="${prod.name}" data-price="${prod.price}">Buy Now</button>
-          <button class="btn-cart add-cart-btn" data-id="${prod.id}" data-name="${prod.name}" data-price="${prod.price}">Add to Cart</button>
-        </div>
-      </div>
-    `;
-    
-    // Insert at beginning of grid
-    productsGrid.insertBefore(card, productsGrid.firstChild);
-    
-    // Bind Add to Cart
-    card.querySelector('.add-cart-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      addToCart(prod.id, prod.name, prod.price);
-      const btn = e.target;
-      btn.textContent = '✓ Added!';
-      btn.style.background = 'linear-gradient(135deg, #4ade80, #16a34a)';
-      setTimeout(() => {
-        btn.textContent = 'Add to Cart';
-        btn.style.background = '';
-      }, 1500);
+    grid.innerHTML = displayProducts.map(p => {
+      const price = p.price || 0;
+      const oldPrice = p.old_price;
+      const discount = p.discount || 0;
+      const rating = p.rating || 5.0;
+      const ratingCount = p.rating_count || 0;
+      const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+      const brandName = p.brand_name || '';
+      const catSlug = p.category_slug || 'all';
+      const imgSrc = p.primary_image || 'hero1.png';
+      // Handle external URLs and local filenames
+      const imgUrl = imgSrc.startsWith('http') ? imgSrc : imgSrc;
+
+      const badges = p.is_bestseller ? '<span class="badge badge-hot">BESTSELLER</span>' :
+                     (p.is_featured ? '<span class="badge badge-new">FEATURED</span>' : '');
+
+      return `
+        <div class="product-card" id="prod-${p.id}" data-category="${catSlug}" data-id="${p.id}">
+          <div class="product-img-wrap">
+            <img src="${imgUrl}" alt="${p.name}" class="product-img" loading="lazy" onerror="this.src='hero1.png'" />
+            ${badges ? `<div class="product-badges">${badges}</div>` : ''}
+            <button class="overlay-wish" aria-label="Wishlist" data-id="${p.id}">♡</button>
+          </div>
+          <div class="product-info">
+            ${brandName ? `<span class="product-brand">${brandName}</span>` : ''}
+            <h3 class="product-name">${p.name}</h3>
+            <div class="product-rating">
+              <span class="stars">${stars}</span>
+              ${ratingCount > 0 ? `<span class="rating-count">(${ratingCount})</span>` : ''}
+            </div>
+            <div class="product-pricing">
+              <span class="price-current">₹${price.toLocaleString('en-IN')}</span>
+              ${oldPrice ? `<span class="price-old">₹${oldPrice.toLocaleString('en-IN')}</span>` : ''}
+              ${discount > 0 ? `<span class="price-discount">${discount}% OFF</span>` : ''}
+            </div>
+            <div class="product-actions">
+              <button class="btn-buy buy-btn" data-id="${p.id}" data-name="${p.name}" data-price="${price}">Buy Now</button>
+              <button class="btn-cart add-cart-btn" data-id="${p.id}" data-name="${p.name}" data-price="${price}">Add to Cart</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Bind cart and wishlist buttons
+    grid.querySelectorAll('.add-cart-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        addToCart(btn.dataset.id, btn.dataset.name, parseInt(btn.dataset.price));
+        btn.textContent = '✓ Added!';
+        btn.style.background = 'linear-gradient(135deg, #4ade80, #16a34a)';
+        setTimeout(() => { btn.textContent = 'Add to Cart'; btn.style.background = ''; }, 1500);
+      });
+    });
+    grid.querySelectorAll('.overlay-wish').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.classList.toggle('active');
+        btn.textContent = btn.classList.contains('active') ? '♥' : '♡';
+        btn.style.color = btn.classList.contains('active') ? '#ff4d00' : '';
+        showToast(btn.classList.contains('active') ? '❤️ Added to wishlist!' : 'Removed from wishlist');
+      });
     });
 
-    // Bind Wishlist
-    card.querySelector('.overlay-wish').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const btn = e.target;
-      btn.classList.toggle('active');
-      if (btn.classList.contains('active')) {
-        btn.textContent = '♥';
-        btn.style.color = '#ff4d00';
-        showToast('❤️ Added to wishlist!');
-      } else {
-        btn.textContent = '♡';
-        btn.style.color = '';
-        showToast('Removed from wishlist');
-      }
-    });
-  });
-  
-  // Initial display limit call
-  applyProductDisplayLimit();
+  } catch (err) {
+    console.error('Failed to load products:', err);
+    const grid2 = document.getElementById('products-grid');
+    if (grid2) grid2.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#A1A1AA;"><p>Products currently unavailable.</p></div>';
+  }
 }
-loadOwnerProducts();
-applyProductDisplayLimit();
+
+// Load products on page load
+if (document.getElementById('products-grid')) {
+  loadProductsFromAPI();
+}
 
 // ========== PRODUCT FILTER TABS ==========
 const filterTabs = document.querySelectorAll('.filter-tab');

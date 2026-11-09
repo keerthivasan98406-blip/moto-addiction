@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Master Owner Panel — Moto Pitshop ERP</title>
-  <meta name="description" content="Central Business Management, Inventory, POS Billing, GST Invoicing, Supplier Purchases, and Reporting for Moto Pitshop." />
+  <meta name="description"
+    content="Central Business Management, Inventory, POS Billing, GST Invoicing, Supplier Purchases, and Reporting for Moto Pitshop." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/owner.css?v=8" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'><path d='M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'/></svg>" />
 </head>
+
 <body>
 
   <!-- ==========================================
@@ -20,10 +26,13 @@
     <div class="sidebar-header">
       <a href="/owner" class="brand-wrap">
         <div class="brand-icon-box">
-          <svg viewBox="0 0 24 24"><path d="M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 9c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H4C2.9 3 2 3.9 2 5v8c0 1.1.9 2 2 2h1c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h1c.55 0 1-.45 1-1v-3l-3-3h-1zM8 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" />
+          </svg>
         </div>
         <div class="brand-text-box">
-          <div class="brand-title">MOTO <span>PIT</span></div>  
+          <div class="brand-title">MOTO <span>PIT</span></div>
           <div class="brand-subtitle-row">
             <span class="brand-subtitle">MASTER OWNER PANEL</span>
             <span class="role-badge" id="sidebar-role-badge">OWNER</span>
@@ -31,10 +40,16 @@
         </div>
       </a>
       <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Sidebar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m15 18-6-6 6-6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
       </button>
-      <button class="sidebar-close-mobile-btn" id="sidebar-close-mobile" title="Close Sidebar" aria-label="Close Sidebar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+      <button class="sidebar-close-mobile-btn" id="sidebar-close-mobile" title="Close Sidebar"
+        aria-label="Close Sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <line x1="18" x2="6" y1="6" y2="18" />
+          <line x1="6" x2="18" y1="6" y2="18" />
+        </svg>
       </button>
     </div>
 
@@ -42,73 +57,140 @@
     <nav class="sidebar-nav" id="sidebar-nav">
       <!-- 1. Dashboard -->
       <a class="nav-item active" data-view="dashboard" href="#dashboard" id="nav-dashboard">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect width="7" height="9" x="3" y="3" rx="1" />
+          <rect width="7" height="5" x="14" y="3" rx="1" />
+          <rect width="7" height="9" x="14" y="12" rx="1" />
+          <rect width="7" height="5" x="3" y="16" rx="1" />
+        </svg>
         <span class="nav-label">Dashboard</span>
       </a>
 
       <!-- 2. POS Billing / Counter Sales -->
       <a class="nav-item" data-view="pos" href="#pos" id="nav-pos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="8" cy="21" r="1" />
+          <circle cx="19" cy="21" r="1" />
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+        </svg>
         <span class="nav-label">POS Billing / Counter Sales</span>
       </a>
 
       <!-- 3. Online Orders -->
       <a class="nav-item" data-view="orders" href="#orders" id="nav-orders">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <path d="M12 11h4" />
+          <path d="M12 16h4" />
+          <path d="M8 11h.01" />
+          <path d="M8 16h.01" />
+        </svg>
         <span class="nav-label">Online Orders</span>
       </a>
 
       <!-- 4. Product Management -->
       <a class="nav-item" data-view="products" href="#products" id="nav-products">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m7.5 4.27 9 5.15" />
+          <path
+            d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+          <path d="m3.3 7 8.7 5 8.7-5" />
+          <path d="M12 22V12" />
+        </svg>
         <span class="nav-label">Product Management</span>
       </a>
 
       <!-- 5. Inventory & Stock -->
       <a class="nav-item" data-view="inventory" href="#inventory" id="nav-inventory">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"/><path d="M6 18h12"/><path d="M6 14h12"/><rect width="12" height="12" x="6" y="10"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z" />
+          <path d="M6 18h12" />
+          <path d="M6 14h12" />
+          <rect width="12" height="12" x="6" y="10" />
+        </svg>
         <span class="nav-label">Inventory & Stock</span>
       </a>
 
       <!-- 6. Distributor / Purchase Entry -->
       <a class="nav-item" data-view="purchases" href="#purchases" id="nav-purchases">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+          <path d="M15 18H9" />
+          <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+          <circle cx="17" cy="18" r="2" />
+          <circle cx="7" cy="18" r="2" />
+        </svg>
         <span class="nav-label">Distributor / Purchase Entry</span>
       </a>
 
       <!-- 7. GST Invoices & Billing -->
       <a class="nav-item" data-view="invoices" href="#invoices" id="nav-invoices">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+          <path d="M14 8H8" />
+          <path d="M16 12H8" />
+          <path d="M13 16H8" />
+        </svg>
         <span class="nav-label">GST Invoices & Billing</span>
       </a>
 
       <!-- 8. Customers -->
       <a class="nav-item" data-view="customers" href="#customers" id="nav-customers">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
         <span class="nav-label">Customers</span>
       </a>
 
       <!-- 9. Distributors & Suppliers -->
       <a class="nav-item" data-view="suppliers" href="#suppliers" id="nav-suppliers">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+          <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+          <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+          <path d="M10 6h4" />
+          <path d="M10 10h4" />
+          <path d="M10 14h4" />
+          <path d="M10 18h4" />
+        </svg>
         <span class="nav-label">Distributors & Suppliers</span>
       </a>
 
       <!-- 10. Monthly Reports -->
       <a class="nav-item" data-view="reports" href="#reports" id="nav-reports">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16v5"/><path d="M16 14v7"/><path d="M20 10v11"/><path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15"/><path d="M4 18v3"/><path d="M8 14v7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 16v5" />
+          <path d="M16 14v7" />
+          <path d="M20 10v11" />
+          <path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15" />
+          <path d="M4 18v3" />
+          <path d="M8 14v7" />
+        </svg>
         <span class="nav-label">Monthly Reports</span>
       </a>
 
       <!-- 11. Expenses & Payments -->
       <a class="nav-item" data-view="expenses" href="#expenses" id="nav-expenses">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+          <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+        </svg>
         <span class="nav-label">Expenses & Payments</span>
       </a>
 
       <!-- 12. Shop Settings & GST Setup -->
       <a class="nav-item" data-view="settings" href="#settings" id="nav-settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
         <span class="nav-label">Shop Settings & GST Setup</span>
       </a>
     </nav>
@@ -124,7 +206,11 @@
           </div>
         </div>
         <button class="sidebar-toggle-btn" id="logout-btn" title="Sign Out">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" x2="9" y1="12" y2="12" />
+          </svg>
         </button>
       </div>
     </div>
@@ -135,13 +221,18 @@
        MAIN APP WORKSPACE
        ========================================== -->
   <div class="owner-main-wrap">
-        <!-- Header -->
+    <!-- Header -->
     <header class="owner-header">
       <div class="owner-header-main-row">
         <div class="header-left">
           <button class="hamburger-btn" id="mobile-hamburger" aria-label="Toggle Navigation">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-          <span class="mobile-ham-label" style="font-size:0.85rem; font-weight:700; margin-left:6px; letter-spacing:0.5px;">Menu</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+              <line x1="4" x2="20" y1="12" y2="12" />
+              <line x1="4" x2="20" y1="6" y2="6" />
+              <line x1="4" x2="20" y1="18" y2="18" />
+            </svg>
+            <span class="mobile-ham-label"
+              style="font-size:0.85rem; font-weight:700; margin-left:6px; letter-spacing:0.5px;">Menu</span>
           </button>
           <div class="page-title-box">
             <h1 class="page-title" id="page-title">Business Overview & Sales</h1>
@@ -151,15 +242,24 @@
         <div class="header-right">
           <div class="quick-actions-bar">
             <button class="btn btn-primary btn-sm" onclick="navigateTo('pos')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <circle cx="8" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              </svg>
               <span>New POS Bill [F2]</span>
             </button>
             <button class="btn btn-secondary btn-sm" onclick="openAddProductModal()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <line x1="12" x2="12" y1="5" y2="19" />
+                <line x1="5" x2="19" y1="12" y2="12" />
+              </svg>
               <span>Add Product</span>
             </button>
             <button class="btn btn-secondary btn-sm" onclick="openAddPurchaseModal()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+              </svg>
               <span>Purchase Entry</span>
             </button>
           </div>
@@ -170,9 +270,11 @@
       </div>
 
       <div class="page-subtitle-row" id="page-subtitle-row">
-        <span class="page-subtitle" id="page-subtitle">Real-time performance indicators and operational management</span>
+        <span class="page-subtitle" id="page-subtitle">Real-time performance indicators and operational
+          management</span>
         <span class="live-badge"><span class="live-dot"></span>LIVE STORE: TN-33</span>
-        <span class="live-badge" id="mongo-top-badge" style="cursor:pointer;" onclick="navigateTo('settings');" title="Click to view MongoDB cluster details">
+        <span class="live-badge" id="mongo-top-badge" style="cursor:pointer;" onclick="navigateTo('settings');"
+          title="Click to view MongoDB cluster details">
           <span class="live-dot" id="mongo-top-dot" style="background:#f59e0b;"></span>
           <span id="mongo-top-text">MongoDB: Connecting...</span>
         </span>
@@ -192,7 +294,9 @@
           <div class="stat-card highlight">
             <div class="stat-card-header">
               <span class="stat-card-title">Today's Sales</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-today-sales">₹0</div>
             <div class="stat-card-sub" id="card-today-orders">0 completed bills today</div>
@@ -202,7 +306,9 @@
           <div class="stat-card">
             <div class="stat-card-header">
               <span class="stat-card-title">Monthly Sales</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16v5M16 14v7M20 10v11M4 18v3M8 14v7"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 16v5M16 14v7M20 10v11M4 18v3M8 14v7" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-monthly-sales">₹0</div>
             <div class="stat-card-sub" id="card-monthly-orders">Current calendar month</div>
@@ -212,7 +318,10 @@
           <div class="stat-card">
             <div class="stat-card-header">
               <span class="stat-card-title">Total Orders</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect width="8" height="4" x="8" y="2" rx="1" />
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-total-orders">0</div>
             <div class="stat-card-sub">All-time lifetime orders</div>
@@ -222,7 +331,10 @@
           <div class="stat-card warning">
             <div class="stat-card-header">
               <span class="stat-card-title">Pending Orders</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-pending-orders">0</div>
             <div class="stat-card-sub">Awaiting packing/dispatch</div>
@@ -232,7 +344,11 @@
           <div class="stat-card">
             <div class="stat-card-header">
               <span class="stat-card-title">Active Products</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m7.5 4.27 9 5.15" />
+                  <path
+                    d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-total-products">0</div>
             <div class="stat-card-sub">SKUs listed in catalog</div>
@@ -242,7 +358,11 @@
           <div class="stat-card danger">
             <div class="stat-card-header">
               <span class="stat-card-title">Low Stock Alert</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                  <line x1="12" x2="12" y1="9" y2="13" />
+                  <line x1="12" x2="12.01" y1="17" y2="17" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-low-stock">0</div>
             <div class="stat-card-sub">Items at or below min stock</div>
@@ -252,7 +372,11 @@
           <div class="stat-card">
             <div class="stat-card-header">
               <span class="stat-card-title">Today's Purchases</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+                  <circle cx="17" cy="18" r="2" />
+                  <circle cx="7" cy="18" r="2" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-today-purchases">₹0</div>
             <div class="stat-card-sub">Recorded goods received</div>
@@ -262,7 +386,9 @@
           <div class="stat-card warning">
             <div class="stat-card-header">
               <span class="stat-card-title">Supplier Balance</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-supplier-payable">₹0</div>
             <div class="stat-card-sub">Pending distributor dues</div>
@@ -272,7 +398,10 @@
           <div class="stat-card">
             <div class="stat-card-header">
               <span class="stat-card-title">Monthly Expenses</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-monthly-expenses">₹0</div>
             <div class="stat-card-sub">Rent, power, salaries, misc</div>
@@ -282,7 +411,9 @@
           <div class="stat-card highlight">
             <div class="stat-card-header">
               <span class="stat-card-title">Estimated Gross Profit</span>
-              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></div>
+              <div class="stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 20V10M18 20V4M6 20v-4" />
+                </svg></div>
             </div>
             <div class="stat-card-value" id="card-gross-profit">₹0</div>
             <div class="stat-card-sub">Revenue minus COGS</div>
@@ -295,7 +426,9 @@
           <div class="card-panel">
             <div class="panel-header">
               <h2 class="panel-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 16v5M16 14v7M20 10v11M4 18v3M8 14v7"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                  <path d="M12 16v5M16 14v7M20 10v11M4 18v3M8 14v7" />
+                </svg>
                 7-Day Sales Trend & Volume
               </h2>
               <span class="badge badge-info">Live Database Metrics</span>
@@ -309,7 +442,10 @@
           <div class="card-panel">
             <div class="panel-header">
               <h2 class="panel-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
                 Top-Selling Products
               </h2>
             </div>
@@ -325,7 +461,10 @@
           <div class="card-panel">
             <div class="panel-header">
               <h2 class="panel-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                  <rect width="8" height="4" x="8" y="2" rx="1" />
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                </svg>
                 Recent Online Store Orders
               </h2>
               <button class="btn btn-secondary btn-sm" onclick="navigateTo('orders')">View All Orders →</button>
@@ -343,7 +482,9 @@
                   </tr>
                 </thead>
                 <tbody id="recent-online-orders-body">
-                  <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Loading recent orders...</td></tr>
+                  <tr>
+                    <td colspan="6" style="text-align:center; color:var(--text-muted);">Loading recent orders...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -353,7 +494,11 @@
           <div class="card-panel">
             <div class="panel-header">
               <h2 class="panel-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                  <circle cx="8" cy="21" r="1" />
+                  <circle cx="19" cy="21" r="1" />
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                </svg>
                 Recent Counter POS Bills
               </h2>
               <button class="btn btn-secondary btn-sm" onclick="navigateTo('pos')">Open POS →</button>
@@ -370,7 +515,9 @@
                   </tr>
                 </thead>
                 <tbody id="recent-pos-bills-body">
-                  <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading counter bills...</td></tr>
+                  <tr>
+                    <td colspan="5" style="text-align:center; color:var(--text-muted);">Loading counter bills...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -385,8 +532,10 @@
               <div>
                 <h4 style="color:var(--accent-orange);margin-bottom:12px;font-size:0.95rem;">Product Categories</h4>
                 <div style="display:flex;gap:8px;margin-bottom:12px;">
-                  <input type="text" id="new-category-name" class="form-input" placeholder="Category name e.g. Racing Suits" style="flex:1;" />
-                  <input type="text" id="new-category-icon" class="form-input" placeholder="Icon e.g. 🏁" style="width:70px;" />
+                  <input type="text" id="new-category-name" class="form-input"
+                    placeholder="Category name e.g. Racing Suits" style="flex:1;" />
+                  <input type="text" id="new-category-icon" class="form-input" placeholder="Icon e.g. 🏁"
+                    style="width:70px;" />
                   <button class="btn btn-primary btn-sm" onclick="addCategory()">+ Add</button>
                 </div>
                 <div id="categories-manager-list" style="max-height:250px;overflow-y:auto;">
@@ -396,7 +545,8 @@
               <div>
                 <h4 style="color:var(--accent-orange);margin-bottom:12px;font-size:0.95rem;">Product Brands</h4>
                 <div style="display:flex;gap:8px;margin-bottom:12px;">
-                  <input type="text" id="new-brand-name" class="form-input" placeholder="Brand name e.g. AGV" style="flex:1;" />
+                  <input type="text" id="new-brand-name" class="form-input" placeholder="Brand name e.g. AGV"
+                    style="flex:1;" />
                   <button class="btn btn-primary btn-sm" onclick="addBrand()">+ Add</button>
                 </div>
                 <div id="brands-manager-list" style="max-height:250px;overflow-y:auto;">
@@ -410,45 +560,65 @@
           <div class="card-panel" style="grid-column: 1 / -1; margin-top: 15px;">
             <div class="panel-header" style="margin-bottom: 12px;">
               <div style="display:flex; align-items:center; gap:10px;">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                </svg>
                 <h2 class="panel-title" style="margin:0;">MongoDB Atlas Cloud Cluster Data Store</h2>
               </div>
               <div style="display:flex; gap:8px;">
-                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect" onclick="triggerMongoReconnect()">Retry Connection</button>
-                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to MongoDB</button>
+                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect"
+                  onclick="triggerMongoReconnect()">Retry Connection</button>
+                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to
+                  MongoDB</button>
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
-              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+            <div
+              style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+              <div
+                style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
                 <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Status</span>
-                <span id="mongo-card-status" style="font-size:1.05rem; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-top:4px;">
+                <span id="mongo-card-status"
+                  style="font-size:1.05rem; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-top:4px;">
                   <span class="live-dot" id="mongo-card-dot" style="background:#f59e0b;"></span>
                   <span id="mongo-card-status-text">Checking connection...</span>
                 </span>
               </div>
-              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+              <div
+                style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
                 <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Host</span>
-                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopit.c8x6ms0.mongodb.net</span>
+                <span
+                  style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopit.c8x6ms0.mongodb.net</span>
               </div>
-              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+              <div
+                style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
                 <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Database Name</span>
-                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopitshop</span>
+                <span
+                  style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopitshop</span>
               </div>
-              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+              <div
+                style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
                 <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Data Flow</span>
-                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px;">Live Realtime Sync</span>
+                <span
+                  style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px;">Live
+                  Realtime Sync</span>
               </div>
             </div>
 
             <!-- Whitelist Banner -->
-            <div id="mongo-whitelist-banner" style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+            <div id="mongo-whitelist-banner"
+              style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
               <div style="display:flex; align-items:flex-start; gap:10px;">
                 <span style="font-size:1.2rem;">⚠️</span>
                 <div>
                   <strong style="color:#f59e0b;">MongoDB Atlas Network Access Whitelist Action Required:</strong>
                   <p style="margin:4px 0 0 0; font-size:0.85rem; color:var(--text-main); line-height:1.4;">
-                    Your cluster rejected the TLS connection (SSL alert 80). In your MongoDB Atlas dashboard, go to <strong>Network Access</strong> &rarr; click <strong>Add IP Address</strong> &rarr; select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> or add your current IP <code style="background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">42.109.144.22</code>. Then click "Retry Connection" above.
+                    Your cluster rejected the TLS connection (SSL alert 80). In your MongoDB Atlas dashboard, go to
+                    <strong>Network Access</strong> &rarr; click <strong>Add IP Address</strong> &rarr; select
+                    <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> or add your current IP <code
+                      style="background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">42.109.144.22</code>. Then
+                    click "Retry Connection" above.
                   </p>
                 </div>
               </div>
@@ -456,39 +626,50 @@
 
             <!-- Synced Collections Grid -->
             <div>
-              <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">MongoDB Synced Collections Data</span>
-              <div id="mongo-counts-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
+              <span
+                style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">MongoDB
+                Synced Collections Data</span>
+              <div id="mongo-counts-grid"
+                style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Products</span>
-                  <span id="cnt-products" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-products"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Orders</span>
-                  <span id="cnt-orders" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-orders"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Invoices</span>
-                  <span id="cnt-invoices" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-invoices"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Customers</span>
-                  <span id="cnt-customers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-customers"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Purchases</span>
-                  <span id="cnt-purchases" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-purchases"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Suppliers</span>
-                  <span id="cnt-suppliers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-suppliers"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Expenses</span>
-                  <span id="cnt-expenses" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-expenses"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Settings</span>
-                  <span id="cnt-settings" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-settings"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
               </div>
             </div>
@@ -505,9 +686,13 @@
           <div class="pos-catalog-panel">
             <!-- Scan / Search Bar -->
             <div class="pos-scan-box">
-              <input type="text" id="pos-scan-input" class="pos-scan-input" placeholder="Scan Barcode or Search SKU / Product Name... [Press F4 to focus]" autocomplete="off" />
+              <input type="text" id="pos-scan-input" class="pos-scan-input"
+                placeholder="Scan Barcode or Search SKU / Product Name... [Press F4 to focus]" autocomplete="off" />
               <button class="btn btn-primary" id="pos-scan-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path d="m21 21-4.3-4.3" />
+                  <circle cx="11" cy="11" r="8" />
+                </svg>
                 <span>Find / Add</span>
               </button>
             </div>
@@ -531,7 +716,8 @@
             <div class="card-panel" style="margin-top: 14px;">
               <div class="panel-header">
                 <h3 class="panel-title">Today's Counter Bills & Fast Reprint</h3>
-                <input type="text" id="pos-bills-search" class="form-input" style="max-width: 200px; padding: 4px 8px; font-size: 0.78rem;" placeholder="Search bills..." />
+                <input type="text" id="pos-bills-search" class="form-input"
+                  style="max-width: 200px; padding: 4px 8px; font-size: 0.78rem;" placeholder="Search bills..." />
               </div>
               <div class="table-responsive">
                 <table class="data-table">
@@ -564,7 +750,8 @@
             </div>
 
             <!-- Customer Selector Bar -->
-            <div style="padding:10px 14px; background:rgba(0,0,0,0.15); border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center;">
+            <div
+              style="padding:10px 14px; background:rgba(0,0,0,0.15); border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center;">
               <select id="pos-customer-select" class="form-input" style="flex:1; padding:6px 10px; font-size:0.8rem;">
                 <option value="1">Walk-in Counter Customer (Retail)</option>
                 <!-- Populated with customers -->
@@ -575,7 +762,7 @@
             <!-- Cart Items List -->
             <div class="pos-cart-items-list" id="pos-cart-items-list">
               <div style="text-align:center; padding:40px 10px; color:var(--text-muted); font-size:0.85rem;">
-                Cart is empty.<br/>Scan a barcode or click products to add.
+                Cart is empty.<br />Scan a barcode or click products to add.
               </div>
             </div>
 
@@ -611,19 +798,24 @@
 
               <!-- Split Details Input (Hidden unless SPLIT selected) -->
               <div id="split-payment-box" style="display:none; gap:8px;">
-                <input type="number" id="split-cash-amount" class="form-input" placeholder="Cash Amount" style="font-size:0.8rem;" />
-                <input type="number" id="split-upi-amount" class="form-input" placeholder="UPI Amount" style="font-size:0.8rem;" />
+                <input type="number" id="split-cash-amount" class="form-input" placeholder="Cash Amount"
+                  style="font-size:0.8rem;" />
+                <input type="number" id="split-upi-amount" class="form-input" placeholder="UPI Amount"
+                  style="font-size:0.8rem;" />
               </div>
 
               <!-- Complete Sale Button -->
-              <button class="btn btn-primary" id="pos-complete-btn" style="padding:14px; font-size:1.05rem; justify-content:center;" onclick="completePosSale()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="20 6 9 17 4 12"/></svg>
+              <button class="btn btn-primary" id="pos-complete-btn"
+                style="padding:14px; font-size:1.05rem; justify-content:center;" onclick="completePosSale()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
                 <span>COMPLETE SALE & PRINT [F9]</span>
               </button>
             </div>
           </div>
 
-          
+
         </div>
       </section>
 
@@ -634,7 +826,10 @@
         <div class="card-panel">
           <div class="table-controls">
             <div class="search-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
               <input type="text" id="orders-search-input" placeholder="Search Order #, customer name, phone..." />
             </div>
             <div class="filter-group">
@@ -672,7 +867,10 @@
                 </tr>
               </thead>
               <tbody id="orders-table-body">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading orders...</td></tr>
+                <tr>
+                  <td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading orders...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -686,7 +884,10 @@
         <div class="card-panel">
           <div class="table-controls">
             <div class="search-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
               <input type="text" id="prod-search-input" placeholder="Search by Name, SKU, Barcode, HSN..." />
             </div>
             <div class="filter-group">
@@ -701,7 +902,10 @@
                 <option value="out">Out of Stock</option>
               </select>
               <button class="btn btn-primary btn-sm" onclick="openAddProductModal()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <line x1="12" x2="12" y1="5" y2="19" />
+                  <line x1="5" x2="19" y1="12" y2="12" />
+                </svg>
                 <span>Add Product</span>
               </button>
               <button class="btn btn-secondary btn-sm" onclick="exportProductsCsv()">Export CSV</button>
@@ -725,7 +929,10 @@
                 </tr>
               </thead>
               <tbody id="products-table-body">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading products catalog...</td></tr>
+                <tr>
+                  <td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading products
+                    catalog...</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -769,7 +976,10 @@
         <div class="card-panel">
           <div class="panel-header">
             <h2 class="panel-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path
+                  d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z" />
+              </svg>
               Central Stock Movement Ledger (Audit Trail)
             </h2>
             <div style="display:flex; gap:8px;">
@@ -802,7 +1012,10 @@
                 </tr>
               </thead>
               <tbody id="inventory-ledger-body">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading ledger...</td></tr>
+                <tr>
+                  <td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading ledger...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -816,7 +1029,9 @@
         <div class="card-panel">
           <div class="panel-header">
             <h2 class="panel-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+              </svg>
               Distributor Purchases & Stock Replenishment
             </h2>
             <button class="btn btn-primary btn-sm" onclick="openAddPurchaseModal()">+ New Purchase Entry</button>
@@ -839,7 +1054,10 @@
                 </tr>
               </thead>
               <tbody id="purchases-table-body">
-                <tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Loading purchase entries...</td></tr>
+                <tr>
+                  <td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Loading purchase
+                    entries...</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -853,7 +1071,10 @@
         <div class="card-panel">
           <div class="table-controls">
             <div class="search-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
               <input type="text" id="invoice-search-input" placeholder="Search Invoice #, customer, GSTIN..." />
             </div>
             <div class="filter-group">
@@ -882,7 +1103,10 @@
                 </tr>
               </thead>
               <tbody id="invoices-table-body">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading invoices...</td></tr>
+                <tr>
+                  <td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading invoices...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -896,7 +1120,10 @@
         <div class="card-panel">
           <div class="panel-header">
             <h2 class="panel-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+              </svg>
               Customer Database & Order History
             </h2>
             <button class="btn btn-primary btn-sm" onclick="openAddCustomerModal()">+ Add Customer</button>
@@ -918,7 +1145,10 @@
                 </tr>
               </thead>
               <tbody id="customers-table-body">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading customers...</td></tr>
+                <tr>
+                  <td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading customers...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -932,7 +1162,9 @@
         <div class="card-panel">
           <div class="panel-header">
             <h2 class="panel-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+              </svg>
               Distributors & Wholesalers Directory
             </h2>
             <button class="btn btn-primary btn-sm" onclick="openAddSupplierModal()">+ Add Supplier</button>
@@ -954,7 +1186,10 @@
                 </tr>
               </thead>
               <tbody id="suppliers-table-body">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading suppliers...</td></tr>
+                <tr>
+                  <td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading suppliers...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -1023,24 +1258,33 @@
         <div class="card-panel" style="margin-bottom: 20px;">
           <div class="panel-header">
             <h3 class="panel-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+              </svg>
               GST Tax Reconciliation Summary (Input vs Output)
             </h3>
           </div>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
             <div style="background:var(--bg-sidebar); padding:14px; border-radius:6px; border:1px solid var(--border);">
               <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">OUTPUT GST (SALES)</div>
-              <div style="font-size:1.4rem; font-family:var(--font-heading); color:var(--text-primary); font-weight:700;" id="rep-tax-output">₹0</div>
+              <div
+                style="font-size:1.4rem; font-family:var(--font-heading); color:var(--text-primary); font-weight:700;"
+                id="rep-tax-output">₹0</div>
               <div style="font-size:0.72rem; color:var(--text-muted);">CGST + SGST + IGST Collected</div>
             </div>
             <div style="background:var(--bg-sidebar); padding:14px; border-radius:6px; border:1px solid var(--border);">
               <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">INPUT TAX CREDIT (ITC)</div>
-              <div style="font-size:1.4rem; font-family:var(--font-heading); color:var(--text-primary); font-weight:700;" id="rep-tax-input">₹0</div>
+              <div
+                style="font-size:1.4rem; font-family:var(--font-heading); color:var(--text-primary); font-weight:700;"
+                id="rep-tax-input">₹0</div>
               <div style="font-size:0.72rem; color:var(--text-muted);">GST Paid on Purchases</div>
             </div>
-            <div style="background:var(--bg-sidebar); padding:14px; border-radius:6px; border:1px solid var(--accent-orange-border);">
+            <div
+              style="background:var(--bg-sidebar); padding:14px; border-radius:6px; border:1px solid var(--accent-orange-border);">
               <div style="font-size:0.75rem; color:var(--accent-orange); font-weight:700;">NET GST PAYABLE</div>
-              <div style="font-size:1.4rem; font-family:var(--font-heading); color:var(--accent-orange); font-weight:700;" id="rep-tax-payable">₹0</div>
+              <div
+                style="font-size:1.4rem; font-family:var(--font-heading); color:var(--accent-orange); font-weight:700;"
+                id="rep-tax-payable">₹0</div>
               <div style="font-size:0.72rem; color:var(--text-muted);">Output Tax minus ITC</div>
             </div>
           </div>
@@ -1052,7 +1296,13 @@
             <h3 class="panel-title" style="margin-bottom:14px;">Category-Wise Revenue</h3>
             <div class="table-responsive">
               <table class="data-table">
-                <thead><tr><th>Category</th><th>Units Sold</th><th>Revenue (₹)</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Units Sold</th>
+                    <th>Revenue (₹)</th>
+                  </tr>
+                </thead>
                 <tbody id="rep-categories-body"></tbody>
               </table>
             </div>
@@ -1061,7 +1311,13 @@
             <h3 class="panel-title" style="margin-bottom:14px;">Brand-Wise Revenue</h3>
             <div class="table-responsive">
               <table class="data-table">
-                <thead><tr><th>Brand</th><th>Units Sold</th><th>Revenue (₹)</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Brand</th>
+                    <th>Units Sold</th>
+                    <th>Revenue (₹)</th>
+                  </tr>
+                </thead>
                 <tbody id="rep-brands-body"></tbody>
               </table>
             </div>
@@ -1071,45 +1327,65 @@
           <div class="card-panel" style="grid-column: 1 / -1; margin-top: 15px;">
             <div class="panel-header" style="margin-bottom: 12px;">
               <div style="display:flex; align-items:center; gap:10px;">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                </svg>
                 <h2 class="panel-title" style="margin:0;">MongoDB Atlas Cloud Cluster Data Store</h2>
               </div>
               <div style="display:flex; gap:8px;">
-                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect" onclick="triggerMongoReconnect()">Retry Connection</button>
-                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to MongoDB</button>
+                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect"
+                  onclick="triggerMongoReconnect()">Retry Connection</button>
+                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to
+                  MongoDB</button>
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
-              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+            <div
+              style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+              <div
+                style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
                 <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Status</span>
-                <span id="mongo-card-status" style="font-size:1.05rem; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-top:4px;">
+                <span id="mongo-card-status"
+                  style="font-size:1.05rem; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-top:4px;">
                   <span class="live-dot" id="mongo-card-dot" style="background:#f59e0b;"></span>
                   <span id="mongo-card-status-text">Checking connection...</span>
                 </span>
               </div>
-              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+              <div
+                style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
                 <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Cluster Host</span>
-                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopit.c8x6ms0.mongodb.net</span>
+                <span
+                  style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopit.c8x6ms0.mongodb.net</span>
               </div>
-              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+              <div
+                style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
                 <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Database Name</span>
-                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopitshop</span>
+                <span
+                  style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px; font-family:monospace;">motopitshop</span>
               </div>
-              <div style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+              <div
+                style="background:var(--bg-elevated); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
                 <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Data Flow</span>
-                <span style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px;">Live Realtime Sync</span>
+                <span
+                  style="font-size:0.95rem; font-weight:600; color:var(--text-main); display:block; margin-top:4px;">Live
+                  Realtime Sync</span>
               </div>
             </div>
 
             <!-- Whitelist Banner -->
-            <div id="mongo-whitelist-banner" style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+            <div id="mongo-whitelist-banner"
+              style="display:none; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
               <div style="display:flex; align-items:flex-start; gap:10px;">
                 <span style="font-size:1.2rem;">⚠️</span>
                 <div>
                   <strong style="color:#f59e0b;">MongoDB Atlas Network Access Whitelist Action Required:</strong>
                   <p style="margin:4px 0 0 0; font-size:0.85rem; color:var(--text-main); line-height:1.4;">
-                    Your cluster rejected the TLS connection (SSL alert 80). In your MongoDB Atlas dashboard, go to <strong>Network Access</strong> &rarr; click <strong>Add IP Address</strong> &rarr; select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> or add your current IP <code style="background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">42.109.144.22</code>. Then click "Retry Connection" above.
+                    Your cluster rejected the TLS connection (SSL alert 80). In your MongoDB Atlas dashboard, go to
+                    <strong>Network Access</strong> &rarr; click <strong>Add IP Address</strong> &rarr; select
+                    <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> or add your current IP <code
+                      style="background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">42.109.144.22</code>. Then
+                    click "Retry Connection" above.
                   </p>
                 </div>
               </div>
@@ -1117,39 +1393,50 @@
 
             <!-- Synced Collections Grid -->
             <div>
-              <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">MongoDB Synced Collections Data</span>
-              <div id="mongo-counts-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
+              <span
+                style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">MongoDB
+                Synced Collections Data</span>
+              <div id="mongo-counts-grid"
+                style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Products</span>
-                  <span id="cnt-products" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-products"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Orders</span>
-                  <span id="cnt-orders" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-orders"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Invoices</span>
-                  <span id="cnt-invoices" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-invoices"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Customers</span>
-                  <span id="cnt-customers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-customers"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Purchases</span>
-                  <span id="cnt-purchases" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-purchases"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Suppliers</span>
-                  <span id="cnt-suppliers" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-suppliers"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Expenses</span>
-                  <span id="cnt-expenses" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-expenses"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
                 <div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; text-align:center;">
                   <span style="font-size:0.7rem; color:var(--text-muted);">Settings</span>
-                  <span id="cnt-settings" style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
+                  <span id="cnt-settings"
+                    style="display:block; font-weight:700; font-size:1.1rem; color:var(--text-main);">-</span>
                 </div>
               </div>
             </div>
@@ -1164,7 +1451,10 @@
         <div class="card-panel">
           <div class="panel-header">
             <h2 class="panel-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path
+                  d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+              </svg>
               Operating Expenses & Vendor Payments
             </h2>
             <div style="display:flex; gap:8px;">
@@ -1200,7 +1490,10 @@
                 </tr>
               </thead>
               <tbody id="expenses-table-body">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading expenses...</td></tr>
+                <tr>
+                  <td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Loading expenses...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -1215,7 +1508,11 @@
           <!-- Left Column: Business & GST Profile Form -->
           <div class="card-panel">
             <h2 class="panel-title" style="margin-bottom:18px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path
+                  d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
               Business Details & GST Setup
             </h2>
             <form id="store-settings-form">
@@ -1288,12 +1585,15 @@
               <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:14px;">
                 Cloud Cluster: <strong>motopit.c8x6ms0.mongodb.net / motopitshop</strong>
               </p>
-              <div id="mongo-whitelist-banner" style="display:none; padding:10px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); border-radius:6px; margin-bottom:12px; font-size:0.78rem; color:#f59e0b;">
+              <div id="mongo-whitelist-banner"
+                style="display:none; padding:10px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); border-radius:6px; margin-bottom:12px; font-size:0.78rem; color:#f59e0b;">
                 ⚠️ IP whitelist required. Ensure 0.0.0.0/0 is permitted in Atlas Network Access.
               </div>
               <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect" onclick="triggerMongoReconnect()">Retry Connection</button>
-                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to MongoDB</button>
+                <button class="btn btn-secondary btn-sm" id="btn-mongo-reconnect"
+                  onclick="triggerMongoReconnect()">Retry Connection</button>
+                <button class="btn btn-primary btn-sm" id="btn-mongo-sync" onclick="triggerMongoSync()">Sync All Data to
+                  MongoDB</button>
               </div>
             </div>
 
@@ -1302,7 +1602,8 @@
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <h2 class="panel-title" style="font-size:1.05rem;">Categories & Brands</h2>
                 <div style="display:flex; gap:6px;">
-                  <button class="btn btn-outline-orange btn-xs" onclick="openInlineAddCategoryModal()">+ Add Category</button>
+                  <button class="btn btn-outline-orange btn-xs" onclick="openInlineAddCategoryModal()">+ Add
+                    Category</button>
                   <button class="btn btn-outline-orange btn-xs" onclick="openInlineAddBrandModal()">+ Add Brand</button>
                 </div>
               </div>
@@ -1333,7 +1634,8 @@
           <div class="form-grid-2">
             <div class="form-field">
               <label class="form-label">Product Name *</label>
-              <input type="text" id="prod-form-name" class="form-input" placeholder="e.g. AGV K6 S Carbon Helmet" required />
+              <input type="text" id="prod-form-name" class="form-input" placeholder="e.g. AGV K6 S Carbon Helmet"
+                required />
             </div>
             <div class="form-field">
               <label class="form-label">SKU (Unique Code) *</label>
@@ -1359,7 +1661,8 @@
             <div class="form-field">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <label class="form-label" style="margin-bottom:0;">Category *</label>
-                <button type="button" class="btn btn-outline-orange btn-xs" id="btn-quick-add-category" onclick="openInlineAddCategoryModal()" title="Add Custom Category">
+                <button type="button" class="btn btn-outline-orange btn-xs" id="btn-quick-add-category"
+                  onclick="openInlineAddCategoryModal()" title="Add Custom Category">
                   <span style="font-weight:700;">+ New Category</span>
                 </button>
               </div>
@@ -1370,7 +1673,8 @@
             <div class="form-field">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <label class="form-label" style="margin-bottom:0;">Brand *</label>
-                <button type="button" class="btn btn-outline-orange btn-xs" id="btn-quick-add-brand" onclick="openInlineAddBrandModal()" title="Add Custom Brand">
+                <button type="button" class="btn btn-outline-orange btn-xs" id="btn-quick-add-brand"
+                  onclick="openInlineAddBrandModal()" title="Add Custom Brand">
                   <span style="font-weight:700;">+ New Brand</span>
                 </button>
               </div>
@@ -1421,7 +1725,8 @@
 
           <div class="form-field">
             <label class="form-label">Product Description</label>
-            <textarea id="prod-form-desc" class="form-input" rows="2" placeholder="Specifications, certification (ECE/DOT), material, warranty..."></textarea>
+            <textarea id="prod-form-desc" class="form-input" rows="2"
+              placeholder="Specifications, certification (ECE/DOT), material, warranty..."></textarea>
           </div>
         </div>
         <div class="modal-footer">
@@ -1458,7 +1763,8 @@
           <button class="modal-close-btn" onclick="closeModal('modal-thermal-receipt')">✕</button>
         </div>
       </div>
-      <div class="modal-body" id="thermal-receipt-area" style="font-family:monospace; background:#fff; color:#000; padding:16px; border-radius:4px; font-size:0.8rem; line-height:1.3;">
+      <div class="modal-body" id="thermal-receipt-area"
+        style="font-family:monospace; background:#fff; color:#000; padding:16px; border-radius:4px; font-size:0.8rem; line-height:1.3;">
         <!-- Injected dynamically -->
       </div>
     </div>
@@ -1477,7 +1783,8 @@
             <div class="form-field">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <label class="form-label" style="margin-bottom:0;">Distributor / Supplier *</label>
-                <button type="button" class="btn btn-outline-orange btn-xs" onclick="openInlineAddSupplierModal()" title="Add New Distributor">+ New Supplier</button>
+                <button type="button" class="btn btn-outline-orange btn-xs" onclick="openInlineAddSupplierModal()"
+                  title="Add New Distributor">+ New Supplier</button>
               </div>
               <select id="pur-form-supplier" class="form-input" required>
                 <option value="">-- Select Supplier / Distributor --</option>
@@ -1505,14 +1812,18 @@
 
           <!-- Line Items Table -->
           <div style="margin: 16px 0;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
               <div>
                 <span class="form-label" style="font-weight:700;">Purchased Product Line Items *</span>
-                <span style="font-size:0.75rem; color:var(--text-muted); margin-left:8px;">(Select catalog SKU or create product)</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); margin-left:8px;">(Select catalog SKU or create
+                  product)</span>
               </div>
               <div style="display:flex; gap:8px;">
-                <button type="button" class="btn btn-outline-orange btn-xs" onclick="openAddProductModal()" title="Create New Product in Catalog">+ New Product</button>
-                <button type="button" class="btn btn-primary btn-xs" onclick="addPurchaseLineItem()">+ Add Line Item</button>
+                <button type="button" class="btn btn-outline-orange btn-xs" onclick="openAddProductModal()"
+                  title="Create New Product in Catalog">+ New Product</button>
+                <button type="button" class="btn btn-primary btn-xs" onclick="addPurchaseLineItem()">+ Add Line
+                  Item</button>
               </div>
             </div>
             <div class="table-responsive">
@@ -1535,7 +1846,8 @@
           </div>
 
           <!-- Financial Breakdown Summary Box -->
-          <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:8px; padding:12px 18px; margin:14px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div
+            style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:8px; padding:12px 18px; margin:14px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
             <div>
               <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Subtotal (Taxable)</div>
               <div id="pur-summary-taxable" style="font-size:1.05rem; font-weight:700; color:#fff;">₹0</div>
@@ -1557,7 +1869,8 @@
           <div class="form-grid-2">
             <div class="form-field">
               <label class="form-label">Amount Paid Now (₹)</label>
-              <input type="number" id="pur-form-paid" class="form-input" value="0" min="0" oninput="calculatePurchaseTotals()" />
+              <input type="number" id="pur-form-paid" class="form-input" value="0" min="0"
+                oninput="calculatePurchaseTotals()" />
             </div>
             <div class="form-field">
               <label class="form-label">Payment Mode</label>
@@ -1610,7 +1923,8 @@
 
           <div class="form-field">
             <label class="form-label">Description / Purpose *</label>
-            <input type="text" id="exp-form-desc" class="form-input" placeholder="e.g. Showroom Air Conditioner servicing" required />
+            <input type="text" id="exp-form-desc" class="form-input"
+              placeholder="e.g. Showroom Air Conditioner servicing" required />
           </div>
 
           <div class="form-grid-2">
@@ -1631,7 +1945,8 @@
 
           <div class="form-field">
             <label class="form-label">Vendor / Payee / Reference</label>
-            <input type="text" id="exp-form-vendor" class="form-input" placeholder="e.g. Voltas Service Center / UPI Ref" />
+            <input type="text" id="exp-form-vendor" class="form-input"
+              placeholder="e.g. Voltas Service Center / UPI Ref" />
           </div>
         </div>
         <div class="modal-footer">
@@ -1672,7 +1987,8 @@
           </div>
           <div class="form-field">
             <label class="form-label">Audit Notes</label>
-            <input type="text" id="adj-form-notes" class="form-input" placeholder="Explain physical verification details" />
+            <input type="text" id="adj-form-notes" class="form-input"
+              placeholder="Explain physical verification details" />
           </div>
         </div>
         <div class="modal-footer">
@@ -1764,7 +2080,8 @@
           </div>
           <div class="form-field">
             <label class="form-label">Address</label>
-            <input type="text" id="cust-form-address" class="form-input" placeholder="Door No, Street, City, State, PIN" />
+            <input type="text" id="cust-form-address" class="form-input"
+              placeholder="Door No, Street, City, State, PIN" />
           </div>
         </div>
         <div class="modal-footer">
@@ -1786,7 +2103,8 @@
         <div class="modal-body">
           <div class="form-field">
             <label class="form-label">Company Name *</label>
-            <input type="text" id="supp-form-name" class="form-input" placeholder="e.g. Racing Gear Wholesalers Ltd" required />
+            <input type="text" id="supp-form-name" class="form-input" placeholder="e.g. Racing Gear Wholesalers Ltd"
+              required />
           </div>
           <div class="form-grid-2">
             <div class="form-field">
@@ -1836,12 +2154,13 @@
           </div>
           <div class="form-field">
             <label class="form-label">Login Email *</label>
-            <input type="email" id="user-form-email" class="form-input" placeholder="ramesh@motopitshop.com" required autocomplete="username" />
+            <input type="email" id="user-form-email" class="form-input" placeholder="ramesh@motopitshop.com" required />
           </div>
           <div class="form-grid-2">
             <div class="form-field">
               <label class="form-label">Password *</label>
-              <input type="password" id="user-form-password" class="form-input" placeholder="••••••••" required autocomplete="new-password" />
+              <input type="password" id="user-form-password" class="form-input" placeholder="••••••••" required
+                autocomplete="new-password" />
             </div>
             <div class="form-field">
               <label class="form-label">Staff Role *</label>
@@ -1866,7 +2185,7 @@
     </div>
   </div>
 
-  
+
   <!-- Quick Custom Category Modal -->
   <div class="modal-overlay" id="modal-quick-category" style="z-index: 100050;">
     <div class="modal-dialog" style="max-width: 440px;">
@@ -1878,15 +2197,18 @@
         <div class="modal-body" style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
           <div class="form-field">
             <label class="form-label">Category Name *</label>
-            <input type="text" id="quick-cat-name" class="form-input" placeholder="e.g. Performance Exhausts" required />
+            <input type="text" id="quick-cat-name" class="form-input" placeholder="e.g. Performance Exhausts"
+              required />
           </div>
           <div class="form-field">
             <label class="form-label">Icon / Emoji (Optional)</label>
-            <input type="text" id="quick-cat-icon" class="form-input" placeholder="e.g. 💨 or 🏍️" maxlength="4" value="📦" />
+            <input type="text" id="quick-cat-icon" class="form-input" placeholder="e.g. 💨 or 🏍️" maxlength="4"
+              value="📦" />
           </div>
           <div class="form-field">
             <label class="form-label">Description (Optional)</label>
-            <input type="text" id="quick-cat-desc" class="form-input" placeholder="e.g. Slip-ons, full systems & headers" />
+            <input type="text" id="quick-cat-desc" class="form-input"
+              placeholder="e.g. Slip-ons, full systems & headers" />
           </div>
         </div>
         <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px;">
@@ -1912,7 +2234,8 @@
           </div>
           <div class="form-field">
             <label class="form-label">Description (Optional)</label>
-            <input type="text" id="quick-brand-desc" class="form-input" placeholder="e.g. Premium racing exhaust systems" />
+            <input type="text" id="quick-brand-desc" class="form-input"
+              placeholder="e.g. Premium racing exhaust systems" />
           </div>
         </div>
         <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px;">
@@ -1923,7 +2246,7 @@
     </div>
   </div>
 
-  
+
   <!-- Quick Custom Supplier Modal -->
   <div class="modal-overlay" id="modal-quick-supplier" style="z-index: 100060;">
     <div class="modal-dialog" style="max-width: 460px;">
@@ -1935,7 +2258,8 @@
         <div class="modal-body" style="padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;">
           <div class="form-field">
             <label class="form-label">Distributor / Company Name *</label>
-            <input type="text" id="quick-supp-name" class="form-input" placeholder="e.g. Brembo India Spares Distribution" required />
+            <input type="text" id="quick-supp-name" class="form-input"
+              placeholder="e.g. Brembo India Spares Distribution" required />
           </div>
           <div class="form-grid-2">
             <div class="form-field">
@@ -1950,7 +2274,8 @@
           <div class="form-grid-2">
             <div class="form-field">
               <label class="form-label">GSTIN (Optional)</label>
-              <input type="text" id="quick-supp-gstin" class="form-input" placeholder="e.g. 33AAPCA1234F1Z1" maxlength="15" />
+              <input type="text" id="quick-supp-gstin" class="form-input" placeholder="e.g. 33AAPCA1234F1Z1"
+                maxlength="15" />
             </div>
             <div class="form-field">
               <label class="form-label">Email (Optional)</label>
@@ -1959,7 +2284,8 @@
           </div>
           <div class="form-field">
             <label class="form-label">Operating Address / City</label>
-            <input type="text" id="quick-supp-address" class="form-input" placeholder="e.g. Ambattur Industrial Estate, Chennai, TN" />
+            <input type="text" id="quick-supp-address" class="form-input"
+              placeholder="e.g. Ambattur Industrial Estate, Chennai, TN" />
           </div>
         </div>
         <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px;">
@@ -1976,4 +2302,5 @@
   <!-- Owner Portal Controller Script -->
   <script src="/owner.js?v=9"></script>
 </body>
+
 </html>
