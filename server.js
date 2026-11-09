@@ -622,10 +622,21 @@ const server = http.createServer(async (req, res) => {
       const payStatus = (payment && payment.status) ? payment.status : (customer.payment === 'COD' ? 'PENDING' : 'SUCCESS');
       const payRef = (payment && payment.transactionRef) ? payment.transactionRef : `REF-${Date.now()}`;
 
+      // Store screenshot - limit to 500KB to prevent DB bloat
+      const screenshot = customer.screenshot || '';
+      const screenshotStored = screenshot.length > 524288 ? screenshot.substring(0, 524288) : screenshot;
+
       const orderRes = insertOrder.run(
-        orderNumber, userId, customer.name, customer.email, customer.phone,
-        JSON.stringify(customer.address || {}), payStatus === 'SUCCESS' ? 'CONFIRMED' : 'PLACED',
-        payStatus, customer.payment || 'UPI', payRef, customer.screenshot || '',
+        orderNumber, userId,
+        (customer.name || '').trim(),
+        (customer.email || '').trim(),
+        (customer.phone || '').trim(),
+        JSON.stringify(customer.address || {}),
+        payStatus === 'SUCCESS' ? 'CONFIRMED' : 'PLACED',
+        payStatus,
+        customer.payment || 'UPI',
+        payRef,
+        screenshotStored,
         subtotal, taxTotal, cgstTotal, sgstTotal, igstTotal, grandTotal
       );
 
@@ -677,6 +688,7 @@ const server = http.createServer(async (req, res) => {
         grandTotal
       });
     } catch (err) {
+      console.error('Order creation error:', err.message, err.stack);
       return sendJson(res, 500, { error: err.message });
     }
   }
