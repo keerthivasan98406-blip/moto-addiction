@@ -526,7 +526,7 @@ function updateCartUI() {
         <span>×${item.qty}</span>
         <button class="cart-item-remove" data-idx="${idx}" aria-label="Remove">✕</button>
       `;
-      cartItemsEl.insertBefore(el, cartFooterEl.previousSibling);
+      cartItemsEl.appendChild(el);
     });
     cartItemsEl.querySelectorAll('.cart-item-remove').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -597,14 +597,18 @@ function closeCheckout() {
 }
 
 function showCheckoutStep1() {
-  document.getElementById('checkout-step-1').style.display = 'block';
-  document.getElementById('checkout-step-2').style.display = 'none';
+  const s1 = document.getElementById('checkout-step-1');
+  const s2 = document.getElementById('checkout-step-2');
+  if (s1) s1.style.display = 'block';
+  if (s2) s2.style.display = 'none';
   updateStep1Summary();
 }
 
 function showCheckoutStep2() {
-  document.getElementById('checkout-step-1').style.display = 'none';
-  document.getElementById('checkout-step-2').style.display = 'block';
+  const s1 = document.getElementById('checkout-step-1');
+  const s2 = document.getElementById('checkout-step-2');
+  if (s1) s1.style.display = 'none';
+  if (s2) s2.style.display = 'block';
   updatePaymentStep();
 }
 

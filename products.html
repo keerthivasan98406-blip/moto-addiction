@@ -431,78 +431,122 @@
     </div>
   </div>
 
-  <!-- ===== CHECKOUT MODAL ===== -->
+  <!-- ===== CHECKOUT MODAL (2-Step: Delivery → Payment) ===== -->
   <div class="checkout-modal" id="checkout-modal">
     <div class="checkout-content">
-      <div class="checkout-header">
-        <h3>Checkout Details</h3>
-        <button class="checkout-close" id="checkout-close" aria-label="Close checkout">✕</button>
+
+      <!-- STEP 1: Delivery Information -->
+      <div id="checkout-step-1">
+        <div class="checkout-header">
+          <h3>🏍️ Delivery Information</h3>
+          <button class="checkout-close" id="checkout-close" aria-label="Close checkout">✕</button>
+        </div>
+        <form id="checkout-form" class="checkout-form" autocomplete="on">
+          <div class="form-group">
+            <label for="cust-name">Full Name *</label>
+            <input type="text" id="cust-name" required placeholder="e.g. Keerthivasan A" autocomplete="name" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cust-email">Email *</label>
+              <input type="email" id="cust-email" required placeholder="you@example.com" autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="cust-phone">Phone Number *</label>
+              <input type="tel" id="cust-phone" required placeholder="+91 98765 43210" autocomplete="tel" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cust-address">Street Address *</label>
+            <input type="text" id="cust-address" required placeholder="3/12 Mel St, Ramapuram" autocomplete="street-address" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cust-city">City *</label>
+              <input type="text" id="cust-city" required placeholder="Chengalpattu" autocomplete="address-level2" />
+            </div>
+            <div class="form-group">
+              <label for="cust-pincode">Postal Code *</label>
+              <input type="text" id="cust-pincode" required placeholder="603201" autocomplete="postal-code" pattern="[0-9]{6}" maxlength="6" />
+            </div>
+          </div>
+          <div class="checkout-summary" id="checkout-summary-1">
+            <h4>Order Summary</h4>
+            <div id="checkout-items-preview" style="margin-bottom:8px; font-size:0.88rem; color:var(--text-secondary);"></div>
+            <div class="summary-row total">
+              <span>Total:</span>
+              <span id="summary-total-amount" style="color:var(--primary); font-weight:700;">₹0</span>
+            </div>
+          </div>
+          <button type="submit" id="btn-continue-to-payment" class="btn btn-primary" style="width:100%; margin-top:16px; padding:14px; font-size:1rem; font-weight:700;">
+            Continue to Payment →
+          </button>
+        </form>
       </div>
-      <form id="checkout-form" class="checkout-form">
-        <div class="form-group">
-          <label for="cust-name">Full Name *</label>
-          <input type="text" id="cust-name" required placeholder="e.g. Rahul Sharma" style="background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm);">
+
+      <!-- STEP 2: Payment -->
+      <div id="checkout-step-2" style="display:none;">
+        <div class="checkout-header">
+          <button id="btn-back-to-delivery" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:0.85rem; display:flex; align-items:center; gap:4px;">← Back</button>
+          <button class="checkout-close" id="checkout-close-2" aria-label="Close">✕</button>
         </div>
-        <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:12px;">
-          <div class="form-group">
-            <label for="cust-email">Email Address *</label>
-            <input type="email" id="cust-email" required placeholder="e.g. rahul@example.com" style="background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm); width:100%;">
-          </div>
-          <div class="form-group">
-            <label for="cust-phone">Phone Number *</label>
-            <input type="tel" id="cust-phone" required placeholder="e.g. 9876543210" style="background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm); width:100%;">
-          </div>
+        <div style="text-align:center; padding:0 0 12px;">
+          <div style="font-size:1.5rem;">💳</div>
+          <h3 style="margin:0; font-size:1.2rem;">Payment Options</h3>
         </div>
-        
-        <div class="form-row" style="display:grid; grid-template-columns: 1fr; gap:16px; margin-top:12px;">
-          <div class="form-group">
-            <label for="cust-pay">Payment Method *</label>
-            <select id="cust-pay" required style="background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm); width:100%;">
-              <option value="upi">UPI (GPay / PhonePe)</option>
-              <option value="online">Online Payment (Scan & Pay)</option>
-              <option value="cod" selected>Cash on Delivery (COD)</option>
-            </select>
+        <div style="background:var(--surface-2); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+          <p style="font-weight:700; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase;">Order Summary</p>
+          <div id="payment-items-list" style="font-size:0.88rem; color:var(--text-secondary);"></div>
+          <hr style="border-color:var(--border); margin:8px 0;" />
+          <div style="display:flex; justify-content:space-between; font-weight:700;">
+            <span>Total Amount:</span>
+            <span id="payment-total" style="color:var(--primary);">₹0</span>
           </div>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;" id="payment-items-count"></p>
         </div>
-        
-        <!-- Online Scan & Pay Panel -->
-        <div id="online-pay-details" style="display: none; background: var(--surface-2); border: 1px dashed var(--primary); border-radius: var(--radius-sm); padding: 16px; margin-top: 12px; text-align: center;">
-          <p style="font-size: 0.9rem; margin-bottom: 12px; color: var(--text-primary);">Scan the QR Code below to pay via GPay / PhonePe / Paytm:</p>
-          <div style="width: 140px; height: 140px; background: white; margin: 0 auto 12px; padding: 10px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-            <svg viewBox="0 0 29 29" width="120" height="120" style="shape-rendering: crispEdges;">
-              <path fill="#000000" d="M0 0h7v7H0zm1 1v5h5V1zm8 0h3v1h-3zm4 0h1v1h-1zm2 0h1v2h-1zm2 0h3v1h-3zm4 0h3v7h-3zm1 1v5h1V2zm-12 1h1v1h-1zm1 1h1v2h-1zm1 1h2v1h-2zm-11 3h3v1h-3zm12 0h1v1h-1zm4 0h1v1h-1zm1 1h1v2h-1zm4 0h3v3h-3zm1 1v1h1v-1zm-15 1h1v2h-1zm2 0h1v1h-1zm2 0h1v1h-1zm4 0h1v2h-1zm5 0h1v2h-1zm-15 1h1v1h-1zm10 0h1v1h-1zm3 0h1v1h-1zm-13 1h3v1h-3zm5 0h1v1h-1zm4 0h1v2h-1zm2 0h2v1h-2zm3 0h1v1h-1zm-14 1h1v2h-1zm2 0h1v1h-1zm2 0h1v1h-1zm5 0h1v1h-1zm4 0h1v1h-1zm3 0h1v2h-1zm-17 1h1v1h-1zm11 0h1v1h-1zm3 0h1v1h-1zm1 1h1v2h-1zm2 0h3v1h-3zm-17 1h3v1h-3zm5 0h2v1h-2zm3 0h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm3 0h1v1h-1zm-15 1h1v1h-1zm4 0h1v2h-1zm3 0h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm1 1h2v1h-2zm-12 1h3v1h-3zm6 0h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm4 0h1v1h-1zm-14 1h1v1h-1zm3 0h1v1h-1zm5 0h1v2h-1zm3 0h1v1h-1zm2 0h1v1h-1zm-13 1h3v1h-3zm5 0h1v1h-1zm2 0h1v1h-1zm2 0h1v2h-1zm3 0h1v1h-1zm1 1h2v1h-2zm-12 1h1v2h-1zm2 0h1v1h-1zm2 0h1v1h-1zm4 0h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm3 0h2v1h-2z"/>
-            </svg>
+        <div style="background:#fff8f0; border:1.5px solid var(--primary); border-radius:10px; padding:16px; text-align:center; margin-bottom:16px;">
+          <p style="font-weight:700; color:#111; margin-bottom:12px; font-size:0.95rem;">📱 Scan QR Code to Pay</p>
+          <div style="display:flex; justify-content:center; margin-bottom:10px;">
+            <img id="payment-qr-img" src="" alt="UPI QR Code" style="width:160px; height:160px; border-radius:8px; border:1px solid #ddd;" />
           </div>
-          <p style="font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; color: var(--primary);">UPI ID: motoaddictor@upi</p>
-          <div class="form-group" style="text-align: left;">
-            <label for="cust-screenshot" style="font-size: 0.85rem; color: var(--text-secondary);">Upload Payment Screenshot *</label>
-            <input type="file" id="cust-screenshot" accept="image/*" style="background: var(--surface-3); border: 1px solid var(--border); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.85rem; width: 100%; color: var(--text-muted);">
-          </div>
+          <p style="font-size:0.82rem; color:#555; margin-bottom:2px;">Amount: <strong id="qr-amount-label">₹0</strong></p>
+          <p style="font-size:0.78rem; color:#888;">UPI ID: <strong id="qr-upi-label">9894703254@upi</strong></p>
         </div>
-        
-        <div class="form-group" style="margin-top: 12px;">
-          <label for="cust-address">Shipping Address *</label>
-          <textarea id="cust-address" required placeholder="e.g. Flat 302, Phase 1, Dynamic City, Bangalore" rows="3" style="resize:none; background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px; border-radius:var(--radius-sm); font-family:inherit; width: 100%;"></textarea>
+        <p style="text-align:center; font-size:0.82rem; color:var(--text-secondary); margin-bottom:10px; font-weight:600;">Pay Directly via Apps:</p>
+        <div style="display:flex; gap:10px; justify-content:center; margin-bottom:16px;">
+          <button onclick="openUPIApp('gpay')" style="flex:1; padding:10px 6px; background:#fff; border:1px solid #e0e0e0; border-radius:8px; cursor:pointer; font-size:0.78rem; font-weight:600; color:#111;">🟢 Google Pay</button>
+          <button onclick="openUPIApp('phonepe')" style="flex:1; padding:10px 6px; background:#fff; border:1px solid #e0e0e0; border-radius:8px; cursor:pointer; font-size:0.78rem; font-weight:600; color:#6739b7;">🟣 PhonePe</button>
+          <button onclick="openUPIApp('paytm')" style="flex:1; padding:10px 6px; background:#fff; border:1px solid #e0e0e0; border-radius:8px; cursor:pointer; font-size:0.78rem; font-weight:600; color:#00b9f1;">🔵 Paytm</button>
         </div>
-        
-        <div class="checkout-summary" style="margin-top: 16px; background: var(--surface-3); padding:16px; border-radius: var(--radius-sm); border:1px solid var(--border);">
-          <h4 style="margin-bottom:8px; font-family:var(--font-heading); color: var(--primary); font-size:1.1rem;">Order Summary</h4>
-          <div class="summary-row" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
-            <span>Items:</span>
-            <span id="summary-items-count">0</span>
-          </div>
-          <div class="summary-row" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:8px;">
-            <span>Shipping:</span>
-            <span style="color: #4ade80; font-weight: 600;">FREE</span>
-          </div>
-          <div class="summary-row total" style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:700; border-top:1px solid var(--border); padding-top:8px;">
-            <span>Total:</span>
-            <span id="summary-total-amount">₹0</span>
+        <div style="background:#fffbea; border:1px solid #f59e0b; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:0.82rem; color:#555; line-height:1.6;">
+          <p style="font-weight:700; margin-bottom:6px; color:#b45309;">📋 Payment Instructions:</p>
+          <ul style="margin:0; padding-left:16px;">
+            <li>Pay <strong id="instr-amount">₹0</strong> to <strong id="instr-upi">9894703254@upi</strong></li>
+            <li>Use any UPI app or scan the QR code above</li>
+            <li>Take a screenshot of the payment confirmation</li>
+            <li>Upload the screenshot below to complete your order</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label for="cust-screenshot" style="display:block; background:var(--primary); color:#fff; text-align:center; padding:12px; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.9rem;">
+            📷 Upload Payment Screenshot
+          </label>
+          <input type="file" id="cust-screenshot" accept="image/*" style="display:none;" />
+          <div id="screenshot-preview" style="margin-top:10px; display:none;">
+            <img id="screenshot-img-preview" src="" alt="Payment Screenshot" style="width:100%; max-height:200px; object-fit:contain; border-radius:8px; border:2px solid #4ade80;" />
+            <p style="color:#4ade80; font-size:0.82rem; margin-top:4px; text-align:center;">✓ Screenshot uploaded</p>
           </div>
         </div>
-        
-        <button type="submit" id="checkout-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Place Order 🏍️</button>
-      </form>
+        <button id="checkout-submit-btn" style="display:none; width:100%; padding:14px; background:linear-gradient(135deg,#4ade80,#16a34a); color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer;">
+          ✅ Confirm Order
+        </button>
+        <div style="text-align:center; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+          <a id="whatsapp-help-btn" href="https://wa.me/919894703254" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:#25d366; color:#fff; padding:8px 16px; border-radius:20px; font-size:0.82rem; font-weight:600; text-decoration:none;">
+            💬 Chat on WhatsApp
+          </a>
+        </div>
+      </div>
+
     </div>
   </div>
 
