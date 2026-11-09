@@ -3,6 +3,9 @@
   "version": "2.0.0",
   "description": "Production Motorcycle Spare Parts Ecommerce & Business Management Platform",
   "main": "server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
