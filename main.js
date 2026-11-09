@@ -586,11 +586,17 @@ function openCheckout(directItem = null) {
   }
   closeCart();
   showCheckoutStep1();
-  checkoutModal.classList.add('active');
+  const modal = document.getElementById('checkout-modal');
+  if (modal) {
+    modal.classList.add('active');
+  } else {
+    console.warn('checkout-modal not found on this page');
+  }
 }
 
 function closeCheckout() {
-  checkoutModal.classList.remove('active');
+  const modal = document.getElementById('checkout-modal');
+  if (modal) modal.classList.remove('active');
   activeCheckoutItem = null;
   checkoutDeliveryData = null;
   showCheckoutStep1();
@@ -640,12 +646,13 @@ function updatePaymentStep() {
   }
 
   const totalFmt = `₹${total.toLocaleString('en-IN')}`;
-  document.getElementById('payment-total').textContent = totalFmt;
-  document.getElementById('qr-amount-label').textContent = totalFmt;
-  document.getElementById('instr-amount').textContent = totalFmt;
-  document.getElementById('payment-items-count').textContent = `${items.reduce((a,i)=>a+(i.qty||1),0)} item(s)`;
-  document.getElementById('qr-upi-label').textContent = UPI_ID;
-  document.getElementById('instr-upi').textContent = UPI_ID;
+  const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  setText('payment-total', totalFmt);
+  setText('qr-amount-label', totalFmt);
+  setText('instr-amount', totalFmt);
+  setText('payment-items-count', `${items.reduce((a,i)=>a+(i.qty||1),0)} item(s)`);
+  setText('qr-upi-label', UPI_ID);
+  setText('instr-upi', UPI_ID);
 
   // List items
   const listEl = document.getElementById('payment-items-list');
@@ -662,9 +669,12 @@ function updatePaymentStep() {
   if (waBtn) waBtn.href = `https://wa.me/919894703254?text=Hi%2C+I+need+help+with+my+Moto+Pit+order.+Total%3A+${totalFmt}`;
 
   // Reset screenshot
-  document.getElementById('screenshot-preview').style.display = 'none';
-  if (checkoutSubmitBtn) checkoutSubmitBtn.style.display = 'none';
-  if (custScreenshotInput) custScreenshotInput.value = '';
+  const ssPreview = document.getElementById('screenshot-preview');
+  if (ssPreview) ssPreview.style.display = 'none';
+  const submitBtn = document.getElementById('checkout-submit-btn');
+  if (submitBtn) submitBtn.style.display = 'none';
+  const ssInput = document.getElementById('cust-screenshot');
+  if (ssInput) ssInput.value = '';
 }
 
 function openUPIApp(app) {
@@ -683,22 +693,26 @@ function openUPIApp(app) {
 document.getElementById('checkout-close')?.addEventListener('click', closeCheckout);
 document.getElementById('checkout-close-2')?.addEventListener('click', closeCheckout);
 document.getElementById('btn-back-to-delivery')?.addEventListener('click', showCheckoutStep1);
-checkoutModal?.addEventListener('click', (e) => { if (e.target === checkoutModal) closeCheckout(); });
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('checkout-modal');
+  if (modal && e.target === modal) closeCheckout();
+});
 
 // Checkout button from cart
 document.getElementById('checkout-btn')?.addEventListener('click', () => openCheckout());
 
 // Step 1 form submit → go to payment step
-if (checkoutForm) {
-  checkoutForm.addEventListener('submit', (e) => {
+const checkoutFormEl = document.getElementById('checkout-form');
+if (checkoutFormEl) {
+  checkoutFormEl.addEventListener('submit', (e) => {
     e.preventDefault();
     checkoutDeliveryData = {
-      name: document.getElementById('cust-name').value.trim(),
-      email: document.getElementById('cust-email').value.trim(),
-      phone: document.getElementById('cust-phone').value.trim(),
-      address: document.getElementById('cust-address').value.trim(),
-      city: document.getElementById('cust-city').value.trim(),
-      pincode: document.getElementById('cust-pincode').value.trim(),
+      name: document.getElementById('cust-name')?.value.trim() || '',
+      email: document.getElementById('cust-email')?.value.trim() || '',
+      phone: document.getElementById('cust-phone')?.value.trim() || '',
+      address: document.getElementById('cust-address')?.value.trim() || '',
+      city: document.getElementById('cust-city')?.value.trim() || '',
+      pincode: document.getElementById('cust-pincode')?.value.trim() || '',
     };
     showCheckoutStep2();
   });
@@ -711,23 +725,25 @@ document.addEventListener('click', (e) => {
     e.stopPropagation();
     const id = buyBtn.getAttribute('data-id');
     const name = buyBtn.getAttribute('data-name');
-    const price = parseInt(buyBtn.getAttribute('data-price'), 10);
+    const price = parseInt(buyBtn.getAttribute('data-price'), 10) || 0;
     const img = buyBtn.closest('.product-card')?.querySelector('.product-img')?.src || '';
     openCheckout({ id, name, price, qty: 1, image: img });
   }
 });
 
 // Screenshot upload
-if (custScreenshotInput) {
-  custScreenshotInput.addEventListener('change', () => {
-    const file = custScreenshotInput.files[0];
+const custScreenshotInputEl = document.getElementById('cust-screenshot');
+if (custScreenshotInputEl) {
+  custScreenshotInputEl.addEventListener('change', () => {
+    const file = custScreenshotInputEl.files && custScreenshotInputEl.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const preview = document.getElementById('screenshot-preview');
         const imgEl = document.getElementById('screenshot-img-preview');
         if (preview && imgEl) { imgEl.src = ev.target.result; preview.style.display = 'block'; }
-        if (checkoutSubmitBtn) checkoutSubmitBtn.style.display = 'block';
+        const submitBtn = document.getElementById('checkout-submit-btn');
+        if (submitBtn) submitBtn.style.display = 'block';
         showToast('📸 Screenshot uploaded!');
       };
       reader.readAsDataURL(file);

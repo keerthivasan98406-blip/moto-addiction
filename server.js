@@ -615,7 +615,7 @@ const server = http.createServer(async (req, res) => {
           order_number, user_id, customer_name, customer_email, customer_phone,
           shipping_address_json, status, payment_status, payment_method, payment_ref, payment_screenshot,
           subtotal, tax_total, cgst_total, sgst_total, igst_total, grand_total
-        ) VALUES (?, ?, ?, ?, ?, ?, 'PLACED', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const userId = currentUser ? currentUser.id : null;
@@ -647,7 +647,7 @@ const server = http.createServer(async (req, res) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       const updateStock = db.prepare(`
-        UPDATE products SET stock = MAX(0, stock - ?), updated_at = datetime("now") WHERE id = ?
+        UPDATE products SET stock = MAX(0, stock - ?), updated_at = datetime('now') WHERE id = ?
       `);
       const logTxn = db.prepare(`
         INSERT INTO inventory_transactions (product_id, transaction_type, quantity_change, previous_stock, new_stock, notes, user_id)
@@ -728,7 +728,7 @@ const server = http.createServer(async (req, res) => {
         UPDATE orders SET
           status = COALESCE(?, status),
           payment_status = COALESCE(?, payment_status),
-          updated_at = datetime("now")
+          updated_at = datetime('now')
         WHERE id = ?
       `).run(status, payment_status, id);
 
@@ -764,7 +764,7 @@ const server = http.createServer(async (req, res) => {
           discount = ?,
           stock = COALESCE(?, stock),
           primary_image = COALESCE(?, primary_image),
-          updated_at = datetime("now")
+          updated_at = datetime('now')
         WHERE id = ?
       `).run(name, brand_id || null, category_id || null, description || null, price, old_price || null, discount, stock, primary_image || null, id);
 
@@ -803,7 +803,7 @@ const server = http.createServer(async (req, res) => {
       const prevStock = prod.stock;
       const newStock = Math.max(0, prevStock + parseInt(change, 10));
 
-      db.prepare('UPDATE products SET stock = ?, updated_at = datetime("now") WHERE id = ?').run(newStock, product_id);
+      db.prepare(`UPDATE products SET stock = ?, updated_at = datetime('now') WHERE id = ?`).run(newStock, product_id);
       db.prepare(`
         INSERT INTO inventory_transactions (product_id, transaction_type, quantity_change, previous_stock, new_stock, notes, user_id)
         VALUES (?, 'ADJUSTMENT', ?, ?, ?, ?, ?)

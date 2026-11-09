@@ -1042,10 +1042,18 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
       if (!existing) return sendJson(res, 404, { error: 'Product not found' });
 
-      let discount = existing.discount;
-      if (old_price && price && old_price > price) {
-        discount = Math.round(((old_price - price) / old_price) * 100);
-      }
+      const safeBrandId = brand_id && !isNaN(parseInt(brand_id, 10)) ? parseInt(brand_id, 10) : null;
+      const safeCatId = category_id && !isNaN(parseInt(category_id, 10)) ? parseInt(category_id, 10) : null;
+      const safeSuppId = supplier_id && !isNaN(parseInt(supplier_id, 10)) ? parseInt(supplier_id, 10) : null;
+      const safePrice = price && !isNaN(parseInt(price, 10)) ? parseInt(price, 10) : null;
+      const safeOldPrice = old_price && !isNaN(parseInt(old_price, 10)) ? parseInt(old_price, 10) : null;
+      const safePurchasePrice = purchase_price && !isNaN(parseInt(purchase_price, 10)) ? parseInt(purchase_price, 10) : null;
+      const safeGstRate = gst_rate && !isNaN(parseFloat(gst_rate)) ? parseFloat(gst_rate) : null;
+      const safeStock = stock !== undefined && !isNaN(parseInt(stock, 10)) ? parseInt(stock, 10) : null;
+      const safeMinStock = min_stock && !isNaN(parseInt(min_stock, 10)) ? parseInt(min_stock, 10) : null;
+      const safeDiscount = safeOldPrice && safePrice && safeOldPrice > safePrice
+        ? Math.round(((safeOldPrice - safePrice) / safeOldPrice) * 100)
+        : (safeOldPrice ? 0 : existing.discount);
 
       // Check barcode conflict
       if (barcode && barcode !== existing.barcode) {
@@ -1072,27 +1080,28 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
           stock = COALESCE(?, stock),
           min_stock = COALESCE(?, min_stock),
           primary_image = COALESCE(?, primary_image),
-          images_json = COALESCE(?, images_json),
           variants_json = COALESCE(?, variants_json),
           warranty = COALESCE(?, warranty),
           weight = COALESCE(?, weight),
           updated_at = datetime('now')
         WHERE id = ?
       `).run(
-        name, barcode, brand_id, category_id, supplier_id, description,
-        price, old_price || null, purchase_price, discount, gst_rate, hsn,
-        stock, min_stock, primary_image, images_json ? (typeof images_json === 'string' ? images_json : JSON.stringify(images_json)) : null, variants_json ? JSON.stringify(variants_json) : null,
-        warranty, weight, id
+        name || null, barcode || null, safeBrandId, safeCatId, safeSuppId,
+        description || null, safePrice, safeOldPrice, safePurchasePrice,
+        safeDiscount, safeGstRate, hsn || null, safeStock, safeMinStock,
+        primary_image || null,
+        variants_json ? (typeof variants_json === 'string' ? variants_json : JSON.stringify(variants_json)) : null,
+        warranty || null, weight || null, id
       );
 
-      // Log stock change if modified manually
-      if (stock !== undefined && parseInt(stock, 10) !== existing.stock) {
-        const diff = parseInt(stock, 10) - existing.stock;
+      // Log stock change if modified
+      if (safeStock !== null && safeStock !== existing.stock) {
+        const diff = safeStock - existing.stock;
         db.prepare(`
           INSERT INTO inventory_transactions (
             product_id, transaction_type, quantity_change, previous_stock, new_stock, notes, user_id
           ) VALUES (?, 'ADJUSTMENT', ?, ?, ?, 'Stock updated via Product Edit', ?)
-        `).run(id, diff, existing.stock, stock, currentUser.id);
+        `).run(id, diff, existing.stock, safeStock, currentUser.id);
       }
 
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'UPDATE_PRODUCT', 'PRODUCT', id, 'SUCCESS');
@@ -1114,7 +1123,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const body = await parseJsonBody(req);
       const archiveState = body.is_archived ? 1 : 0;
 
-      db.prepare('UPDATE products SET is_archived = ?, updated_at = datetime("now") WHERE id = ?').run(archiveState, id);
+      db.prepare(`UPDATE products SET is_archived = ?, updated_at = datetime('now') WHERE id = ?`).run(archiveState, id);
       syncTableRecordToMongo(db, 'products', id);
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, archiveState ? 'ARCHIVE_PRODUCT' : 'UNARCHIVE_PRODUCT', 'PRODUCT', id, 'SUCCESS');
 
@@ -1768,7 +1777,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       // If status changed to CANCELLED and was not previously cancelled, restore inventory
       if (status === 'CANCELLED' && order.status !== 'CANCELLED') {
         const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(id);
-        const restoreStock = db.prepare('UPDATE products SET stock = stock + ?, updated_at = datetime("now") WHERE id = ?');
+        const restoreStock = db.prepare(`UPDATE products SET stock = stock + ?, updated_at = datetime('now') WHERE id = ?`);
         const logTxn = db.prepare(`
           INSERT INTO inventory_transactions (
             product_id, transaction_type, quantity_change, previous_stock, new_stock, notes, user_id
