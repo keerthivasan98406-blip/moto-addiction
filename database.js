@@ -3,8 +3,19 @@ const Database = require('better-sqlite3');
 const crypto = require('crypto');
 const path = require('path');
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'motopitshop.db');
-const db = new Database(DB_PATH);
+// On Render (read-only filesystem), use /tmp for SQLite or fall back to in-memory
+const DB_PATH = process.env.DB_PATH || 
+  (process.env.NODE_ENV === 'production' 
+    ? '/tmp/motopitshop.db'   // Render allows writes to /tmp
+    : path.join(__dirname, 'motopitshop.db'));
+
+let db;
+try {
+  db = new Database(DB_PATH);
+} catch (err) {
+  console.warn('[DB] Could not open SQLite at', DB_PATH, '- using in-memory DB:', err.message);
+  db = new Database(':memory:');
+}
 
 // Enable Foreign Keys
 db.exec('PRAGMA foreign_keys = ON;');

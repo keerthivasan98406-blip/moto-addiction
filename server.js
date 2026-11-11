@@ -8,10 +8,17 @@ const { handleOwnerApi } = require('./owner-api.js');
 const { connectMongo, syncTableRecordToMongo, deleteFromMongo, getMongoStatus, getDb } = require('./mongodb.js');
 const { migrateAllToMongo } = require('./migrate-to-mongo.js');
 
-// Initialize database on server startup
-initDatabase();
+// Initialize database on server startup (SQLite - local/dev only, fails gracefully on read-only filesystems)
+try {
+  initDatabase();
+  console.log('[DB] SQLite database initialized successfully.');
+} catch (dbErr) {
+  console.warn('[DB] SQLite init failed (expected on read-only deploy environments like Render):', dbErr.message);
+  console.warn('[DB] Continuing with MongoDB as primary database.');
+}
 
 // Connect to MongoDB Atlas cluster asynchronously and synchronize data
+// NOTE: server.listen() is called BELOW at module level - MongoDB does NOT block HTTP startup
 connectMongo().then(async (mDb) => {
   if (mDb) {
     console.log('[SERVER] MongoDB Atlas connected. Syncing owner portal records...');
@@ -162,6 +169,13 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer(async (req, res) => {
+  // Health check endpoint - always respond immediately, no auth needed
+  // Render uses this to verify the server is alive
+  if (req.url === '/health' || req.url === '/health/') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    return res.end(JSON.stringify({ status: 'OK', message: 'Moto Pitshop server is running', timestamp: new Date().toISOString() }));
+  }
+
   // CORS Preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
