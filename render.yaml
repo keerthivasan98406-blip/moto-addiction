@@ -17,5 +17,3 @@ services:
         value: motopitshop
       - key: SESSION_SECRET
         value: motopitshop_production_secure_session_secret_2026
-      - key: PORT
-        value: 10000
