@@ -55,10 +55,11 @@ async function connectMongo() {
       console.log('[MONGODB] Initializing connection to cluster...');
       
       client = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 8000,
-        connectTimeoutMS: 10000,
-        maxPoolSize: 20,
-        minPoolSize: 2
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
+        socketTimeoutMS: 10000,
+        maxPoolSize: 10,
+        minPoolSize: 1
       });
 
       await client.connect();

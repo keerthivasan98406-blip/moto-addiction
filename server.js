@@ -468,7 +468,12 @@ async function mainHandler(req, res) {
         }
         if (bikeBrand && bikeModel) filter.compatible_bike_ids = { $exists: true };
 
-        let products = await mongoDb.collection('products').find(filter).sort({ _id: -1 }).toArray();
+        // 5-second timeout so homepage never hangs on slow MongoDB connection
+        let products = await mongoDb.collection('products')
+          .find(filter)
+          .maxTimeMS(5000)
+          .sort({ _id: -1 })
+          .toArray();
 
         // Normalize id field for frontend compatibility
         products = products.map(p => ({
