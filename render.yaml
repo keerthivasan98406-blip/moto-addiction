@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: moto-addiction
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        value: mongodb+srv://Motopitshop:Motopitshop2026@motopit.c8x6ms0.mongodb.net/motopitshop?retryWrites=true&w=majority
+      - key: DB_NAME
+        value: motopitshop
+      - key: SESSION_SECRET
+        value: motopitshop_production_secure_session_secret_2026
+      - key: PORT
+        value: 10000

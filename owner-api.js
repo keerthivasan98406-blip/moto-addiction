@@ -3,7 +3,7 @@ const path = require('path');
 // owner-api.js - Complete Business Logic and API Endpoints for Moto Pit Master Owner Portal
 const crypto = require('crypto');
 const { db, hashPassword } = require('./database.js');
-const { syncTableRecordToMongo, deleteFromMongo, getMongoStatus, connectMongo } = require('./mongodb.js');
+const { syncTableRecordToMongo, deleteFromMongo, getMongoStatus, connectMongo, getDb } = require('./mongodb.js');
 const { migrateAllToMongo } = require('./migrate-to-mongo.js');
 
 function getStoreSettings() {
@@ -56,6 +56,7 @@ function parseDateRange(range, start, end) {
 
 async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJsonBody, sendJson, logAudit) {
   const isOwnerStaff = currentUser && (currentUser.role === 'OWNER' || currentUser.role === 'ADMIN' || currentUser.role === 'STAFF');
+  const canAccessPos = currentUser && (currentUser.role === 'OWNER' || currentUser.role === 'ADMIN' || currentUser.role === 'STAFF');
 
   if (pathname === '/api/owner/mongodb/status' && req.method === 'GET') {
     const status = getMongoStatus();
@@ -119,6 +120,17 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       if (existing) return sendJson(res, 400, { error: `Category with slug "${generatedSlug}" already exists` });
       const result = db.prepare('INSERT INTO categories (slug, name, icon, description, display_order) VALUES (?, ?, ?, ?, ?)').run(generatedSlug, name.trim(), icon || '📦', description || '', nextOrder);
       try { syncTableRecordToMongo(db, 'categories', result.lastInsertRowid); } catch(e) {}
+      // Write to MongoDB directly
+      const mongoDb = getDb();
+      if (mongoDb) {
+        try {
+          await mongoDb.collection('categories').updateOne(
+            { slug: generatedSlug },
+            { $set: { id: result.lastInsertRowid, slug: generatedSlug, name: name.trim(), icon: icon || '📦', description: description || '', display_order: nextOrder, _synced_at: new Date() } },
+            { upsert: true }
+          );
+        } catch (e) { /* sync already attempted above */ }
+      }
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_CATEGORY', 'CATEGORY', result.lastInsertRowid, 'SUCCESS', { name, slug: generatedSlug });
       return sendJson(res, 201, { 
         message: 'Category created successfully', 
@@ -136,6 +148,16 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
   if (pathname === '/api/owner/categories' && req.method === 'GET') {
     if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    // Try MongoDB first
+    const mongoDb = getDb();
+    if (mongoDb) {
+      try {
+        const categories = await mongoDb.collection('categories').find({}).sort({ display_order: 1 }).toArray();
+        if (categories.length > 0) {
+          return sendJson(res, 200, { categories: categories.map(c => ({ ...c, id: c.id || (c._id ? c._id.toString() : undefined) })) });
+        }
+      } catch (e) { /* fall through */ }
+    }
     const categories = db.prepare('SELECT * FROM categories ORDER BY display_order ASC').all();
     return sendJson(res, 200, { categories });
   }
@@ -162,6 +184,17 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       if (existing) return sendJson(res, 400, { error: `Brand with slug "${generatedSlug}" already exists` });
       const result = db.prepare('INSERT INTO brands (slug, name, logo, description) VALUES (?, ?, ?, ?)').run(generatedSlug, name.trim(), logo || '', description || '');
       try { syncTableRecordToMongo(db, 'brands', result.lastInsertRowid); } catch(e) {}
+      // Write to MongoDB directly
+      const mongoDb = getDb();
+      if (mongoDb) {
+        try {
+          await mongoDb.collection('brands').updateOne(
+            { slug: generatedSlug },
+            { $set: { id: result.lastInsertRowid, slug: generatedSlug, name: name.trim(), logo: logo || '', description: description || '', _synced_at: new Date() } },
+            { upsert: true }
+          );
+        } catch (e) { /* sync already attempted above */ }
+      }
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_BRAND', 'BRAND', result.lastInsertRowid, 'SUCCESS', { name, slug: generatedSlug });
       return sendJson(res, 201, { 
         message: 'Brand created successfully', 
@@ -179,6 +212,16 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
   if (pathname === '/api/owner/brands' && req.method === 'GET') {
     if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
+    // Try MongoDB first
+    const mongoDb = getDb();
+    if (mongoDb) {
+      try {
+        const brands = await mongoDb.collection('brands').find({}).sort({ name: 1 }).toArray();
+        if (brands.length > 0) {
+          return sendJson(res, 200, { brands: brands.map(b => ({ ...b, id: b.id || (b._id ? b._id.toString() : undefined) })) });
+        }
+      } catch (e) { /* fall through */ }
+    }
     const brands = db.prepare('SELECT * FROM brands ORDER BY name ASC').all();
     return sendJson(res, 200, { brands });
   }
@@ -812,6 +855,8 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
   
   // Image Upload Endpoint for Owner Portal
+  // Stores base64 as a data URL directly — works on both local and deployed (Render/Railway/Heroku)
+  // No disk writes = no files lost on container restart
   if (pathname === '/api/owner/upload' && req.method === 'POST') {
     if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
 
@@ -822,37 +867,35 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         return sendJson(res, 400, { error: 'No image data provided' });
       }
 
-      let base64Data = image;
-      let ext = '.png';
+      // If already a data URL, return it directly — no disk needed
       if (image.startsWith('data:image/')) {
-        const matches = image.match(/^data:image\/([a-zA-Z0-9-+]+);base64,(.+)$/);
-        if (matches) {
-          ext = '.' + (matches[1] === 'jpeg' ? 'jpg' : matches[1]);
-          base64Data = matches[2];
-        }
-      } else if (filename && filename.includes('.')) {
-        ext = path.extname(filename);
+        return sendJson(res, 200, {
+          success: true,
+          url: image,          // data URL stored directly in DB
+          filename: filename || 'image',
+          storage: 'inline'
+        });
       }
 
-      const uploadsFolder = path.join(__dirname, 'uploads');
-      if (!fs.existsSync(uploadsFolder)) {
-        fs.mkdirSync(uploadsFolder, { recursive: true });
+      // If it's raw base64 without prefix, add the data URL prefix
+      let ext = 'png';
+      if (filename) {
+        const parts = filename.split('.');
+        if (parts.length > 1) ext = parts[parts.length - 1].toLowerCase();
+        if (ext === 'jpg') ext = 'jpeg';
       }
+      const dataUrl = `data:image/${ext};base64,${image}`;
 
-      const safeName = 'prod-' + Date.now() + '-' + Math.floor(Math.random() * 1000) + ext;
-      const targetFilePath = path.join(uploadsFolder, safeName);
-      const buffer = Buffer.from(base64Data, 'base64');
-      fs.writeFileSync(targetFilePath, buffer);
-
-      const publicUrl = '/uploads/' + safeName;
       return sendJson(res, 200, {
         success: true,
-        url: publicUrl,
-        filename: safeName
+        url: dataUrl,
+        filename: filename || 'image',
+        storage: 'inline'
       });
+
     } catch (err) {
       console.error('Image upload error:', err);
-      return sendJson(res, 500, { error: 'Failed to upload image: ' + err.message });
+      return sendJson(res, 500, { error: 'Failed to process image: ' + err.message });
     }
   }
 
@@ -866,6 +909,37 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     const stockStatus = parsedUrl.searchParams.get('stockStatus');
     const showArchived = parsedUrl.searchParams.get('archived') === 'true';
 
+    // Try MongoDB first so it works on deployed app
+    const mongoDb = getDb();
+    if (mongoDb) {
+      try {
+        const filter = {};
+        if (!showArchived) filter.is_archived = { $ne: 1 };
+        if (search) {
+          const regex = new RegExp(search, 'i');
+          filter.$or = [{ name: regex }, { sku: regex }, { barcode: regex }, { product_code: regex }, { hsn: regex }];
+        }
+        if (category && category !== 'all') filter.$or = [{ category_slug: category }, { category_id: isNaN(parseInt(category)) ? category : parseInt(category) }];
+        if (stockStatus === 'low') { filter.stock = { $lte: 5, $gt: 0 }; }
+        else if (stockStatus === 'out') { filter.stock = { $lte: 0 }; }
+        else if (stockStatus === 'in') { filter.stock = { $gt: 5 }; }
+
+        let products = await mongoDb.collection('products').find(filter).sort({ _id: -1 }).toArray();
+        products = products.map(p => ({
+          ...p,
+          id: p.id || (p._id ? p._id.toString() : undefined),
+          images_json: p.images_json || (p.images ? JSON.stringify(p.images) : '[]'),
+          category_name: p.category_name || '',
+          brand_name: p.brand_name || '',
+          supplier_name: p.supplier_name || ''
+        }));
+        return sendJson(res, 200, { products });
+      } catch (mongoErr) {
+        console.warn('[owner/products GET] MongoDB failed, falling back to SQLite:', mongoErr.message);
+      }
+    }
+
+    // SQLite fallback
     let query = `
       SELECT p.*, c.name as category_name, b.name as brand_name, s.name as supplier_name
       FROM products p
@@ -1012,8 +1086,77 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         price
       });
 
-      // Synchronize New Product to MongoDB
-      syncTableRecordToMongo(db, 'products', productId);
+      // Look up category and brand names to store alongside the product in MongoDB
+      let categoryName = '';
+      let brandName = '';
+      try {
+        if (safeCatId) {
+          const catRow = db.prepare('SELECT name, slug FROM categories WHERE id = ?').get(safeCatId);
+          if (catRow) { categoryName = catRow.name; }
+        }
+        if (safeBrandId) {
+          const brandRow = db.prepare('SELECT name FROM brands WHERE id = ?').get(safeBrandId);
+          if (brandRow) { brandName = brandRow.name; }
+        }
+      } catch (e) { /* ignore */ }
+
+      // Write to MongoDB directly so the product is immediately available on deployed app
+      const mongoDb = getDb();
+      if (mongoDb) {
+        try {
+          const mongoDoc = {
+            id: productId,
+            sku: genSku,
+            barcode: genBarcode,
+            product_code: genSku,
+            name: name.trim(),
+            slug,
+            brand_id: safeBrandId,
+            brand_name: brandName,
+            category_id: safeCatId,
+            category_name: categoryName,
+            category_slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            supplier_id: safeSuppId,
+            description: description || '',
+            price: safePrice,
+            old_price: safeOldPrice,
+            purchase_price: purPrice,
+            discount: safeDiscount,
+            gst_rate: safeGstRate,
+            hsn: hsn || '8714',
+            stock: initialStock,
+            min_stock: safeMinStock,
+            primary_image: img,
+            images_json: (typeof images_json === 'string' ? images_json : JSON.stringify(images_json || [img])),
+            images: images_json || [img],
+            variants_json: JSON.stringify(variants_json || []),
+            warranty: warranty || '1 Year Manufacturer',
+            weight: weight || '1.0 kg',
+            is_archived: 0,
+            status: 'ACTIVE',
+            rating: 5.0,
+            rating_count: 1,
+            is_featured: 0,
+            is_bestseller: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            _synced_at: new Date()
+          };
+          await mongoDb.collection('products').updateOne(
+            { sku: genSku },
+            { $set: mongoDoc },
+            { upsert: true }
+          );
+          console.log(`[MONGODB] Product "${name}" saved directly to MongoDB.`);
+        } catch (mongoErr) {
+          console.warn('[MONGODB] Direct product save failed (SQLite still saved):', mongoErr.message);
+          // Also try background sync as fallback
+          syncTableRecordToMongo(db, 'products', productId);
+        }
+      } else {
+        // No live MongoDB connection — queue sync
+        syncTableRecordToMongo(db, 'products', productId);
+      }
 
       return sendJson(res, 201, {
         message: 'Product created successfully',
@@ -1110,7 +1253,40 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       }
 
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'UPDATE_PRODUCT', 'PRODUCT', id, 'SUCCESS');
-      syncTableRecordToMongo(db, 'products', id);
+
+      // Write updated product to MongoDB directly
+      const mongoDb = getDb();
+      if (mongoDb) {
+        try {
+          const updatedProduct = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+          if (updatedProduct) {
+            let catName = updatedProduct.category_name || '';
+            let brdName = updatedProduct.brand_name || '';
+            try {
+              if (updatedProduct.category_id) {
+                const c = db.prepare('SELECT name FROM categories WHERE id = ?').get(updatedProduct.category_id);
+                if (c) catName = c.name;
+              }
+              if (updatedProduct.brand_id) {
+                const b = db.prepare('SELECT name FROM brands WHERE id = ?').get(updatedProduct.brand_id);
+                if (b) brdName = b.name;
+              }
+            } catch (e) { /* ignore */ }
+
+            await mongoDb.collection('products').updateOne(
+              { sku: updatedProduct.sku },
+              { $set: { ...updatedProduct, category_name: catName, brand_name: brdName, _synced_at: new Date() } },
+              { upsert: true }
+            );
+          }
+        } catch (mongoErr) {
+          console.warn('[MONGODB] Product update sync failed:', mongoErr.message);
+          syncTableRecordToMongo(db, 'products', id);
+        }
+      } else {
+        syncTableRecordToMongo(db, 'products', id);
+      }
+
       return sendJson(res, 200, { message: 'Product updated successfully' });
 
     } catch (err) {

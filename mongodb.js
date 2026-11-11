@@ -320,5 +320,8 @@ module.exports = {
   deleteFromMongo,
   closeMongo,
   MONGODB_URI,
-  DB_NAME
+  DB_NAME,
+  // Expose state for direct use in owner-api.js
+  get dbInstance() { return dbInstance; },
+  get connectionState() { return connectionState; }
 };

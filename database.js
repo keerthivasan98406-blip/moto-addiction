@@ -1,10 +1,10 @@
 // database.js - Moto Pitshop Database Initialization & Data Layer
-const { DatabaseSync } = require('node:sqlite');
+const Database = require('better-sqlite3');
 const crypto = require('crypto');
 const path = require('path');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'motopitshop.db');
-const db = new DatabaseSync(DB_PATH);
+const db = new Database(DB_PATH);
 
 // Enable Foreign Keys
 db.exec('PRAGMA foreign_keys = ON;');

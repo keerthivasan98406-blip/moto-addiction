@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { db, initDatabase, hashPassword } = require('./database.js');
 const { handleOwnerApi } = require('./owner-api.js');
-const { connectMongo, syncTableRecordToMongo, deleteFromMongo, getMongoStatus } = require('./mongodb.js');
+const { connectMongo, syncTableRecordToMongo, deleteFromMongo, getMongoStatus, getDb } = require('./mongodb.js');
 const { migrateAllToMongo } = require('./migrate-to-mongo.js');
 
 // Initialize database on server startup
@@ -116,12 +116,22 @@ function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', chunk => body += chunk);
+    req.on('error', (err) => reject(err));
     req.on('end', () => {
       if (!body) return resolve({});
+      // Normalize macOS smart quotes and other Unicode quote variants to standard ASCII quotes
+      // so JSON.parse doesn't fail when users type on a MacBook with autocorrect enabled
+      const normalized = body
+        .replace(/[\u2018\u2019]/g, "'")   // curly single quotes → '
+        .replace(/[\u201C\u201D]/g, '"')   // curly double quotes → "
+        .replace(/[\u201A]/g, ',')         // single low-9 quotation mark
+        .replace(/[\u2013\u2014]/g, '-')   // em dash / en dash → -
+        .replace(/[\u2026]/g, '...');      // ellipsis → ...
       try {
-        resolve(JSON.parse(body));
+        resolve(JSON.parse(normalized));
       } catch (err) {
-        reject(err);
+        // Send a proper 400 response instead of crashing the server
+        reject(new SyntaxError(`Invalid JSON in request body: ${err.message}`));
       }
     });
   });
@@ -161,6 +171,10 @@ const server = http.createServer(async (req, res) => {
     });
     return res.end();
   }
+
+  // Top-level error boundary: catch any unhandled error in the request pipeline
+  // and return a proper JSON error instead of leaving the response hanging
+  const originalHandler = async () => {
 
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
@@ -401,6 +415,38 @@ const server = http.createServer(async (req, res) => {
     const bikeModel = parsedUrl.searchParams.get('bikeModel');
     const bikeYear = parsedUrl.searchParams.get('bikeYear');
 
+    // Try MongoDB first (works on deployed apps where SQLite is ephemeral)
+    const mongoDb = getDb();
+    if (mongoDb) {
+      try {
+        const filter = { status: 'ACTIVE', is_archived: { $ne: 1 } };
+        if (cat && cat !== 'all') filter.$or = [{ category_slug: cat }, { category_name: new RegExp(cat, 'i') }];
+        if (brand && brand !== 'all') filter.$or = [{ brand_slug: brand }, { brand_name: new RegExp(brand, 'i') }];
+        if (search) {
+          const regex = new RegExp(search, 'i');
+          filter.$or = [{ name: regex }, { sku: regex }, { product_code: regex }, { description: regex }, { brand_name: regex }, { hsn: regex }];
+        }
+        if (bikeBrand && bikeModel) filter.compatible_bike_ids = { $exists: true };
+
+        let products = await mongoDb.collection('products').find(filter).sort({ _id: -1 }).toArray();
+
+        // Normalize id field for frontend compatibility
+        products = products.map(p => ({
+          ...p,
+          id: p.id || (p._id ? p._id.toString() : undefined),
+          images_json: p.images_json || (p.images ? JSON.stringify(p.images) : '[]'),
+          category_slug: p.category_slug || '',
+          category_name: p.category_name || '',
+          brand_name: p.brand_name || ''
+        }));
+
+        return sendJson(res, 200, { products });
+      } catch (mongoErr) {
+        console.warn('[API/products] MongoDB read failed, falling back to SQLite:', mongoErr.message);
+      }
+    }
+
+    // SQLite fallback (localhost / dev)
     let query = `
       SELECT p.*, c.name as category_name, c.slug as category_slug, b.name as brand_name
       FROM products p
@@ -448,6 +494,31 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname.startsWith('/api/products/') && req.method === 'GET') {
     const id = pathname.split('/')[3];
+
+    // Try MongoDB first
+    const mongoDb = getDb();
+    if (mongoDb) {
+      try {
+        const { ObjectId } = require('mongodb');
+        let product = null;
+        // Try by numeric id, slug, or sku
+        const numId = parseInt(id, 10);
+        if (!isNaN(numId)) {
+          product = await mongoDb.collection('products').findOne({ id: numId });
+        }
+        if (!product) {
+          product = await mongoDb.collection('products').findOne({ $or: [{ slug: id }, { sku: id }] });
+        }
+        if (product) {
+          product.id = product.id || (product._id ? product._id.toString() : undefined);
+          product.images_json = product.images_json || (product.images ? JSON.stringify(product.images) : '[]');
+          return sendJson(res, 200, { product, compatibleBikes: [], reviews: [] });
+        }
+      } catch (mongoErr) {
+        console.warn('[API/products/:id] MongoDB read failed, falling back to SQLite:', mongoErr.message);
+      }
+    }
+
     const product = db.prepare(`
       SELECT p.*, c.name as category_name, b.name as brand_name, s.name as supplier_name
       FROM products p
@@ -530,16 +601,43 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/categories' && req.method === 'GET') {
+    const mongoDb = getDb();
+    if (mongoDb) {
+      try {
+        const categories = await mongoDb.collection('categories').find({}).sort({ display_order: 1 }).toArray();
+        if (categories.length > 0) {
+          return sendJson(res, 200, { categories: categories.map(c => ({ ...c, id: c.id || c._id })) });
+        }
+      } catch (e) { /* fall through to SQLite */ }
+    }
     const categories = db.prepare('SELECT * FROM categories ORDER BY display_order ASC').all();
     return sendJson(res, 200, { categories });
   }
 
   if (pathname === '/api/brands' && req.method === 'GET') {
+    const mongoDb = getDb();
+    if (mongoDb) {
+      try {
+        const brands = await mongoDb.collection('brands').find({}).sort({ name: 1 }).toArray();
+        if (brands.length > 0) {
+          return sendJson(res, 200, { brands: brands.map(b => ({ ...b, id: b.id || b._id })) });
+        }
+      } catch (e) { /* fall through to SQLite */ }
+    }
     const brands = db.prepare('SELECT * FROM brands ORDER BY name ASC').all();
     return sendJson(res, 200, { brands });
   }
 
   if (pathname === '/api/bikes' && req.method === 'GET') {
+    const mongoDb = getDb();
+    if (mongoDb) {
+      try {
+        const bikes = await mongoDb.collection('bikes').find({}).sort({ brand: 1, model: 1 }).toArray();
+        if (bikes.length > 0) {
+          return sendJson(res, 200, { bikes: bikes.map(b => ({ ...b, id: b.id || b._id })) });
+        }
+      } catch (e) { /* fall through to SQLite */ }
+    }
     const bikes = db.prepare('SELECT * FROM bikes ORDER BY brand ASC, model ASC, year DESC').all();
     return sendJson(res, 200, { bikes });
   }
@@ -975,6 +1073,24 @@ const server = http.createServer(async (req, res) => {
       }
     });
   }
+  }; // end originalHandler
+
+  // Execute with top-level error boundary
+  try {
+    await originalHandler();
+  } catch (err) {
+    console.error('[SERVER] Unhandled request error:', err.message);
+    if (!res.headersSent) {
+      // Detect JSON parse errors from MacBook smart quotes or malformed bodies
+      if (err instanceof SyntaxError && err.message.includes('JSON')) {
+        sendJson(res, 400, {
+          error: 'Invalid request format. If you are typing on a MacBook, please disable smart quotes in System Settings → Keyboard → Text Replacements, or use the web form normally.'
+        });
+      } else {
+        sendJson(res, 500, { error: 'Internal server error: ' + err.message });
+      }
+    }
+  }
 });
 
 server.listen(PORT, '0.0.0.0', () => {
@@ -982,4 +1098,16 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(` MOTO PITSHOP SERVER RUNNING AT: http://localhost:${PORT}`);
   console.log(` Domain Route Support: https://motopitshop.com/`);
   console.log(`====================================================`);
+});
+
+// Prevent server from crashing on unhandled promise rejections (e.g. JSON parse errors, DB errors)
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[SERVER] Unhandled Promise Rejection:', reason);
+  // Do NOT exit - keep the server alive so saved data is not lost
+});
+
+// Prevent server from crashing on uncaught synchronous exceptions
+process.on('uncaughtException', (err) => {
+  console.error('[SERVER] Uncaught Exception:', err.message);
+  // Do NOT exit - keep the server alive
 });

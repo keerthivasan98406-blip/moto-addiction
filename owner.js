@@ -1342,7 +1342,16 @@ function openAddProductModal() {
   setVal('prod-form-image-1', 'hero1.png');
   setVal('prod-form-image-2', '');
   setVal('prod-form-image-3', '');
-  if (typeof updateSlotPreview === 'function') { updateSlotPreview(1); updateSlotPreview(2); updateSlotPreview(3); }
+
+  // Reset status labels and file inputs for all 3 slots
+  [1, 2, 3].forEach(slot => {
+    const statusEl = document.getElementById('prod-img-status-' + slot);
+    if (statusEl) { statusEl.textContent = ''; statusEl.style.color = '#6B7280'; }
+    const fileInput = document.getElementById('prod-form-file-' + slot);
+    if (fileInput) fileInput.value = '';
+    if (typeof updateSlotPreview === 'function') updateSlotPreview(slot);
+  });
+
   setProductImagePreset('hero1.png');
   setText('modal-product-title', 'Add New Motorcycle Product');
 
@@ -1375,6 +1384,7 @@ function editProduct(productId) {
   document.getElementById('prod-form-gst').value = Math.round(p.gst_rate || 18);
   document.getElementById('prod-form-stock').value = p.stock;
   document.getElementById('prod-form-minstock').value = p.min_stock || 5;
+
   let pImages = [];
   try { pImages = typeof p.images_json === 'string' ? JSON.parse(p.images_json || '[]') : (p.images_json || []); } catch (e) { pImages = []; }
   if (!pImages.length && p.primary_image) pImages = [p.primary_image];
@@ -1385,7 +1395,16 @@ function editProduct(productId) {
   if (fImg1) fImg1.value = pImages[0] || p.primary_image || 'hero1.png';
   if (fImg2) fImg2.value = pImages[1] || '';
   if (fImg3) fImg3.value = pImages[2] || '';
-  if (typeof updateSlotPreview === 'function') { updateSlotPreview(1); updateSlotPreview(2); updateSlotPreview(3); }
+
+  // Reset status labels, clear file inputs, update previews for all 3 slots
+  [1, 2, 3].forEach(slot => {
+    const statusEl = document.getElementById('prod-img-status-' + slot);
+    if (statusEl) { statusEl.textContent = ''; statusEl.style.color = '#6B7280'; }
+    const fileInput = document.getElementById('prod-form-file-' + slot);
+    if (fileInput) fileInput.value = '';
+    if (typeof updateSlotPreview === 'function') updateSlotPreview(slot);
+  });
+
   document.getElementById('prod-form-desc').value = p.description || '';
   document.getElementById('modal-product-title').textContent = `Edit Product: ${p.name}`;
 
@@ -3312,22 +3331,117 @@ function setupProductImageUploadListener() {
 function updateSlotPreview(slot) {
   const input = document.getElementById('prod-form-image-' + slot);
   const preview = document.getElementById('prod-img-preview-' + slot);
-  const empty = document.getElementById('prod-img-empty-' + slot);
+  const placeholder = document.getElementById('prod-img-placeholder-' + slot);
   const val = input ? input.value.trim() : '';
 
   if (val) {
-    if (preview) { preview.src = val; preview.style.display = 'block'; }
-    if (empty) empty.style.display = 'none';
+    if (preview) {
+      preview.src = val;
+      preview.style.display = 'block';
+    }
+    if (placeholder) placeholder.style.display = 'none';
   } else {
-    if (preview) { preview.src = ''; preview.style.display = 'none'; }
-    if (empty) empty.style.display = 'block';
+    if (preview) {
+      preview.src = '';
+      preview.style.display = 'none';
+    }
+    if (placeholder) placeholder.style.display = 'flex';
   }
 }
 
 function clearSlotImage(slot) {
   const input = document.getElementById('prod-form-image-' + slot);
+  const statusEl = document.getElementById('prod-img-status-' + slot);
   if (input) input.value = '';
+  if (statusEl) statusEl.textContent = '';
   updateSlotPreview(slot);
+  // Reset the file input so the same file can be re-selected
+  const fileInput = document.getElementById('prod-form-file-' + slot);
+  if (fileInput) fileInput.value = '';
+}
+
+async function handleSlotFileUpload(slot, fileInput) {
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return;
+
+  const input = document.getElementById('prod-form-image-' + slot);
+  const preview = document.getElementById('prod-img-preview-' + slot);
+  const placeholder = document.getElementById('prod-img-placeholder-' + slot);
+  const statusEl = document.getElementById('prod-img-status-' + slot);
+  const uploadingOverlay = document.getElementById('prod-img-uploading-' + slot);
+
+  // Validate file type and size (max 5MB)
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select a valid image file (jpg, png, webp)', 'error');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image must be under 5MB', 'error');
+    return;
+  }
+
+  if (statusEl) statusEl.textContent = '⏳ Reading file...';
+  if (uploadingOverlay) uploadingOverlay.style.display = 'flex';
+
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    const base64Data = evt.target.result; // full data URL e.g. data:image/jpeg;base64,...
+
+    // --- Step 1: Set preview immediately from base64 so user sees it right away ---
+    if (preview) { preview.src = base64Data; preview.style.display = 'block'; }
+    if (placeholder) placeholder.style.display = 'none';
+
+    // --- Step 2: Store base64 in the input as the guaranteed fallback ---
+    // This means even if server upload fails, the image is embedded in the DB
+    if (input) input.value = base64Data;
+    if (statusEl) statusEl.textContent = '📸 Image ready (embedded)';
+
+    // --- Step 3: Try to upload to server for a cleaner URL ---
+    try {
+      if (uploadingOverlay) uploadingOverlay.style.display = 'flex';
+      if (statusEl) statusEl.textContent = '⏳ Uploading to server...';
+
+      const res = await fetch('/api/owner/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Data, filename: file.name })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        // Server upload succeeded — use the URL (much smaller than base64)
+        if (input) input.value = data.url;
+        if (preview) preview.src = data.url;
+        if (statusEl) {
+          statusEl.textContent = '✓ Uploaded: ' + file.name;
+          statusEl.style.color = '#22c55e';
+        }
+        showToast('Image ' + slot + ' uploaded successfully', 'success');
+      } else {
+        // Server upload failed — base64 is already stored, that's fine
+        if (statusEl) {
+          statusEl.textContent = '✓ Image embedded (no server upload)';
+          statusEl.style.color = '#F59E0B';
+        }
+      }
+    } catch (err) {
+      // Network error — base64 is already stored, works on both local and deployed
+      if (statusEl) {
+        statusEl.textContent = '✓ Image ready (embedded in record)';
+        statusEl.style.color = '#F59E0B';
+      }
+    } finally {
+      if (uploadingOverlay) uploadingOverlay.style.display = 'none';
+    }
+  };
+
+  reader.onerror = () => {
+    if (uploadingOverlay) uploadingOverlay.style.display = 'none';
+    if (statusEl) { statusEl.textContent = '✕ Failed to read file'; statusEl.style.color = '#ef4444'; }
+    showToast('Failed to read the image file', 'error');
+  };
+
+  reader.readAsDataURL(file);
 }
 
 function applyPresetToActiveSlot(filename) {
@@ -3345,118 +3459,8 @@ function applyPresetToActiveSlot(filename) {
   if (input) {
     input.value = filename;
     updateSlotPreview(targetSlot);
-    showToast('Loaded preset into Image ' + targetSlot, 'success');
+    const statusEl = document.getElementById('prod-img-status-' + targetSlot);
+    if (statusEl) { statusEl.textContent = '✓ Preset applied'; statusEl.style.color = '#22c55e'; }
+    showToast('Applied preset to Image ' + targetSlot, 'success');
   }
-}
-
-async function handleSlotFileUpload(slot, fileInput) {
-  const file = fileInput.files && fileInput.files[0];
-  if (!file) return;
-
-  const input = document.getElementById('prod-form-image-' + slot);
-  const preview = document.getElementById('prod-img-preview-' + slot);
-  const empty = document.getElementById('prod-img-empty-' + slot);
-
-  const reader = new FileReader();
-  reader.onload = async (evt) => {
-    const base64Data = evt.target.result;
-    if (preview) { preview.src = base64Data; preview.style.display = 'block'; }
-    if (empty) empty.style.display = 'none';
-
-    try {
-      const res = await fetch('/api/owner/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64Data, filename: file.name })
-      });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        if (input) input.value = data.url;
-        if (preview) preview.src = data.url;
-        showToast('Image ' + slot + ' uploaded successfully!', 'success');
-      } else {
-        if (input) input.value = base64Data;
-      }
-    } catch (err) {
-      if (input) input.value = base64Data;
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-
-// --- 3 IMAGE SLOTS CONTROLLERS ---
-function updateSlotPreview(slot) {
-  const input = document.getElementById('prod-form-image-' + slot);
-  const preview = document.getElementById('prod-img-preview-' + slot);
-  const empty = document.getElementById('prod-img-empty-' + slot);
-  const val = input ? input.value.trim() : '';
-
-  if (val) {
-    if (preview) { preview.src = val; preview.style.display = 'block'; }
-    if (empty) empty.style.display = 'none';
-  } else {
-    if (preview) { preview.src = ''; preview.style.display = 'none'; }
-    if (empty) empty.style.display = 'block';
-  }
-}
-
-function clearSlotImage(slot) {
-  const input = document.getElementById('prod-form-image-' + slot);
-  if (input) input.value = '';
-  updateSlotPreview(slot);
-}
-
-function applyPresetToActiveSlot(filename) {
-  let targetSlot = 1;
-  const val1 = document.getElementById('prod-form-image-1')?.value.trim();
-  const val2 = document.getElementById('prod-form-image-2')?.value.trim();
-  const val3 = document.getElementById('prod-form-image-3')?.value.trim();
-
-  if (!val1) targetSlot = 1;
-  else if (!val2) targetSlot = 2;
-  else if (!val3) targetSlot = 3;
-  else targetSlot = 1;
-
-  const input = document.getElementById('prod-form-image-' + targetSlot);
-  if (input) {
-    input.value = filename;
-    updateSlotPreview(targetSlot);
-    showToast('Loaded preset into Image ' + targetSlot, 'success');
-  }
-}
-
-async function handleSlotFileUpload(slot, fileInput) {
-  const file = fileInput.files && fileInput.files[0];
-  if (!file) return;
-
-  const input = document.getElementById('prod-form-image-' + slot);
-  const preview = document.getElementById('prod-img-preview-' + slot);
-  const empty = document.getElementById('prod-img-empty-' + slot);
-
-  const reader = new FileReader();
-  reader.onload = async (evt) => {
-    const base64Data = evt.target.result;
-    if (preview) { preview.src = base64Data; preview.style.display = 'block'; }
-    if (empty) empty.style.display = 'none';
-
-    try {
-      const res = await fetch('/api/owner/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64Data, filename: file.name })
-      });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        if (input) input.value = data.url;
-        if (preview) preview.src = data.url;
-        showToast('Image ' + slot + ' uploaded successfully!', 'success');
-      } else {
-        if (input) input.value = base64Data;
-      }
-    } catch (err) {
-      if (input) input.value = base64Data;
-    }
-  };
-  reader.readAsDataURL(file);
 }

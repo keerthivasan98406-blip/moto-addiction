@@ -1751,97 +1751,95 @@
             </div>
 
             <!-- 3 Slots Grid -->
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
 
               <!-- Slot 1: Primary Image -->
-              <div class="img-slot-card"
-                style="background:#0e1015; border:1px solid var(--accent-orange, #ff4d00); border-radius:8px; padding:10px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:0.78rem; font-weight:700; color:var(--accent-orange, #ff4d00);">★ Image 1
-                    (Front / Primary) *</span>
-                  <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(1)">Clear</button>
+              <div class="img-slot-card" style="background:#0e1015; border:1px solid var(--accent-orange,#ff4d00); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:0.78rem; font-weight:700; color:var(--accent-orange,#ff4d00);">★ Image 1 (Primary) *</span>
+                  <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(1)">✕ Clear</button>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                  <div
-                    style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px solid #333; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
-                    <img id="prod-img-preview-1" src="hero1.png" alt="Preview 1"
-                      style="width:100%; height:100%; object-fit:contain;" onerror="this.src='hero1.png'" />
+                <!-- Large preview -->
+                <div id="prod-img-wrap-1" style="width:100%; height:120px; border-radius:6px; background:#07080a; border:1px solid #333; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:8px; position:relative;">
+                  <img id="prod-img-preview-1" src="hero1.png" alt="Preview 1"
+                    style="max-width:100%; max-height:100%; object-fit:contain;"
+                    onerror="this.style.display='none'; document.getElementById('prod-img-placeholder-1').style.display='flex';" />
+                  <div id="prod-img-placeholder-1" style="display:none; flex-direction:column; align-items:center; gap:4px; color:#555;">
+                    <span style="font-size:1.8rem;">🖼️</span>
+                    <span style="font-size:0.7rem;">No image</span>
                   </div>
-                  <div style="flex:1;">
-                    <input type="text" id="prod-form-image-1" class="form-input"
-                      style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value="hero1.png"
-                      placeholder="Paste Image URL here..." oninput="updateSlotPreview(1)" />
-                    <div style="display:flex; gap:6px;">
-                      <input type="file" id="prod-form-file-1" accept="image/*" style="display:none;"
-                        onchange="handleSlotFileUpload(1, this)" />
-                      <button type="button" class="btn btn-primary btn-xs"
-                        onclick="document.getElementById('prod-form-file-1').click()"
-                        style="width:100%; font-size:0.75rem;">📁 Upload File</button>
-                    </div>
+                  <!-- Upload progress overlay -->
+                  <div id="prod-img-uploading-1" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; border-radius:6px;">
+                    <span style="color:#F59E0B; font-size:0.8rem; font-weight:600;">⏳ Uploading...</span>
                   </div>
                 </div>
+                <!-- URL input -->
+                <input type="text" id="prod-form-image-1" class="form-input"
+                  style="font-size:0.78rem; padding:6px 8px; margin-bottom:6px; width:100%;"
+                  value="hero1.png" placeholder="Paste image URL here..."
+                  oninput="updateSlotPreview(1)" />
+                <!-- Status text -->
+                <div id="prod-img-status-1" style="font-size:0.68rem; color:#6B7280; margin-bottom:6px; min-height:14px;"></div>
+                <!-- Upload button -->
+                <input type="file" id="prod-form-file-1" accept="image/*" style="display:none;" onchange="handleSlotFileUpload(1, this)" />
+                <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('prod-form-file-1').click()"
+                  style="width:100%; font-size:0.76rem; padding:7px 0;">📁 Upload from Device</button>
               </div>
 
               <!-- Slot 2: Side View -->
-              <div class="img-slot-card"
-                style="background:#0e1015; border:1px solid var(--border-subtle, #2a2d36); border-radius:8px; padding:10px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main, #fff);">Image 2 (Side / Angle
-                    View)</span>
-                  <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(2)">Clear</button>
+              <div class="img-slot-card" style="background:#0e1015; border:1px solid var(--border-subtle,#2a2d36); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main,#fff);">Image 2 (Side / Angle)</span>
+                  <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(2)">✕ Clear</button>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                  <div
-                    style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
-                    <img id="prod-img-preview-2" src="" alt="Preview 2"
-                      style="width:100%; height:100%; object-fit:contain; display:none;"
-                      onerror="this.style.display='none'; document.getElementById('prod-img-empty-2').style.display='block';" />
-                    <span id="prod-img-empty-2" style="font-size:0.7rem; color:var(--text-muted);">Optional</span>
+                <div id="prod-img-wrap-2" style="width:100%; height:120px; border-radius:6px; background:#07080a; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:8px; position:relative;">
+                  <img id="prod-img-preview-2" src="" alt="Preview 2"
+                    style="max-width:100%; max-height:100%; object-fit:contain; display:none;"
+                    onerror="this.style.display='none'; document.getElementById('prod-img-placeholder-2').style.display='flex';" />
+                  <div id="prod-img-placeholder-2" style="display:flex; flex-direction:column; align-items:center; gap:4px; color:#555;">
+                    <span style="font-size:1.8rem;">🖼️</span>
+                    <span id="prod-img-empty-2" style="font-size:0.7rem;">Optional</span>
                   </div>
-                  <div style="flex:1;">
-                    <input type="text" id="prod-form-image-2" class="form-input"
-                      style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value=""
-                      placeholder="Paste Image URL here..." oninput="updateSlotPreview(2)" />
-                    <div style="display:flex; gap:6px;">
-                      <input type="file" id="prod-form-file-2" accept="image/*" style="display:none;"
-                        onchange="handleSlotFileUpload(2, this)" />
-                      <button type="button" class="btn btn-primary btn-xs"
-                        onclick="document.getElementById('prod-form-file-2').click()"
-                        style="width:100%; font-size:0.75rem;">📁 Upload File</button>
-                    </div>
+                  <div id="prod-img-uploading-2" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; border-radius:6px;">
+                    <span style="color:#F59E0B; font-size:0.8rem; font-weight:600;">⏳ Uploading...</span>
                   </div>
                 </div>
+                <input type="text" id="prod-form-image-2" class="form-input"
+                  style="font-size:0.78rem; padding:6px 8px; margin-bottom:6px; width:100%;"
+                  value="" placeholder="Paste image URL here..."
+                  oninput="updateSlotPreview(2)" />
+                <div id="prod-img-status-2" style="font-size:0.68rem; color:#6B7280; margin-bottom:6px; min-height:14px;"></div>
+                <input type="file" id="prod-form-file-2" accept="image/*" style="display:none;" onchange="handleSlotFileUpload(2, this)" />
+                <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('prod-form-file-2').click()"
+                  style="width:100%; font-size:0.76rem; padding:7px 0;">📁 Upload from Device</button>
               </div>
 
               <!-- Slot 3: Back / Detail View -->
-              <div class="img-slot-card"
-                style="background:#0e1015; border:1px solid var(--border-subtle, #2a2d36); border-radius:8px; padding:10px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main, #fff);">Image 3 (Back / Detail
-                    View)</span>
-                  <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(3)">Clear</button>
+              <div class="img-slot-card" style="background:#0e1015; border:1px solid var(--border-subtle,#2a2d36); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main,#fff);">Image 3 (Back / Detail)</span>
+                  <button type="button" class="btn btn-secondary btn-xs" onclick="clearSlotImage(3)">✕ Clear</button>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                  <div
-                    style="width:68px; height:68px; border-radius:6px; background:#07080a; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
-                    <img id="prod-img-preview-3" src="" alt="Preview 3"
-                      style="width:100%; height:100%; object-fit:contain; display:none;"
-                      onerror="this.style.display='none'; document.getElementById('prod-img-empty-3').style.display='block';" />
-                    <span id="prod-img-empty-3" style="font-size:0.7rem; color:var(--text-muted);">Optional</span>
+                <div id="prod-img-wrap-3" style="width:100%; height:120px; border-radius:6px; background:#07080a; border:1px dashed #444; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:8px; position:relative;">
+                  <img id="prod-img-preview-3" src="" alt="Preview 3"
+                    style="max-width:100%; max-height:100%; object-fit:contain; display:none;"
+                    onerror="this.style.display='none'; document.getElementById('prod-img-placeholder-3').style.display='flex';" />
+                  <div id="prod-img-placeholder-3" style="display:flex; flex-direction:column; align-items:center; gap:4px; color:#555;">
+                    <span style="font-size:1.8rem;">🖼️</span>
+                    <span id="prod-img-empty-3" style="font-size:0.7rem;">Optional</span>
                   </div>
-                  <div style="flex:1;">
-                    <input type="text" id="prod-form-image-3" class="form-input"
-                      style="font-size:0.8rem; padding:6px 8px; margin-bottom:6px;" value=""
-                      placeholder="Paste Image URL here..." oninput="updateSlotPreview(3)" />
-                    <div style="display:flex; gap:6px;">
-                      <input type="file" id="prod-form-file-3" accept="image/*" style="display:none;"
-                        onchange="handleSlotFileUpload(3, this)" />
-                      <button type="button" class="btn btn-primary btn-xs"
-                        onclick="document.getElementById('prod-form-file-3').click()"
-                        style="width:100%; font-size:0.75rem;">📁 Upload File</button>
-                    </div>
+                  <div id="prod-img-uploading-3" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; border-radius:6px;">
+                    <span style="color:#F59E0B; font-size:0.8rem; font-weight:600;">⏳ Uploading...</span>
                   </div>
                 </div>
+                <input type="text" id="prod-form-image-3" class="form-input"
+                  style="font-size:0.78rem; padding:6px 8px; margin-bottom:6px; width:100%;"
+                  value="" placeholder="Paste image URL here..."
+                  oninput="updateSlotPreview(3)" />
+                <div id="prod-img-status-3" style="font-size:0.68rem; color:#6B7280; margin-bottom:6px; min-height:14px;"></div>
+                <input type="file" id="prod-form-file-3" accept="image/*" style="display:none;" onchange="handleSlotFileUpload(3, this)" />
+                <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('prod-form-file-3').click()"
+                  style="width:100%; font-size:0.76rem; padding:7px 0;">📁 Upload from Device</button>
               </div>
 
             </div>
