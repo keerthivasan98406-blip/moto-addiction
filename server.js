@@ -17,19 +17,33 @@ try {
   console.warn('[DB] Continuing with MongoDB as primary database.');
 }
 
-// Connect to MongoDB Atlas cluster asynchronously and synchronize data
-// NOTE: server.listen() is called BELOW at module level - MongoDB does NOT block HTTP startup
-connectMongo().then(async (mDb) => {
-  if (mDb) {
-    console.log('[SERVER] MongoDB Atlas connected. Syncing owner portal records...');
-    await migrateAllToMongo();
-  }
-}).catch(err => {
-  console.warn('[SERVER] MongoDB connection deferred:', err.message);
-});
-
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'motopitshop_prod_secret_key_2026';
+
+// ============================================================
+// START HTTP SERVER IMMEDIATELY — before any async operations
+// This ensures Render detects the open port right away
+// MongoDB connect and migration happen AFTER the server is live
+// ============================================================
+const server = http.createServer(handleRequest);
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`====================================================`);
+  console.log(` MOTO PITSHOP SERVER RUNNING AT: http://0.0.0.0:${PORT}`);
+  console.log(` Health: http://0.0.0.0:${PORT}/health`);
+  console.log(`====================================================`);
+
+  // Connect to MongoDB AFTER server is already listening
+  // so Render detects the port immediately
+  connectMongo().then(async (mDb) => {
+    if (mDb) {
+      console.log('[SERVER] MongoDB Atlas connected. Syncing owner portal records...');
+      await migrateAllToMongo();
+    }
+  }).catch(err => {
+    console.warn('[SERVER] MongoDB connection deferred:', err.message);
+  });
+});
 
 // Persistent & Memory Session Store
 const sessions = new Map();
@@ -168,12 +182,11 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
-const server = http.createServer(async (req, res) => {
-  // Health check endpoint - always respond immediately, no auth needed
-  // Render uses this to verify the server is alive
+async function handleRequest(req, res) {
+  // /health — instant response, no DB, no auth. Used by Render + UptimeRobot
   if (req.url === '/health' || req.url === '/health/') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    return res.end(JSON.stringify({ status: 'OK', message: 'Moto Pitshop server is running', timestamp: new Date().toISOString() }));
+    return res.end(JSON.stringify({ status: 'OK', message: 'Moto Pitshop server is running', uptime: process.uptime() }));
   }
 
   // CORS Preflight
@@ -186,9 +199,22 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
-  // Top-level error boundary: catch any unhandled error in the request pipeline
-  // and return a proper JSON error instead of leaving the response hanging
-  const originalHandler = async () => {
+  // Top-level error boundary
+  try {
+    await mainHandler(req, res);
+  } catch (err) {
+    console.error('[SERVER] Unhandled request error:', err.message);
+    if (!res.headersSent) {
+      if (err instanceof SyntaxError && err.message.includes('JSON')) {
+        sendJson(res, 400, { error: 'Invalid request body. Please check your input and try again.' });
+      } else {
+        sendJson(res, 500, { error: 'Internal server error: ' + err.message });
+      }
+    }
+  }
+}
+
+async function mainHandler(req, res) {
 
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
@@ -1087,41 +1113,14 @@ const server = http.createServer(async (req, res) => {
       }
     });
   }
-  }; // end originalHandler
+} // end mainHandler
 
-  // Execute with top-level error boundary
-  try {
-    await originalHandler();
-  } catch (err) {
-    console.error('[SERVER] Unhandled request error:', err.message);
-    if (!res.headersSent) {
-      // Detect JSON parse errors from MacBook smart quotes or malformed bodies
-      if (err instanceof SyntaxError && err.message.includes('JSON')) {
-        sendJson(res, 400, {
-          error: 'Invalid request format. If you are typing on a MacBook, please disable smart quotes in System Settings → Keyboard → Text Replacements, or use the web form normally.'
-        });
-      } else {
-        sendJson(res, 500, { error: 'Internal server error: ' + err.message });
-      }
-    }
-  }
-});
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`====================================================`);
-  console.log(` MOTO PITSHOP SERVER RUNNING AT: http://localhost:${PORT}`);
-  console.log(` Domain Route Support: https://motopitshop.com/`);
-  console.log(`====================================================`);
-});
-
-// Prevent server from crashing on unhandled promise rejections (e.g. JSON parse errors, DB errors)
-process.on('unhandledRejection', (reason, promise) => {
+// Prevent server from crashing on unhandled promise rejections
+process.on('unhandledRejection', (reason) => {
   console.error('[SERVER] Unhandled Promise Rejection:', reason);
-  // Do NOT exit - keep the server alive so saved data is not lost
 });
 
 // Prevent server from crashing on uncaught synchronous exceptions
 process.on('uncaughtException', (err) => {
   console.error('[SERVER] Uncaught Exception:', err.message);
-  // Do NOT exit - keep the server alive
 });
