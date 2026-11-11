@@ -184,8 +184,10 @@ const MIME_TYPES = {
 
 async function handleRequest(req, res) {
   // /health — instant response, no DB, no auth. Used by Render + UptimeRobot
+  // Handles both GET and HEAD
   if (req.url === '/health' || req.url === '/health/') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    if (req.method === 'HEAD') return res.end();
     return res.end(JSON.stringify({ status: 'OK', message: 'Moto Pitshop server is running', uptime: process.uptime() }));
   }
 
@@ -1049,7 +1051,17 @@ async function mainHandler(req, res) {
   // ==========================================
   // STATIC FILE & ROUTING WITH PERMISSION GUARDS
   // ==========================================
-  if (req.method === 'GET') {
+  // Handle both GET and HEAD — HEAD is used by UptimeRobot, Render health checks, browsers
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    // For HEAD requests on /, respond immediately with 200 — no need to stream the file body
+    if (req.method === 'HEAD') {
+      res.writeHead(200, {
+        'Content-Type': 'text/html',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+      });
+      return res.end();
+    }
+
     let targetFile = pathname === '/' ? 'index.html' : pathname.replace(/^\//, '');
 
     // Route Protection & Clean URL Aliases
