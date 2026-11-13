@@ -71,7 +71,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         suppliers: db.prepare('SELECT COUNT(*) as c FROM suppliers').get().c,
         expenses: db.prepare('SELECT COUNT(*) as c FROM expenses').get().c
       };
-    } catch(e) {}
+    } catch (e) { }
     return sendJson(res, 200, {
       ...status,
       counts
@@ -119,7 +119,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const existing = db.prepare('SELECT id FROM categories WHERE slug = ?').get(generatedSlug);
       if (existing) return sendJson(res, 400, { error: `Category with slug "${generatedSlug}" already exists` });
       const result = db.prepare('INSERT INTO categories (slug, name, icon, description, display_order) VALUES (?, ?, ?, ?, ?)').run(generatedSlug, name.trim(), icon || '📦', description || '', nextOrder);
-      try { syncTableRecordToMongo(db, 'categories', result.lastInsertRowid); } catch(e) {}
+      try { syncTableRecordToMongo(db, 'categories', result.lastInsertRowid); } catch (e) { }
       // Write to MongoDB directly
       const mongoDb = getDb();
       if (mongoDb) {
@@ -132,8 +132,8 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         } catch (e) { /* sync already attempted above */ }
       }
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_CATEGORY', 'CATEGORY', result.lastInsertRowid, 'SUCCESS', { name, slug: generatedSlug });
-      return sendJson(res, 201, { 
-        message: 'Category created successfully', 
+      return sendJson(res, 201, {
+        message: 'Category created successfully',
         id: result.lastInsertRowid,
         category: {
           id: result.lastInsertRowid,
@@ -154,7 +154,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       try {
         const categories = await mongoDb.collection('categories').find({}).sort({ display_order: 1 }).toArray();
         if (categories.length > 0) {
-          return sendJson(res, 200, { categories: categories.map(c => ({ ...c, id: c.id || (c._id ? c._id.toString() : undefined) })) });
+          return sendJson(res, 200, { categories: categories.map(c => ({ ...c, id: typeof c.id === 'number' ? c.id : (parseInt(c.id, 10) || undefined) })) });
         }
       } catch (e) { /* fall through */ }
     }
@@ -167,7 +167,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     const id = parseInt(pathname.split('/')[4], 10);
     try {
       db.prepare('DELETE FROM categories WHERE id = ?').run(id);
-      try { deleteFromMongo('categories', id); } catch(e) {}
+      try { deleteFromMongo('categories', id); } catch (e) { }
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'DELETE_CATEGORY', 'CATEGORY', id, 'SUCCESS');
       return sendJson(res, 200, { message: 'Category deleted successfully' });
     } catch (err) { return sendJson(res, 500, { error: err.message }); }
@@ -183,7 +183,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const existing = db.prepare('SELECT id FROM brands WHERE slug = ?').get(generatedSlug);
       if (existing) return sendJson(res, 400, { error: `Brand with slug "${generatedSlug}" already exists` });
       const result = db.prepare('INSERT INTO brands (slug, name, logo, description) VALUES (?, ?, ?, ?)').run(generatedSlug, name.trim(), logo || '', description || '');
-      try { syncTableRecordToMongo(db, 'brands', result.lastInsertRowid); } catch(e) {}
+      try { syncTableRecordToMongo(db, 'brands', result.lastInsertRowid); } catch (e) { }
       // Write to MongoDB directly
       const mongoDb = getDb();
       if (mongoDb) {
@@ -196,8 +196,8 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         } catch (e) { /* sync already attempted above */ }
       }
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_BRAND', 'BRAND', result.lastInsertRowid, 'SUCCESS', { name, slug: generatedSlug });
-      return sendJson(res, 201, { 
-        message: 'Brand created successfully', 
+      return sendJson(res, 201, {
+        message: 'Brand created successfully',
         id: result.lastInsertRowid,
         brand: {
           id: result.lastInsertRowid,
@@ -218,7 +218,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       try {
         const brands = await mongoDb.collection('brands').find({}).sort({ name: 1 }).toArray();
         if (brands.length > 0) {
-          return sendJson(res, 200, { brands: brands.map(b => ({ ...b, id: b.id || (b._id ? b._id.toString() : undefined) })) });
+          return sendJson(res, 200, { brands: brands.map(b => ({ ...b, id: typeof b.id === 'number' ? b.id : (parseInt(b.id, 10) || undefined) })) });
         }
       } catch (e) { /* fall through */ }
     }
@@ -500,7 +500,12 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         });
       }
 
-      const grandTotal = taxInclusive ? (calculatedSubtotal + calculatedTaxTotal) : (calculatedSubtotal + calculatedTaxTotal);
+      const orderDiscount = parseFloat(body.discount || body.discount_amount || 0);
+      if (!isNaN(orderDiscount) && orderDiscount > 0) {
+        calculatedDiscountTotal += orderDiscount;
+      }
+      const initialTotal = taxInclusive ? (calculatedSubtotal + calculatedTaxTotal) : (calculatedSubtotal + calculatedTaxTotal);
+      const grandTotal = Math.max(0, initialTotal - (!isNaN(orderDiscount) && orderDiscount > 0 ? orderDiscount : 0));
       const posPrefix = settings.POS_INVOICE_PREFIX || 'POS-';
       const billNumber = `${posPrefix}${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
       const orderNumber = `MPS-POS-${Date.now().toString().slice(-6)}`;
@@ -654,6 +659,9 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         orderNumber,
         grandTotal,
         subtotal: calculatedSubtotal,
+        discount: orderDiscount || 0,
+        discountTotal: calculatedDiscountTotal,
+        discount_total: calculatedDiscountTotal,
         taxTotal: calculatedTaxTotal,
         cgst: calculatedCgst,
         sgst: calculatedSgst,
@@ -853,7 +861,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     }
   }
 
-  
+
   // Image Upload Endpoint for Owner Portal
   // Stores base64 as a data URL directly — works on both local and deployed (Render/Railway/Heroku)
   // No disk writes = no files lost on container restart
@@ -1326,11 +1334,11 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     const id = parseInt(pathname.split('/')[4], 10);
     try {
       // Clean up product relations in database
-      try { db.prepare('DELETE FROM product_bikes WHERE product_id = ?').run(id); } catch(e){}
-      try { db.prepare('DELETE FROM product_reviews WHERE product_id = ?').run(id); } catch(e){}
-      try { db.prepare('DELETE FROM inventory_ledger WHERE product_id = ?').run(id); } catch(e){}
-      try { db.prepare('DELETE FROM order_items WHERE product_id = ?').run(id); } catch(e){}
-      try { db.prepare('DELETE FROM purchase_items WHERE product_id = ?').run(id); } catch(e){}
+      try { db.prepare('DELETE FROM product_bikes WHERE product_id = ?').run(id); } catch (e) { }
+      try { db.prepare('DELETE FROM product_reviews WHERE product_id = ?').run(id); } catch (e) { }
+      try { db.prepare('DELETE FROM inventory_ledger WHERE product_id = ?').run(id); } catch (e) { }
+      try { db.prepare('DELETE FROM order_items WHERE product_id = ?').run(id); } catch (e) { }
+      try { db.prepare('DELETE FROM purchase_items WHERE product_id = ?').run(id); } catch (e) { }
 
       db.prepare('DELETE FROM products WHERE id = ?').run(id);
 
@@ -1569,12 +1577,12 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         if (is_received) {
           items.forEach(i => {
             if (i.product_id) {
-              try { syncTableRecordToMongo(db, 'products', i.product_id); } catch(e) {}
+              try { syncTableRecordToMongo(db, 'products', i.product_id); } catch (e) { }
             }
           });
         }
         if (supplier_id) {
-          try { syncTableRecordToMongo(db, 'suppliers', supplier_id); } catch(e) {}
+          try { syncTableRecordToMongo(db, 'suppliers', supplier_id); } catch (e) { }
         }
       } catch (syncErr) {
         console.warn('[PURCHASE SYNC WARNING]', syncErr.message);
@@ -1640,13 +1648,13 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         syncTableRecordToMongo(db, 'purchases', id);
         items.forEach(item => {
           if (item.product_id) {
-            try { syncTableRecordToMongo(db, 'products', item.product_id); } catch(e) {}
+            try { syncTableRecordToMongo(db, 'products', item.product_id); } catch (e) { }
           }
         });
         if (purchase.supplier_id) {
-          try { syncTableRecordToMongo(db, 'suppliers', purchase.supplier_id); } catch(e) {}
+          try { syncTableRecordToMongo(db, 'suppliers', purchase.supplier_id); } catch (e) { }
         }
-      } catch(e) {}
+      } catch (e) { }
 
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'RECEIVE_PURCHASE', 'PURCHASE', id, 'SUCCESS');
       return sendJson(res, 200, { message: 'Goods receipt confirmed. Stock successfully added to inventory.' });
@@ -1703,7 +1711,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         if (purchase.supplier_id) {
           syncTableRecordToMongo(db, 'suppliers', purchase.supplier_id);
         }
-      } catch(e) {}
+      } catch (e) { }
 
       return sendJson(res, 201, {
         message: 'Supplier payment recorded successfully',
@@ -2061,11 +2069,11 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       try {
         db.prepare('DELETE FROM credit_note_items WHERE credit_note_id IN (SELECT id FROM credit_notes WHERE order_id = ?)').run(orderId);
         db.prepare('DELETE FROM credit_notes WHERE order_id = ?').run(orderId);
-      } catch (e) {}
+      } catch (e) { }
 
       try {
         db.prepare('DELETE FROM payments WHERE order_id = ?').run(orderId);
-      } catch (e) {}
+      } catch (e) { }
 
       db.prepare('DELETE FROM order_items WHERE order_id = ?').run(orderId);
       db.prepare('DELETE FROM invoices WHERE order_id = ?').run(orderId);
@@ -2173,7 +2181,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       try {
         db.prepare('DELETE FROM credit_note_items WHERE credit_note_id IN (SELECT id FROM credit_notes WHERE invoice_id = ?)').run(inv.id);
         db.prepare('DELETE FROM credit_notes WHERE invoice_id = ?').run(inv.id);
-      } catch (e) {}
+      } catch (e) { }
 
       db.prepare('DELETE FROM invoices WHERE id = ?').run(inv.id);
       deleteFromMongo('invoices', { id: inv.id });

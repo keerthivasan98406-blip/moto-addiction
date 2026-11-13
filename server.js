@@ -29,8 +29,9 @@ const server = http.createServer(handleRequest);
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`====================================================`);
-  console.log(` MOTO PITSHOP SERVER RUNNING AT: http://0.0.0.0:${PORT}`);
-  console.log(` Health: http://0.0.0.0:${PORT}/health`);
+  console.log(` MOTO PITSHOP SERVER RUNNING AT: http://localhost:${PORT}`);
+  console.log(` Local Network Access:           http://127.0.0.1:${PORT}`);
+  console.log(` Health Check:                   http://localhost:${PORT}/health`);
   console.log(`====================================================`);
 
   // Connect to MongoDB AFTER server is already listening

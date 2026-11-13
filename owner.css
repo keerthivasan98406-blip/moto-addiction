@@ -1428,7 +1428,7 @@ body {
     background: #fff !important;
     color: #000 !important;
   }
-  .owner-sidebar, .owner-header, .btn, .no-print, .table-controls {
+  .owner-sidebar, .owner-header, .btn, .no-print, .table-controls, .modal-header, .modal-close-btn {
     display: none !important;
   }
   .owner-main-wrap {

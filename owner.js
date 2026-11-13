@@ -437,12 +437,20 @@ function populateCategoryDropdowns() {
 
   if (filter) {
     filter.innerHTML = '<option value="all">All Categories</option>' +
-      cachedCategories.map(c => `<option value="${c.id || c._id}">${c.name}</option>`).join('');
+      cachedCategories.map(c => {
+        const intId = parseInt(c.id, 10);
+        if (isNaN(intId) || String(intId) !== String(c.id)) return '';
+        return `<option value="${intId}">${c.name}</option>`;
+      }).filter(Boolean).join('');
   }
   if (formSelect) {
     const curVal = formSelect.value;
     formSelect.innerHTML = '<option value="">-- Select Category --</option>' +
-      cachedCategories.map(c => `<option value="${c.id || c._id}">${c.icon ? c.icon + ' ' : ''}${c.name}</option>`).join('') +
+      cachedCategories.map(c => {
+        const intId = parseInt(c.id, 10);
+        if (isNaN(intId) || String(intId) !== String(c.id)) return '';
+        return `<option value="${intId}">${c.icon ? c.icon + ' ' : ''}${c.name}</option>`;
+      }).filter(Boolean).join('') +
       '<option value="__new__" style="color:var(--accent-orange); font-weight:600;">+ Add New Category...</option>';
     if (curVal && curVal !== '__new__') formSelect.value = curVal;
 
@@ -461,7 +469,11 @@ function populateBrandDropdowns() {
   if (formSelect) {
     const curVal = formSelect.value;
     formSelect.innerHTML = '<option value="">-- Select Brand --</option>' +
-      cachedBrands.map(b => `<option value="${b.id || b._id}">${b.name}</option>`).join('') +
+      cachedBrands.map(b => {
+        const intId = parseInt(b.id, 10);
+        if (isNaN(intId) || String(intId) !== String(b.id)) return '';
+        return `<option value="${intId}">${b.name}</option>`;
+      }).filter(Boolean).join('') +
       '<option value="__new__" style="color:var(--accent-orange); font-weight:600;">+ Add New Brand...</option>';
     if (curVal && curVal !== '__new__') formSelect.value = curVal;
 
@@ -861,17 +873,37 @@ function updatePosCartQty(productId, change) {
   renderPosCart();
 }
 
-function clearPosCart() {
-  posCart = [];
-  renderPosCart();
+let posCustomDiscount = 0;
+
+function focusPosDiscountInput() {
+  const input = document.getElementById('pos-discount-input');
+  if (input) {
+    input.focus();
+    input.select();
+  }
 }
 
-function renderPosCart() {
+function onPosDiscountInputChange(val) {
+  const num = parseFloat(val);
+  posCustomDiscount = isNaN(num) || num < 0 ? 0 : num;
+  renderPosCart(true);
+}
+
+function clearPosCart() {
+  posCart = [];
+  posCustomDiscount = 0;
+  const discountInput = document.getElementById('pos-discount-input');
+  if (discountInput) discountInput.value = 0;
+  renderPosCart();
+  const custSelect = document.getElementById('pos-customer-select');
+  if (custSelect) custSelect.selectedIndex = 0;
+}
+
+function renderPosCart(skipDiscountInputUpdate = false) {
   const list = document.getElementById('pos-cart-items-list');
   const countBadge = document.getElementById('pos-cart-badge');
   const subtotalEl = document.getElementById('pos-subtotal-val');
-  const taxEl = document.getElementById('pos-tax-val');
-  const discountEl = document.getElementById('pos-discount-val');
+  const discountInput = document.getElementById('pos-discount-input');
   const grandTotalEl = document.getElementById('pos-grand-total');
 
   if (!list) return;
@@ -885,35 +917,24 @@ function renderPosCart() {
         Cart is empty.<br/>Scan a barcode or click products to add.
       </div>
     `;
+    posCustomDiscount = 0;
     if (subtotalEl) subtotalEl.textContent = '₹0';
-    if (taxEl) taxEl.textContent = '₹0';
-    if (discountEl) discountEl.textContent = '₹0';
+    if (discountInput && !skipDiscountInputUpdate) discountInput.value = 0;
     if (grandTotalEl) grandTotalEl.textContent = '₹0';
     return;
   }
 
   let grossTotal = 0;
-  let totalDiscount = 0;
-  let taxableTotal = 0;
-  let taxTotal = 0;
 
   list.innerHTML = posCart.map(item => {
     const lineGross = item.price * item.quantity;
-    const lineDiscount = Math.round(lineGross * (item.discount_pct / 100));
-    const lineNet = lineGross - lineDiscount;
-    const lineTaxable = Math.round(lineNet / (1 + (item.gst_rate / 100)));
-    const lineTax = lineNet - lineTaxable;
-
     grossTotal += lineGross;
-    totalDiscount += lineDiscount;
-    taxableTotal += lineTaxable;
-    taxTotal += lineTax;
 
     return `
       <div class="pos-cart-item">
         <div style="flex:1; overflow:hidden;">
           <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-meta">${formatINR(item.price)} × ${item.quantity} | GST ${item.gst_rate}%</div>
+          <div class="cart-item-meta">${formatINR(item.price)} × ${item.quantity}</div>
         </div>
         <div class="cart-qty-ctrls">
           <button type="button" class="cart-qty-btn" onclick="updatePosCartQty(${item.product_id}, -1)">−</button>
@@ -921,17 +942,25 @@ function renderPosCart() {
           <button type="button" class="cart-qty-btn" onclick="updatePosCartQty(${item.product_id}, 1)">+</button>
         </div>
         <div style="text-align:right; min-width:70px;">
-          <div style="font-weight:700; color:var(--accent-orange); font-size:0.95rem;">${formatINR(lineNet)}</div>
+          <div style="font-weight:700; color:var(--accent-orange); font-size:0.95rem;">${formatINR(lineGross)}</div>
           <button style="background:none; border:none; color:var(--danger); font-size:0.7rem; cursor:pointer;" onclick="updatePosCartQty(${item.product_id}, -9999)">Remove</button>
         </div>
       </div>
     `;
   }).join('');
 
-  const grandTotal = taxableTotal + taxTotal;
-  if (subtotalEl) subtotalEl.textContent = formatINR(taxableTotal);
-  if (taxEl) taxEl.textContent = formatINR(taxTotal);
-  if (discountEl) discountEl.textContent = formatINR(totalDiscount);
+  // Total Amount (sum of items)
+  if (subtotalEl) subtotalEl.textContent = formatINR(grossTotal);
+
+  // Discount Applied (Editable by Owner)
+  if (discountInput && !skipDiscountInputUpdate) {
+    discountInput.value = posCustomDiscount > 0 ? posCustomDiscount : 0;
+  }
+
+  // Cap discount at grossTotal
+  const effectiveDiscount = Math.min(posCustomDiscount, grossTotal);
+  const grandTotal = Math.max(0, grossTotal - effectiveDiscount);
+
   if (grandTotalEl) grandTotalEl.textContent = formatINR(grandTotal);
 }
 
@@ -944,20 +973,43 @@ async function completePosSale() {
 
   const custSelect = document.getElementById('pos-customer-select');
   const custId = custSelect ? custSelect.value : null;
-  const customer = cachedCustomers.find(c => String(c.id) === String(custId)) || {
+  let customer = cachedCustomers.find(c => String(c.id) === String(custId)) || {
     name: 'Counter Walk-in Customer',
     phone: '',
     email: '',
     gstin: ''
   };
 
+  // If customer object has no phone, check lastEnteredCustomerPhone or contact form input
+  if (!customer.phone && lastEnteredCustomerPhone) {
+    customer.phone = lastEnteredCustomerPhone;
+    if (customer.name === 'Counter Walk-in Customer' && lastEnteredCustomerName) {
+      customer.name = lastEnteredCustomerName;
+    }
+  }
+  if (!customer.phone) {
+    const custPhoneInput = document.getElementById('cust-form-phone');
+    if (custPhoneInput && custPhoneInput.value.trim()) {
+      customer.phone = custPhoneInput.value.trim();
+    }
+  }
+
   const completeBtn = document.getElementById('pos-complete-btn');
   if (completeBtn) completeBtn.disabled = true;
 
   try {
+    const grossTotal = posCart.reduce((acc, i) => acc + (parseFloat(i.price || 0) * parseInt(i.quantity || 1, 10)), 0);
+    const discountInputEl = document.getElementById('pos-discount-input');
+    const domDiscountVal = discountInputEl ? parseFloat(discountInputEl.value) : 0;
+    const currentDiscount = !isNaN(domDiscountVal) && domDiscountVal > 0 ? domDiscountVal : (posCustomDiscount || 0);
+    const effectiveDiscount = Math.min(Math.max(0, currentDiscount), grossTotal);
+    posCustomDiscount = effectiveDiscount;
+
     const payload = {
       customer,
       items: posCart,
+      discount: effectiveDiscount,
+      discount_amount: effectiveDiscount,
       payment: {
         method: posSelectedPayment,
         reference_no: posSelectedPayment === 'CASH' ? `CASH-${Date.now().toString().slice(-4)}` : `REF-${Date.now().toString().slice(-6)}`
@@ -974,14 +1026,32 @@ async function completePosSale() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to complete sale');
 
+    // Guarantee discount and discounted grandTotal on the receipt data
+    if (effectiveDiscount > 0) {
+      data.discount = effectiveDiscount;
+      data.discountTotal = effectiveDiscount;
+      data.discount_total = effectiveDiscount;
+      if (data.grandTotal === undefined || data.grandTotal >= grossTotal) {
+        data.grandTotal = Math.max(0, grossTotal - effectiveDiscount);
+      }
+      if (data.grand_total === undefined || data.grand_total >= grossTotal) {
+        data.grand_total = Math.max(0, grossTotal - effectiveDiscount);
+      }
+    }
+
     showToast(`✓ Sale Complete! Invoice #${data.billNumber} generated`, 'success');
 
     // Display Thermal Receipt Modal
     displayThermalReceipt(data);
 
-    // Reset Cart
+    // Reset Cart & Discount
     posCart = [];
+    posCustomDiscount = 0;
+    const discountInput = document.getElementById('pos-discount-input');
+    if (discountInput) discountInput.value = 0;
     renderPosCart();
+    const custSelectEl = document.getElementById('pos-customer-select');
+    if (custSelectEl) custSelectEl.selectedIndex = 0;
 
     // Reload Products to update local stock count
     const prodRes = await fetch('/api/products');
@@ -1049,7 +1119,13 @@ async function reprintBill(idOrNum) {
   }
 }
 
+let currentThermalReceipt = null;
+let currentInvoiceData = null;
+let lastEnteredCustomerPhone = '';
+let lastEnteredCustomerName = '';
+
 function displayThermalReceipt(saleData) {
+  currentThermalReceipt = saleData;
   const modal = document.getElementById('modal-thermal-receipt');
   const area = document.getElementById('thermal-receipt-area');
   if (!modal || !area) return;
@@ -1057,21 +1133,45 @@ function displayThermalReceipt(saleData) {
   const store = saleData.store || {};
   const items = saleData.items || [];
   const cust = saleData.customer || {};
+  const customerName = cust.name || saleData.customer_name || lastEnteredCustomerName || 'Walk-in';
+  let customerPhone = cust.phone || saleData.customer_phone || saleData.phone || lastEnteredCustomerPhone || '';
+  if (!customerPhone) {
+    const custPhoneInput = document.getElementById('cust-form-phone');
+    if (custPhoneInput && custPhoneInput.value.trim()) {
+      customerPhone = custPhoneInput.value.trim();
+    }
+  }
+
+  // Backfill phone into customer object so it's always preserved
+  if (!cust.phone && customerPhone) cust.phone = customerPhone;
+  if (!saleData.customer_phone && customerPhone) saleData.customer_phone = customerPhone;
+
+  const billNo = saleData.billNumber || saleData.invoice_number || saleData.order_number || 'POS-BILL';
+  const dateStr = saleData.created_at ? new Date(saleData.created_at).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
+  const grossTotal = items.reduce((acc, i) => acc + (parseFloat(i.price || 0) * parseInt(i.quantity || 1, 10)), 0);
+  let discountVal = parseFloat(saleData.discount !== undefined ? saleData.discount : (saleData.discountTotal || saleData.discount_total || 0));
+  if (isNaN(discountVal)) discountVal = 0;
+  let grandTotalVal = parseFloat(saleData.grandTotal !== undefined ? saleData.grandTotal : (saleData.grand_total || 0));
+  if (isNaN(grandTotalVal) || grandTotalVal <= 0 || (discountVal > 0 && grandTotalVal >= grossTotal)) {
+    grandTotalVal = Math.max(0, grossTotal - discountVal);
+  }
+  const totalAmountVal = grossTotal || (grandTotalVal + discountVal);
+  const payMethod = saleData.payment?.method || saleData.payment_method || 'CASH';
 
   area.innerHTML = `
     <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:10px; margin-bottom:10px;">
-      <h2 style="font-size:1.2rem; font-weight:800; margin:0;">${store.name || 'MOTO ADDICTOR PITSHOP'}</h2>
-      <div style="font-size:0.75rem;">${store.legalName || 'MOTO ADDICTOR PITSHOP Retail Pvt Ltd'}</div>
-      <div style="font-size:0.72rem;">${store.address || 'Chennai, TN'}</div>
+      <h2 style="font-size:1.2rem; font-weight:800; margin:0;">${store.name || 'MOTO PITSHOP'}</h2>
+      <div style="font-size:0.75rem;">${store.legalName || 'Moto Pitshop Retail Pvt Ltd'}</div>
+      <div style="font-size:0.72rem;">${store.address || '124 Racing Track Boulevard, Motor City, Chennai, TN 600001'}</div>
       <div style="font-size:0.75rem; font-weight:700; margin-top:4px;">GSTIN: ${store.gstin || '33AABCM1234F1Z9'}</div>
       <div style="font-size:0.72rem;">Ph: ${store.phone || '+91 98765 43210'}</div>
     </div>
 
     <div style="font-size:0.72rem; margin-bottom:8px;">
-      <div><strong>BILL NO:</strong> ${saleData.billNumber || saleData.invoice_number || saleData.order_number}</div>
-      <div><strong>DATE:</strong> ${new Date().toLocaleString('en-IN')}</div>
-      <div><strong>CUSTOMER:</strong> ${cust.name || saleData.customer_name || 'Walk-in'}</div>
-      ${cust.phone ? `<div><strong>PHONE:</strong> ${cust.phone}</div>` : ''}
+      <div><strong>BILL NO:</strong> ${billNo}</div>
+      <div><strong>DATE:</strong> ${dateStr}</div>
+      <div><strong>CUSTOMER:</strong> ${customerName}</div>
+      ${customerPhone ? `<div><strong>PHONE:</strong> ${customerPhone}</div>` : ''}
     </div>
 
     <table style="width:100%; border-collapse:collapse; font-size:0.72rem; margin-bottom:10px; border-bottom:1px dashed #000;">
@@ -1096,13 +1196,12 @@ function displayThermalReceipt(saleData) {
     </table>
 
     <div style="font-size:0.75rem; line-height:1.4; border-bottom:1px dashed #000; padding-bottom:8px; margin-bottom:8px;">
-      <div style="display:flex; justify-content:space-between;"><span>Taxable Subtotal:</span><span>₹${saleData.subtotal || saleData.taxable_value || 0}</span></div>
-      <div style="display:flex; justify-content:space-between;"><span>CGST:</span><span>₹${saleData.cgst || Math.round((saleData.taxTotal || saleData.total_tax || 0) / 2)}</span></div>
-      <div style="display:flex; justify-content:space-between;"><span>SGST:</span><span>₹${saleData.sgst || Math.round((saleData.taxTotal || saleData.total_tax || 0) / 2)}</span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Total Amount:</span><span>₹${totalAmountVal}</span></div>
+      ${discountVal > 0 ? `<div style="display:flex; justify-content:space-between; color:#10B981; font-weight:600;"><span>Discount Applied:</span><span>-₹${discountVal}</span></div>` : ''}
       <div style="display:flex; justify-content:space-between; font-weight:800; font-size:0.95rem; margin-top:4px;">
-        <span>NET PAYABLE:</span><span>₹${saleData.grandTotal || saleData.grand_total}</span>
+        <span>NET PAYABLE:</span><span>₹${grandTotalVal}</span>
       </div>
-      <div style="font-size:0.7rem; color:#444; margin-top:2px;">Mode: ${saleData.payment?.method || saleData.payment_method || 'CASH'}</div>
+      <div style="font-size:0.7rem; color:#444; margin-top:2px;">Mode: ${payMethod}</div>
     </div>
 
     <div style="text-align:center; font-size:0.7rem; margin-top:10px;">
@@ -1112,7 +1211,206 @@ function displayThermalReceipt(saleData) {
     </div>
   `;
 
+  // Always ensure WhatsApp button is visible
+  const waBtn = document.getElementById('pos-whatsapp-btn');
+  if (waBtn) waBtn.style.display = 'inline-flex';
+
   openModal('modal-thermal-receipt');
+}
+
+function shareReceiptWhatsApp() {
+  if (!currentThermalReceipt) {
+    showToast('No receipt data available to share', 'error');
+    return;
+  }
+
+  const d = currentThermalReceipt;
+  const store = d.store || {};
+  const cust = d.customer || {};
+  const items = d.items || [];
+
+  // Extract phone number from all available sources (NO popup prompt)
+  let rawPhone = (cust.phone || d.customer_phone || d.phone || '').toString().trim();
+
+  // 1. Check thermal receipt DOM on screen if not found in object
+  if (!rawPhone) {
+    const area = document.getElementById('thermal-receipt-area');
+    if (area) {
+      const match = area.innerText.match(/PHONE:\s*([+0-9\s-]+)/i);
+      if (match && match[1]) {
+        rawPhone = match[1].trim();
+      }
+    }
+  }
+
+  // 2. Check last entered customer phone from contact form
+  if (!rawPhone && lastEnteredCustomerPhone) {
+    rawPhone = lastEnteredCustomerPhone;
+  }
+
+  // 3. Check customer modal form input
+  if (!rawPhone) {
+    const formPhone = document.getElementById('cust-form-phone');
+    if (formPhone && formPhone.value.trim()) {
+      rawPhone = formPhone.value.trim();
+    }
+  }
+
+  // 4. Check cachedCustomers by dropdown selection
+  if (!rawPhone) {
+    const custSelect = document.getElementById('pos-customer-select');
+    if (custSelect && custSelect.value && typeof cachedCustomers !== 'undefined' && Array.isArray(cachedCustomers)) {
+      const found = cachedCustomers.find(c => String(c.id) === String(custSelect.value));
+      if (found && found.phone) rawPhone = found.phone;
+    }
+  }
+
+  // 5. Check cachedCustomers by customer name
+  const custName = cust.name || d.customer_name || lastEnteredCustomerName || '';
+  if (!rawPhone && custName && typeof cachedCustomers !== 'undefined' && Array.isArray(cachedCustomers)) {
+    const foundByName = cachedCustomers.find(c => c.name && c.name.toLowerCase() === custName.toLowerCase() && c.phone);
+    if (foundByName && foundByName.phone) rawPhone = foundByName.phone;
+  }
+
+  // Clean phone to only digits
+  let cleanDigits = rawPhone.replace(/\D/g, '');
+
+  // If still missing, DO NOT prompt popup! Just alert via toast.
+  if (!cleanDigits || cleanDigits.length < 10) {
+    showToast('Customer mobile number is missing. Please enter phone number in customer details.', 'error');
+    return;
+  }
+
+  // Format with India Country Code 91
+  let waNumber = cleanDigits;
+  if (waNumber.length === 10) {
+    waNumber = '91' + waNumber;
+  } else if (waNumber.length === 11 && waNumber.startsWith('0')) {
+    waNumber = '91' + waNumber.slice(1);
+  }
+
+  const billNo = d.billNumber || d.invoice_number || d.order_number || 'POS-BILL';
+  const customerName = custName || 'Valued Customer';
+  const storeName = store.name || 'MOTO PITSHOP';
+  const storePhone = store.phone || '+91 98765 43210';
+  const dateStr = d.created_at ? new Date(d.created_at).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
+
+  const grossTotal = items.reduce((acc, i) => acc + (parseFloat(i.price || 0) * parseInt(i.quantity || 1, 10)), 0);
+  let discountVal = parseFloat(d.discount !== undefined ? d.discount : (d.discountTotal || d.discount_total || 0));
+  if (isNaN(discountVal)) discountVal = 0;
+  let finalGrandTotalNum = parseFloat(d.grandTotal !== undefined ? d.grandTotal : (d.grand_total || 0));
+  if (isNaN(finalGrandTotalNum) || finalGrandTotalNum <= 0 || (discountVal > 0 && finalGrandTotalNum >= grossTotal)) {
+    finalGrandTotalNum = Math.max(0, grossTotal - discountVal);
+  }
+  const grandTotal = formatINR(finalGrandTotalNum);
+  const totalAmountStr = formatINR(grossTotal || (finalGrandTotalNum + discountVal));
+  const payMode = (d.payment?.method || d.payment_method || 'CASH').toUpperCase();
+
+  // Itemized line items
+  let itemsLines = '';
+  if (items && items.length > 0) {
+    itemsLines = items.map(i => {
+      const name = i.name || i.product_name || 'Item';
+      const qty = i.quantity || 1;
+      const price = formatINR(i.price || 0);
+      const lineTot = formatINR(i.total || (i.price * qty) || 0);
+      return `• *${name}* × ${qty}\n   Rate: ${price} | Total: ${lineTot}`;
+    }).join('\n');
+  } else {
+    itemsLines = `• *Store Purchase* = ${grandTotal}`;
+  }
+
+  const message =
+    `🏍️ *${storeName.toUpperCase()}*
+*TAX INVOICE / CASH BILL*
+━━━━━━━━━━━━━━━━━━━━━
+*Bill No:* ${billNo}
+*Date:* ${dateStr}
+*Customer:* ${customerName}
+*Phone:* ${rawPhone}
+
+*ITEMS PURCHASED:*
+${itemsLines}
+
+━━━━━━━━━━━━━━━━━━━━━
+*Total Amount:* ${totalAmountStr}
+${discountVal > 0 ? `*Discount Applied:* -${formatINR(discountVal)}\n` : ''}*NET PAYABLE:* ${grandTotal}
+*Payment Mode:* ${payMode}
+━━━━━━━━━━━━━━━━━━━━━
+Thank you for riding with *${storeName}*! 🏁
+Visit us online: https://motopitshop.com
+_Keep this digital receipt for warranty & returns._
+Support: ${storePhone}`;
+
+  const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(message)}`;
+  window.open(waUrl, '_blank', 'noopener,noreferrer');
+  showToast(`Directly sending bill to WhatsApp (+${waNumber})...`, 'success');
+}
+
+function shareInvoiceWhatsApp() {
+  if (!currentInvoiceData) {
+    showToast('No invoice loaded to share', 'error');
+    return;
+  }
+
+  const { invoice: inv, items, store } = currentInvoiceData;
+  let rawPhone = (inv.customer_phone || lastEnteredCustomerPhone || '').toString().trim();
+  if (!rawPhone) {
+    const formPhone = document.getElementById('cust-form-phone');
+    if (formPhone && formPhone.value.trim()) rawPhone = formPhone.value.trim();
+  }
+
+  let cleanDigits = rawPhone.replace(/\D/g, '');
+  if (!cleanDigits || cleanDigits.length < 10) {
+    showToast('Customer mobile number is missing.', 'error');
+    return;
+  }
+
+  let waNumber = cleanDigits;
+  if (waNumber.length === 10) waNumber = '91' + waNumber;
+  else if (waNumber.length === 11 && waNumber.startsWith('0')) waNumber = '91' + waNumber.slice(1);
+
+  const billNo = inv.invoice_number || inv.order_number || 'TAX-INV';
+  const custName = inv.customer_name || 'Valued Customer';
+  const storeName = store.name || 'MOTO PITSHOP';
+  const storePhone = store.phone || '+91 98765 43210';
+  const dateStr = inv.created_at ? new Date(inv.created_at).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
+
+  const grandTotal = formatINR(inv.grand_total || 0);
+  const taxableVal = formatINR(inv.taxable_value || 0);
+  const cgstVal = formatINR(inv.cgst || 0);
+  const sgstVal = formatINR(inv.sgst || 0);
+
+  const itemsLines = (items || []).map(i => {
+    const name = i.product_name || 'Product';
+    const qty = i.quantity || 1;
+    const price = formatINR(i.price || 0);
+    const lineTot = formatINR(i.total || 0);
+    return `• *${name}* × ${qty} = ${lineTot}`;
+  }).join('\n');
+
+  const message =
+    `🏍️ *${storeName.toUpperCase()} - GST TAX INVOICE*
+━━━━━━━━━━━━━━━━━━━━━
+*Invoice No:* ${billNo}
+*Date:* ${dateStr}
+*Customer:* ${custName}
+*Phone:* ${rawPhone}
+
+*ITEMS:*
+${itemsLines || '• Store Purchase'}
+
+━━━━━━━━━━━━━━━━━━━━━
+*Subtotal:* ${taxableVal}
+*NET PAYABLE:* ${grandTotal}
+━━━━━━━━━━━━━━━━━━━━━
+Thank you for choosing *${storeName}*! 🏁
+Visit: https://motopitshop.com
+Support: ${storePhone}`;
+
+  const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(message)}`;
+  window.open(waUrl, '_blank', 'noopener,noreferrer');
+  showToast(`Directly sending invoice to WhatsApp (+${waNumber})...`, 'success');
 }
 
 // ==========================================
@@ -1810,6 +2108,7 @@ async function viewGstInvoice(invoiceNumber) {
     const inv = data.invoice || {};
     const store = inv.store || {};
     const items = inv.items || [];
+    currentInvoiceData = { invoice: inv, items, store };
 
     const printArea = document.getElementById('invoice-print-area');
     if (!printArea) return;
@@ -2702,10 +3001,18 @@ function setupEventListeners() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to add customer');
 
+        lastEnteredCustomerPhone = payload.phone;
+        lastEnteredCustomerName = payload.name;
         showToast(data.message, 'success');
         closeModal('modal-customer');
         await loadInitialMasterData();
         loadCustomersData();
+
+        // Automatically select the newly created customer in POS customer dropdown
+        const posSelect = document.getElementById('pos-customer-select');
+        if (posSelect && data.id) {
+          posSelect.value = String(data.id);
+        }
       } catch (err) {
         showToast(err.message, 'error');
       }
