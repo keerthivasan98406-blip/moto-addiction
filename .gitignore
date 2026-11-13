@@ -5,3 +5,4 @@ motopitshop.db
 *.db-wal
 .DS_Store
 .kiro/
+package-lock.json
