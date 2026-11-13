@@ -10,7 +10,8 @@
     "start": "node server.js",
     "dev": "node server.js",
     "init-db": "node database.js",
-    "migrate-mongo": "node migrate-to-mongo.js"
+    "migrate-mongo": "node migrate-to-mongo.js",
+    "postinstall": "npm rebuild better-sqlite3"
   },
   "dependencies": {
     "better-sqlite3": "^13.1.1",
