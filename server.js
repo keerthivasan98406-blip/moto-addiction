@@ -144,7 +144,7 @@ async function mainHandler(req, res) {
     if (currentUser) await logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'LOGOUT', 'USER', currentUser.id, 'SUCCESS');
     const authHeader = req.headers['authorization']; let token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
     if (!token && req.headers.cookie) { const cookies = req.headers.cookie.split(';').reduce((acc, cookie) => { const [k, v] = cookie.trim().split('='); acc[k] = v; return acc; }, {}); token = cookies['motopitshop_session']; }
-    if (token) { sessions.delete(token); try { const db = getDb(); if (db) await db.collection('sessions').deleteOne({ token }); } catch(e){} }
+    if (token) { sessions.delete(token); try { const db = getDb(); if (db) await db.collection('sessions').deleteOne({ token }); } catch (e) { } }
     return sendJson(res, 200, { message: 'Logged out successfully' }, { 'Set-Cookie': 'motopitshop_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT' });
   }
 
@@ -179,10 +179,14 @@ async function mainHandler(req, res) {
   if (pathname === '/api/products' && req.method === 'GET') {
     const cat = parsedUrl.searchParams.get('category'); const brand = parsedUrl.searchParams.get('brand'); const search = parsedUrl.searchParams.get('search');
     const db = getDb();
-    if (db) { try { const filter = { status: 'ACTIVE', is_archived: { $ne: 1 } }; if (cat && cat !== 'all') filter.$or = [{ category_slug: cat }, { category_name: new RegExp(cat, 'i') }]; if (brand && brand !== 'all') filter.$or = [{ brand_slug: brand }, { brand_name: new RegExp(brand, 'i') }]; if (search) { const regex = new RegExp(search, 'i'); filter.$or = [{ name: regex }, { sku: regex }, { product_code: regex }, { description: regex }, { brand_name: regex }, { hsn: regex }]; }
-      let products = await db.collection('products').find(filter).maxTimeMS(5000).sort({ _id: -1 }).toArray();
-      products = products.map(p => ({ ...p, id: p.id || (p._id ? p._id.toString() : undefined), images_json: p.images_json || (p.images ? JSON.stringify(p.images) : '[]'), category_slug: p.category_slug || '', category_name: p.category_name || '', brand_name: p.brand_name || '' }));
-      return sendJson(res, 200, { products }); } catch (e) { console.warn('[API/products] MongoDB read failed:', e.message); } }
+    if (db) {
+      try {
+        const filter = { status: 'ACTIVE', is_archived: { $ne: 1 } }; if (cat && cat !== 'all') filter.$or = [{ category_slug: cat }, { category_name: new RegExp(cat, 'i') }]; if (brand && brand !== 'all') filter.$or = [{ brand_slug: brand }, { brand_name: new RegExp(brand, 'i') }]; if (search) { const regex = new RegExp(search, 'i'); filter.$or = [{ name: regex }, { sku: regex }, { product_code: regex }, { description: regex }, { brand_name: regex }, { hsn: regex }]; }
+        let products = await db.collection('products').find(filter).maxTimeMS(5000).sort({ _id: -1 }).toArray();
+        products = products.map(p => ({ ...p, id: p.id || (p._id ? p._id.toString() : undefined), images_json: p.images_json || (p.images ? JSON.stringify(p.images) : '[]'), category_slug: p.category_slug || '', category_name: p.category_name || '', brand_name: p.brand_name || '' }));
+        return sendJson(res, 200, { products });
+      } catch (e) { console.warn('[API/products] MongoDB read failed:', e.message); }
+    }
     return sendJson(res, 200, { products: [] });
   }
 
@@ -205,15 +209,16 @@ async function mainHandler(req, res) {
     catch (err) { return sendJson(res, 500, { error: err.message }); }
   }
 
-  if (pathname === '/api/categories' && req.method === 'GET') { const db = getDb(); if (db) { try { const categories = await db.collection('categories').find({}).sort({ display_order: 1 }).toArray(); if (categories.length > 0) return sendJson(res, 200, { categories: categories.map(c => ({ ...c, id: c.id || c._id })) }); } catch (e) {} } return sendJson(res, 200, { categories: [] }); }
-  if (pathname === '/api/brands' && req.method === 'GET') { const db = getDb(); if (db) { try { const brands = await db.collection('brands').find({}).sort({ name: 1 }).toArray(); if (brands.length > 0) return sendJson(res, 200, { brands: brands.map(b => ({ ...b, id: b.id || b._id })) }); } catch (e) {} } return sendJson(res, 200, { brands: [] }); }
-  if (pathname === '/api/bikes' && req.method === 'GET') { const db = getDb(); if (db) { try { const bikes = await db.collection('bikes').find({}).sort({ brand: 1, model: 1 }).toArray(); if (bikes.length > 0) return sendJson(res, 200, { bikes: bikes.map(b => ({ ...b, id: b.id || b._id })) }); } catch (e) {} } return sendJson(res, 200, { bikes: [] }); }
+  if (pathname === '/api/categories' && req.method === 'GET') { const db = getDb(); if (db) { try { const categories = await db.collection('categories').find({}).sort({ display_order: 1 }).toArray(); if (categories.length > 0) return sendJson(res, 200, { categories: categories.map(c => ({ ...c, id: c.id || c._id })) }); } catch (e) { } } return sendJson(res, 200, { categories: [] }); }
+  if (pathname === '/api/brands' && req.method === 'GET') { const db = getDb(); if (db) { try { const brands = await db.collection('brands').find({}).sort({ name: 1 }).toArray(); if (brands.length > 0) return sendJson(res, 200, { brands: brands.map(b => ({ ...b, id: b.id || b._id })) }); } catch (e) { } } return sendJson(res, 200, { brands: [] }); }
+  if (pathname === '/api/bikes' && req.method === 'GET') { const db = getDb(); if (db) { try { const bikes = await db.collection('bikes').find({}).sort({ brand: 1, model: 1 }).toArray(); if (bikes.length > 0) return sendJson(res, 200, { bikes: bikes.map(b => ({ ...b, id: b.id || b._id })) }); } catch (e) { } } return sendJson(res, 200, { bikes: [] }); }
 
   // ORDERS
   if (pathname === '/api/payments/create' && req.method === 'POST') { try { const body = await parseJsonBody(req); const { amount, method } = body; return sendJson(res, 200, { success: true, provider: 'MOTO_PITSHOP_PAYMENT_GATEWAY', providerOrderId: `pay_ord_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`, transactionRef: `txn_${Date.now()}`, amount, currency: 'INR', method: method || 'UPI' }); } catch (err) { return sendJson(res, 500, { error: err.message }); } }
 
   if (pathname === '/api/orders' && req.method === 'POST') {
-    try { const body = await parseJsonBody(req); const { customer, items, payment } = body; if (!customer || !items || !items.length) return sendJson(res, 400, { error: 'Customer information and cart items are required' }); const db = getDb(); let subtotal = 0, taxTotal = 0, cgstTotal = 0, sgstTotal = 0; const preparedItems = [];
+    try {
+      const body = await parseJsonBody(req); const { customer, items, payment } = body; if (!customer || !items || !items.length) return sendJson(res, 400, { error: 'Customer information and cart items are required' }); const db = getDb(); let subtotal = 0, taxTotal = 0, cgstTotal = 0, sgstTotal = 0; const preparedItems = [];
       for (const item of items) {
         const rawId = item.id || item.product_id;
         const numId = parseInt(rawId, 10);
@@ -231,7 +236,7 @@ async function mainHandler(req, res) {
               if (ObjectId.isValid(rawId)) {
                 prod = await db.collection('products').findOne({ _id: new ObjectId(rawId) });
               }
-            } catch (e) {}
+            } catch (e) { }
           }
         }
         if (!prod && item.sku) prod = await db.collection('products').findOne({ sku: item.sku });

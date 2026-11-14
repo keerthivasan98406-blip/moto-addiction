@@ -1133,18 +1133,11 @@ function displayThermalReceipt(saleData) {
   const store = saleData.store || {};
   const items = saleData.items || [];
   const cust = saleData.customer || {};
-  const customerName = cust.name || saleData.customer_name || lastEnteredCustomerName || 'Walk-in';
-  let customerPhone = cust.phone || saleData.customer_phone || saleData.phone || lastEnteredCustomerPhone || '';
-  if (!customerPhone) {
-    const custPhoneInput = document.getElementById('cust-form-phone');
-    if (custPhoneInput && custPhoneInput.value.trim()) {
-      customerPhone = custPhoneInput.value.trim();
-    }
-  }
-
-  // Backfill phone into customer object so it's always preserved
-  if (!cust.phone && customerPhone) cust.phone = customerPhone;
-  if (!saleData.customer_phone && customerPhone) saleData.customer_phone = customerPhone;
+  const customerName = cust.name || saleData.customer_name || 'Walk-in';
+  // ONLY use the phone number from the server response — never fall back to
+  // lastEnteredCustomerPhone or form inputs, which may contain a different
+  // customer's number from a previous sale
+  let customerPhone = cust.phone || saleData.customer_phone || '';
 
   const billNo = saleData.billNumber || saleData.invoice_number || saleData.order_number || 'POS-BILL';
   const dateStr = saleData.created_at ? new Date(saleData.created_at).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
@@ -1229,10 +1222,14 @@ function shareReceiptWhatsApp() {
   const cust = d.customer || {};
   const items = d.items || [];
 
-  // Extract phone number from all available sources (NO popup prompt)
-  let rawPhone = (cust.phone || d.customer_phone || d.phone || '').toString().trim();
+  // Extract phone number ONLY from the receipt data itself.
+  // Never fall back to lastEnteredCustomerPhone, form inputs, or
+  // cachedCustomers lookups — those may contain a DIFFERENT customer's
+  // phone number from a previous sale, causing the receipt to be sent
+  // to the wrong person.
+  let rawPhone = (cust.phone || d.customer_phone || '').toString().trim();
 
-  // 1. Check thermal receipt DOM on screen if not found in object
+  // If still missing, check the receipt DOM (which was rendered from server data)
   if (!rawPhone) {
     const area = document.getElementById('thermal-receipt-area');
     if (area) {
@@ -1243,34 +1240,7 @@ function shareReceiptWhatsApp() {
     }
   }
 
-  // 2. Check last entered customer phone from contact form
-  if (!rawPhone && lastEnteredCustomerPhone) {
-    rawPhone = lastEnteredCustomerPhone;
-  }
-
-  // 3. Check customer modal form input
-  if (!rawPhone) {
-    const formPhone = document.getElementById('cust-form-phone');
-    if (formPhone && formPhone.value.trim()) {
-      rawPhone = formPhone.value.trim();
-    }
-  }
-
-  // 4. Check cachedCustomers by dropdown selection
-  if (!rawPhone) {
-    const custSelect = document.getElementById('pos-customer-select');
-    if (custSelect && custSelect.value && typeof cachedCustomers !== 'undefined' && Array.isArray(cachedCustomers)) {
-      const found = cachedCustomers.find(c => String(c.id) === String(custSelect.value));
-      if (found && found.phone) rawPhone = found.phone;
-    }
-  }
-
-  // 5. Check cachedCustomers by customer name
-  const custName = cust.name || d.customer_name || lastEnteredCustomerName || '';
-  if (!rawPhone && custName && typeof cachedCustomers !== 'undefined' && Array.isArray(cachedCustomers)) {
-    const foundByName = cachedCustomers.find(c => c.name && c.name.toLowerCase() === custName.toLowerCase() && c.phone);
-    if (foundByName && foundByName.phone) rawPhone = foundByName.phone;
-  }
+  const custName = cust.name || d.customer_name || 'Valued Customer';
 
   // Clean phone to only digits
   let cleanDigits = rawPhone.replace(/\D/g, '');
@@ -1354,11 +1324,9 @@ function shareInvoiceWhatsApp() {
   }
 
   const { invoice: inv, items, store } = currentInvoiceData;
-  let rawPhone = (inv.customer_phone || lastEnteredCustomerPhone || '').toString().trim();
-  if (!rawPhone) {
-    const formPhone = document.getElementById('cust-form-phone');
-    if (formPhone && formPhone.value.trim()) rawPhone = formPhone.value.trim();
-  }
+  // Only use the phone from the invoice itself — do NOT fall back to
+  // lastEnteredCustomerPhone or form inputs which may hold a different customer's number
+  let rawPhone = (inv.customer_phone || '').toString().trim();
 
   let cleanDigits = rawPhone.replace(/\D/g, '');
   if (!cleanDigits || cleanDigits.length < 10) {

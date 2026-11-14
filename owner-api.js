@@ -493,15 +493,28 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
     let filter = {}; if (type && type !== 'all') filter.customer_type = type.toUpperCase();
     if (search) { const regex = new RegExp(search, 'i'); filter.$or = [{ name: regex }, { phone: regex }, { email: regex }, { gstin: regex }, { customer_code: regex }]; }
     const customers = await db.collection('customers').find(filter).sort({ id: -1 }).toArray();
-    return sendJson(res, 200, { customers });
+    return sendJson(res, 200, {
+      customers: customers.map(c => ({
+        ...c,
+        _id: c._id ? c._id.toString() : String(c.id),
+        id: c.id
+      }))
+    });
   }
 
   if (pathname === '/api/owner/customers' && req.method === 'POST') {
     if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
     try { const body = await parseJsonBody(req); const { name, phone, email, billing_address, shipping_address, gstin, customer_type, notes } = body; if (!name) return sendJson(res, 400, { error: 'Customer name is required' }); if (phone) { const existing = await db.collection('customers').findOne({ phone: phone.trim() }); if (existing) return sendJson(res, 400, { error: `Customer with phone number ${phone} already exists` }); }
       const code = `MPS-CUST-${Date.now().toString().slice(-4)}`; const custId = await getNextId('customers'); const now = new Date().toISOString();
-      await db.collection('customers').insertOne({ id: custId, customer_code: code, name: name.trim(), phone: phone || '', email: email || '', billing_address: billing_address || '', shipping_address: shipping_address || '', gstin: gstin || '', customer_type: customer_type || 'RETAIL', notes: notes || '', total_spend: 0, total_orders: 0, created_at: now, updated_at: now });
-      await logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_CUSTOMER', 'CUSTOMER', custId, 'SUCCESS'); return sendJson(res, 201, { message: 'Customer created successfully', id: custId, customer_code: code });
+      const insertResult = await db.collection('customers').insertOne({ id: custId, customer_code: code, name: name.trim(), phone: (phone || '').trim(), email: (email || '').trim(), billing_address: billing_address || '', shipping_address: shipping_address || '', gstin: gstin || '', customer_type: customer_type || 'RETAIL', notes: notes || '', total_spend: 0, total_orders: 0, created_at: now, updated_at: now });
+      await logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_CUSTOMER', 'CUSTOMER', custId, 'SUCCESS');
+      return sendJson(res, 201, {
+        message: 'Customer created successfully',
+        id: custId,
+        _id: insertResult.insertedId ? insertResult.insertedId.toString() : String(custId),
+        customer_code: code,
+        customer: { id: custId, _id: insertResult.insertedId ? insertResult.insertedId.toString() : String(custId), name: name.trim(), phone: (phone || '').trim(), customer_type: customer_type || 'RETAIL' }
+      });
     } catch (err) { return sendJson(res, 500, { error: err.message }); }
   }
 
