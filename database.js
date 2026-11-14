@@ -1,791 +1,152 @@
-// database.js - Moto Pitshop Database Initialization & Data Layer
-const Database = require('better-sqlite3');
+// database.js - Moto Pitshop MongoDB Data Layer (No SQLite)
 const crypto = require('crypto');
-const path = require('path');
-
-const fs = require('fs');
-
-console.log('[DB-INIT] Initializing SQLite data layer...');
-console.log(`[DB-INIT] Node: ${process.version}, Platform: ${process.platform} (${process.arch}), ABI: ${process.versions.modules}`);
-
-const defaultDbPath = path.join(__dirname, 'motopitshop.db');
-let DB_PATH = process.env.DB_PATH;
-
-if (!DB_PATH) {
-  // Check if directory is writable (Render Linux allows writes in /opt/render/project/src)
-  try {
-    fs.accessSync(__dirname, fs.constants.W_OK);
-    DB_PATH = defaultDbPath;
-    console.log(`[DB-INIT] Workspace directory is writable. Using primary DB: ${DB_PATH}`);
-  } catch (permErr) {
-    console.warn(`[DB-INIT] Directory write check failed (${permErr.message}). Falling back to /tmp/motopitshop.db`);
-    DB_PATH = '/tmp/motopitshop.db';
-  }
-} else {
-  console.log(`[DB-INIT] Using custom DB_PATH from environment: ${DB_PATH}`);
-}
-
-// DATA PRESERVATION:
-// If DB_PATH is in /tmp (or another non-repo path) and doesn't exist yet,
-// copy the existing seeded motopitshop.db so no products/users/categories are lost!
-if (DB_PATH !== defaultDbPath && !fs.existsSync(DB_PATH) && fs.existsSync(defaultDbPath)) {
-  try {
-    fs.copyFileSync(defaultDbPath, DB_PATH);
-    console.log(`[DB-PRESERVATION] Successfully copied existing database from ${defaultDbPath} to ${DB_PATH}`);
-  } catch (copyErr) {
-    console.warn(`[DB-PRESERVATION] Warning: Could not copy existing DB to ${DB_PATH}:`, copyErr.message);
-  }
-}
-
-let db;
-try {
-  console.log(`[DB-INIT] Opening SQLite database connection at ${DB_PATH}...`);
-  db = new Database(DB_PATH, { verbose: process.env.DEBUG_SQL ? console.log : null });
-  console.log(`[DB-INIT] SQLite database opened successfully (open: ${db.open}).`);
-} catch (err) {
-  console.warn(`[DB-INIT] Could not open SQLite at ${DB_PATH}: ${err.message}. Falling back to in-memory DB.`);
-  db = new Database(':memory:');
-  console.log('[DB-INIT] In-memory SQLite fallback database initialized.');
-}
-
-// Configure Foreign Keys & Journal Mode
-try {
-  db.exec('PRAGMA foreign_keys = OFF;');
-  const jm = db.pragma('journal_mode = WAL');
-  console.log(`[DB-INIT] Foreign keys set to OFF (safe hybrid mode). Journal mode: ${JSON.stringify(jm)}`);
-} catch (pragmaErr) {
-  console.warn('[DB-INIT] PRAGMA configuration warning:', pragmaErr.message);
-}
+const { getDb } = require('./mongodb.js');
 
 function hashPassword(password) {
   const salt = 'motopitshop_prod_salt_2026';
   return crypto.scryptSync(password, salt, 64).toString('hex');
 }
 
-function initDatabase() {
-  // 1. Users Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      full_name TEXT NOT NULL,
-      phone TEXT,
-      role TEXT CHECK(role IN ('CUSTOMER', 'STAFF', 'ADMIN', 'OWNER')) NOT NULL DEFAULT 'CUSTOMER',
-      status TEXT CHECK(status IN ('ACTIVE', 'SUSPENDED', 'DISABLED')) NOT NULL DEFAULT 'ACTIVE',
-      permissions_json TEXT DEFAULT '{}',
-      last_login_at TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  // 2. Categories Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      slug TEXT UNIQUE NOT NULL,
-      name TEXT NOT NULL,
-      icon TEXT,
-      description TEXT,
-      display_order INTEGER DEFAULT 0
-    );
-  `);
-
-  // 3. Brands Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS brands (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      slug TEXT UNIQUE NOT NULL,
-      name TEXT NOT NULL,
-      logo TEXT,
-      description TEXT
-    );
-  `);
-
-  // 4. Bikes Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS bikes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      brand TEXT NOT NULL,
-      model TEXT NOT NULL,
-      year INTEGER NOT NULL,
-      variant TEXT NOT NULL,
-      engine_cc INTEGER,
-      UNIQUE(brand, model, year, variant)
-    );
-  `);
-
-  // 5. Suppliers Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS suppliers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      contact_person TEXT,
-      email TEXT,
-      phone TEXT,
-      address TEXT,
-      gstin TEXT,
-      status TEXT DEFAULT 'ACTIVE',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  // 6. Products Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sku TEXT UNIQUE NOT NULL,
-      product_code TEXT,
-      name TEXT NOT NULL,
-      slug TEXT UNIQUE NOT NULL,
-      brand_id INTEGER,
-      category_id INTEGER,
-      description TEXT,
-      price INTEGER NOT NULL,
-      old_price INTEGER,
-      discount INTEGER,
-      gst_rate REAL DEFAULT 18.0,
-      hsn TEXT DEFAULT '8714',
-      stock INTEGER NOT NULL DEFAULT 0,
-      min_stock INTEGER NOT NULL DEFAULT 5,
-      reserved_stock INTEGER NOT NULL DEFAULT 0,
-      supplier_id INTEGER,
-      warranty TEXT DEFAULT '6 Months Manufacturer',
-      weight TEXT DEFAULT '0.5 kg',
-      status TEXT DEFAULT 'ACTIVE',
-      primary_image TEXT NOT NULL,
-      images_json TEXT DEFAULT '[]',
-      is_featured INTEGER DEFAULT 0,
-      is_bestseller INTEGER DEFAULT 0,
-      rating REAL DEFAULT 5.0,
-      rating_count INTEGER DEFAULT 1,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (brand_id) REFERENCES brands(id),
-      FOREIGN KEY (category_id) REFERENCES categories(id),
-      FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
-    );
-  `);
-
-  // 7. Bike Compatibility Matrix Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS bike_compatibility (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      product_id INTEGER NOT NULL,
-      bike_id INTEGER NOT NULL,
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-      FOREIGN KEY (bike_id) REFERENCES bikes(id) ON DELETE CASCADE,
-      UNIQUE(product_id, bike_id)
-    );
-  `);
-
-  // 8. Carts & Cart Items
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS carts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER UNIQUE NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-    CREATE TABLE IF NOT EXISTS cart_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cart_id INTEGER NOT NULL,
-      product_id INTEGER NOT NULL,
-      quantity INTEGER NOT NULL DEFAULT 1,
-      FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-      UNIQUE(cart_id, product_id)
-    );
-  `);
-
-  // 9. Wishlists & Wishlist Items
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS wishlists (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER UNIQUE NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-    CREATE TABLE IF NOT EXISTS wishlist_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      wishlist_id INTEGER NOT NULL,
-      product_id INTEGER NOT NULL,
-      FOREIGN KEY (wishlist_id) REFERENCES wishlists(id) ON DELETE CASCADE,
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-      UNIQUE(wishlist_id, product_id)
-    );
-  `);
-
-  // 10. Orders Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      order_number TEXT UNIQUE NOT NULL,
-      user_id INTEGER,
-      customer_name TEXT NOT NULL,
-      customer_email TEXT NOT NULL,
-      customer_phone TEXT NOT NULL,
-      shipping_address_json TEXT NOT NULL,
-      status TEXT CHECK(status IN ('PLACED', 'CONFIRMED', 'PROCESSING', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED')) NOT NULL DEFAULT 'PLACED',
-      payment_status TEXT CHECK(payment_status IN ('PENDING', 'PROCESSING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED')) NOT NULL DEFAULT 'PENDING',
-      payment_method TEXT DEFAULT 'UPI',
-      payment_ref TEXT,
-      payment_screenshot TEXT,
-      subtotal INTEGER NOT NULL,
-      tax_total INTEGER NOT NULL DEFAULT 0,
-      cgst_total INTEGER NOT NULL DEFAULT 0,
-      sgst_total INTEGER NOT NULL DEFAULT 0,
-      igst_total INTEGER NOT NULL DEFAULT 0,
-      discount_total INTEGER NOT NULL DEFAULT 0,
-      grand_total INTEGER NOT NULL,
-      notes TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-  `);
-
-  // 11. Order Items Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS order_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      order_id INTEGER NOT NULL,
-      product_id INTEGER,
-      product_name TEXT NOT NULL,
-      product_sku TEXT,
-      price INTEGER NOT NULL,
-      quantity INTEGER NOT NULL,
-      hsn TEXT DEFAULT '8714',
-      gst_rate REAL DEFAULT 18.0,
-      tax_amount INTEGER DEFAULT 0,
-      total INTEGER NOT NULL,
-      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-      FOREIGN KEY (product_id) REFERENCES products(id)
-    );
-  `);
-
-  // 12. Payments Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS payments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      order_id INTEGER NOT NULL,
-      user_id INTEGER,
-      provider TEXT DEFAULT 'RAZORPAY_SANDBOX',
-      method TEXT NOT NULL,
-      provider_order_id TEXT,
-      provider_payment_id TEXT,
-      amount INTEGER NOT NULL,
-      currency TEXT DEFAULT 'INR',
-      status TEXT CHECK(status IN ('PENDING', 'PROCESSING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED')) NOT NULL DEFAULT 'PENDING',
-      failure_reason TEXT,
-      transaction_ref TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
-    );
-  `);
-
-  // 13. Invoices Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS invoices (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      invoice_number TEXT UNIQUE NOT NULL,
-      order_id INTEGER UNIQUE NOT NULL,
-      user_id INTEGER,
-      customer_name TEXT NOT NULL,
-      customer_gstin TEXT,
-      store_name TEXT DEFAULT 'MOTO PITSHOP',
-      store_address TEXT DEFAULT '124 Racing Track Boulevard, Motor City, TN 600001',
-      store_gstin TEXT DEFAULT '33AABCM1234F1Z9',
-      taxable_value INTEGER NOT NULL,
-      cgst INTEGER DEFAULT 0,
-      sgst INTEGER DEFAULT 0,
-      igst INTEGER DEFAULT 0,
-      total_tax INTEGER NOT NULL,
-      grand_total INTEGER NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
-    );
-  `);
-
-  // 14. Inventory Transactions Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS inventory_transactions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      product_id INTEGER NOT NULL,
-      transaction_type TEXT CHECK(transaction_type IN ('PURCHASE', 'SALE', 'RETURN', 'ADJUSTMENT', 'DAMAGE', 'CANCELLATION')) NOT NULL,
-      quantity_change INTEGER NOT NULL,
-      previous_stock INTEGER NOT NULL,
-      new_stock INTEGER NOT NULL,
-      notes TEXT,
-      user_id INTEGER,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-    );
-  `);
-
-  // 15. Purchases Table & Purchase Items
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS purchases (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      purchase_number TEXT UNIQUE NOT NULL,
-      supplier_id INTEGER NOT NULL,
-      supplier_invoice_no TEXT,
-      total_cost INTEGER NOT NULL,
-      gst_amount INTEGER DEFAULT 0,
-      grand_total INTEGER NOT NULL,
-      payment_status TEXT DEFAULT 'UNPAID',
-      status TEXT DEFAULT 'RECEIVED',
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
-    );
-    CREATE TABLE IF NOT EXISTS purchase_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      purchase_id INTEGER NOT NULL,
-      product_id INTEGER NOT NULL,
-      quantity INTEGER NOT NULL,
-      unit_cost INTEGER NOT NULL,
-      total INTEGER NOT NULL,
-      FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE CASCADE,
-      FOREIGN KEY (product_id) REFERENCES products(id)
-    );
-  `);
-
-  // 16. Support Tickets Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS support_tickets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ticket_number TEXT UNIQUE NOT NULL,
-      user_id INTEGER,
-      customer_name TEXT NOT NULL,
-      customer_email TEXT NOT NULL,
-      order_number TEXT,
-      issue_type TEXT NOT NULL,
-      subject TEXT NOT NULL,
-      message TEXT NOT NULL,
-      status TEXT DEFAULT 'OPEN',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  // 17. Coupons Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS coupons (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      code TEXT UNIQUE NOT NULL,
-      discount_type TEXT CHECK(discount_type IN ('PERCENTAGE', 'FIXED')) NOT NULL,
-      discount_value INTEGER NOT NULL,
-      min_order_amount INTEGER DEFAULT 0,
-      max_discount INTEGER,
-      valid_from TEXT,
-      valid_until TEXT,
-      usage_limit INTEGER DEFAULT 100,
-      usage_count INTEGER DEFAULT 0,
-      is_active INTEGER DEFAULT 1,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  // 18. Reviews Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS reviews (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      product_id INTEGER NOT NULL,
-      user_id INTEGER,
-      customer_name TEXT NOT NULL,
-      rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
-      comment TEXT NOT NULL,
-      is_approved INTEGER DEFAULT 1,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-    );
-  `);
-
-  // 19. Audit Logs Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS audit_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
-      user_name TEXT NOT NULL,
-      user_role TEXT NOT NULL,
-      action TEXT NOT NULL,
-      entity TEXT NOT NULL,
-      entity_id TEXT,
-      ip_address TEXT DEFAULT '127.0.0.1',
-      result TEXT DEFAULT 'SUCCESS',
-      details_json TEXT DEFAULT '{}',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  // 20. Store Settings & Business Profile Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS store_settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
-  `);
-
-  // 21. Persistent User Sessions Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS sessions (
-      token TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL,
-      created_at INTEGER NOT NULL,
-      expires_at INTEGER NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-  `);
-
-  // 22. Expenses Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS expenses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      expense_number TEXT UNIQUE NOT NULL,
-      expense_date TEXT NOT NULL,
-      category TEXT NOT NULL,
-      description TEXT,
-      amount INTEGER NOT NULL,
-      payment_method TEXT DEFAULT 'CASH',
-      vendor TEXT,
-      reference_number TEXT,
-      recorded_by INTEGER,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (recorded_by) REFERENCES users(id)
-    );
-  `);
-
-  // 23. Credit Notes Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS credit_notes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      credit_note_number TEXT UNIQUE NOT NULL,
-      invoice_id INTEGER NOT NULL,
-      reason TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      status TEXT DEFAULT 'ACTIVE',
-      created_by INTEGER,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
-      FOREIGN KEY (created_by) REFERENCES users(id)
-    );
-  `);
-
-  runSchemaMigrations();
-  seedInitialData();
+async function getNextId(collectionName) {
+  const db = getDb();
+  if (!db) throw new Error('MongoDB not connected');
+  const result = await db.collection('counters').findOneAndUpdate(
+    { _id: collectionName },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: 'after' }
+  );
+  return result.seq;
 }
 
-function addColumnIfNotExists(table, column, colDef) {
-  try {
-    const pragma = db.prepare(`PRAGMA table_info("${table}")`).all();
-    const exists = pragma.some(c => c.name === column);
-    if (!exists) {
-      db.exec(`ALTER TABLE "${table}" ADD COLUMN ${column} ${colDef};`);
-    }
-  } catch (err) {
-    console.error(`Migration error adding ${column} to ${table}:`, err.message);
+async function initDatabase() {
+  const db = getDb();
+  if (!db) { console.warn('[DB] MongoDB not connected yet, skipping seed'); return; }
+  console.log('[DB] Initializing MongoDB collections and seed data...');
+
+  await db.collection('users').createIndex({ email: 1 }, { unique: true });
+  await db.collection('products').createIndex({ sku: 1 }, { unique: true, sparse: true });
+  await db.collection('orders').createIndex({ order_number: 1 }, { unique: true });
+  await db.collection('invoices').createIndex({ invoice_number: 1 }, { unique: true });
+  await db.collection('sessions').createIndex({ token: 1 }, { unique: true });
+  await db.collection('store_settings').createIndex({ key: 1 }, { unique: true });
+
+  const userCount = await db.collection('users').countDocuments();
+  if (userCount === 0) {
+    const now = new Date().toISOString();
+    await db.collection('users').insertMany([
+      { id: 1, email: 'owner@motopitshop.com', password_hash: hashPassword('MotoPit@2026!Owner'), full_name: 'Balaji MJ', phone: '+91 9876543210', role: 'OWNER', status: 'ACTIVE', permissions_json: JSON.stringify({ all: true }), staff_role: 'OWNER', created_at: now, updated_at: now },
+      { id: 2, email: 'admin@motopitshop.com', password_hash: hashPassword('MotoPit@2026!Admin'), full_name: 'Moto Pitshop Administrator', phone: '+91 9876543211', role: 'ADMIN', status: 'ACTIVE', permissions_json: JSON.stringify({ all: true }), staff_role: 'MANAGER', created_at: now, updated_at: now },
+      { id: 3, email: 'staff@motopitshop.com', password_hash: hashPassword('MotoPit@2026!Staff'), full_name: 'Moto Pitshop Operations', phone: '+91 9876543212', role: 'STAFF', status: 'ACTIVE', permissions_json: JSON.stringify({ orders: 'READ_WRITE', inventory: 'READ_WRITE', customers: 'READ' }), staff_role: 'STAFF', created_at: now, updated_at: now },
+      { id: 4, email: 'customer@motopitshop.com', password_hash: hashPassword('MotoPit@2026!Customer'), full_name: 'Demo Customer', phone: '+91 9876543213', role: 'CUSTOMER', status: 'ACTIVE', permissions_json: '{}', staff_role: 'CUSTOMER', created_at: now, updated_at: now },
+      { id: 5, email: 'cashier@motopitshop.com', password_hash: hashPassword('MotoPit@2026!Cashier'), full_name: 'Counter Cashier', phone: '+91 9876543214', role: 'STAFF', status: 'ACTIVE', permissions_json: JSON.stringify({ pos: true, billing: true, customers: true }), staff_role: 'CASHIER', created_at: now, updated_at: now },
+      { id: 6, email: 'inventory@motopitshop.com', password_hash: hashPassword('MotoPit@2026!Inventory'), full_name: 'Warehouse Manager', phone: '+91 9876543215', role: 'STAFF', status: 'ACTIVE', permissions_json: JSON.stringify({ products: true, stock: true, purchases: true }), staff_role: 'INVENTORY', created_at: now, updated_at: now }
+    ]);
+    await db.collection('counters').updateOne({ _id: 'users' }, { $set: { seq: 6 } }, { upsert: true });
+    console.log('[DB] Seeded 6 users');
   }
-}
 
-function runSchemaMigrations() {
-  // 1. Upgrade Products Table
-  addColumnIfNotExists('products', 'barcode', 'TEXT');
-  addColumnIfNotExists('products', 'purchase_price', 'INTEGER DEFAULT 0');
-  addColumnIfNotExists('products', 'variants_json', "TEXT DEFAULT '[]'");
-  addColumnIfNotExists('products', 'is_archived', 'INTEGER DEFAULT 0');
-
-  // 2. Upgrade Orders Table
-  addColumnIfNotExists('orders', 'order_type', "TEXT DEFAULT 'ONLINE'");
-  addColumnIfNotExists('orders', 'courier_name', 'TEXT');
-  addColumnIfNotExists('orders', 'tracking_number', 'TEXT');
-  addColumnIfNotExists('orders', 'invoice_id', 'INTEGER');
-  addColumnIfNotExists('orders', 'pos_cashier_id', 'INTEGER');
-  addColumnIfNotExists('orders', 'dispatch_date', 'TEXT');
-  addColumnIfNotExists('orders', 'delivery_date', 'TEXT');
-
-  // 3. Upgrade Purchases Table
-  addColumnIfNotExists('purchases', 'purchase_date', "TEXT DEFAULT (date('now'))");
-  addColumnIfNotExists('purchases', 'goods_received_date', 'TEXT');
-  addColumnIfNotExists('purchases', 'taxable_value', 'INTEGER DEFAULT 0');
-  addColumnIfNotExists('purchases', 'discount', 'INTEGER DEFAULT 0');
-  addColumnIfNotExists('purchases', 'amount_paid', 'INTEGER DEFAULT 0');
-  addColumnIfNotExists('purchases', 'outstanding_balance', 'INTEGER DEFAULT 0');
-  addColumnIfNotExists('purchases', 'payment_method', "TEXT DEFAULT 'BANK_TRANSFER'");
-  addColumnIfNotExists('purchases', 'notes', 'TEXT');
-
-  // 4. Upgrade Purchase Items Table
-  addColumnIfNotExists('purchase_items', 'variant', 'TEXT');
-  addColumnIfNotExists('purchase_items', 'gst_rate', 'REAL DEFAULT 18.0');
-  addColumnIfNotExists('purchase_items', 'tax_amount', 'INTEGER DEFAULT 0');
-
-  // 5. Upgrade Invoices Table
-  addColumnIfNotExists('invoices', 'order_number', 'TEXT');
-  addColumnIfNotExists('invoices', 'invoice_type', "TEXT DEFAULT 'ONLINE'");
-  addColumnIfNotExists('invoices', 'customer_phone', 'TEXT');
-  addColumnIfNotExists('invoices', 'place_of_supply', "TEXT DEFAULT 'Tamil Nadu (33)'");
-  addColumnIfNotExists('invoices', 'state_code', "TEXT DEFAULT '33'");
-  addColumnIfNotExists('invoices', 'payment_method', "TEXT DEFAULT 'UPI'");
-  addColumnIfNotExists('invoices', 'payment_status', "TEXT DEFAULT 'PAID'");
-  addColumnIfNotExists('invoices', 'notes', 'TEXT');
-
-  // Backfill order_number in invoices if matching order exists
-  try {
-    db.exec("UPDATE invoices SET order_number = (SELECT order_number FROM orders WHERE orders.id = invoices.order_id) WHERE (order_number IS NULL OR order_number = '') AND order_id IS NOT NULL;");
-  } catch (e) {}
-
-  // 6. Upgrade Users Table
-  addColumnIfNotExists('users', 'staff_role', "TEXT DEFAULT 'STAFF'");
-  addColumnIfNotExists('users', 'shipping_address', 'TEXT');
-
-  // 7. Customers Table (Unified for Counter & Online)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS customers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      customer_code TEXT UNIQUE NOT NULL,
-      name TEXT NOT NULL,
-      phone TEXT,
-      email TEXT,
-      billing_address TEXT,
-      shipping_address TEXT,
-      gstin TEXT,
-      customer_type TEXT DEFAULT 'RETAIL',
-      notes TEXT,
-      total_spend INTEGER DEFAULT 0,
-      total_orders INTEGER DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  // 8. Expenses Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS expenses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      expense_number TEXT UNIQUE NOT NULL,
-      expense_date TEXT NOT NULL DEFAULT (date('now')),
-      category TEXT NOT NULL,
-      description TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      payment_method TEXT DEFAULT 'CASH',
-      vendor TEXT,
-      reference_no TEXT,
-      receipt_url TEXT,
-      recorded_by INTEGER,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (recorded_by) REFERENCES users(id)
-    );
-  `);
-
-  // 9. Supplier Payments Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS supplier_payments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      payment_number TEXT UNIQUE NOT NULL,
-      supplier_id INTEGER NOT NULL,
-      purchase_id INTEGER,
-      payment_date TEXT NOT NULL DEFAULT (date('now')),
-      amount INTEGER NOT NULL,
-      payment_method TEXT DEFAULT 'BANK_TRANSFER',
-      reference_no TEXT,
-      notes TEXT,
-      recorded_by INTEGER,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
-      FOREIGN KEY (purchase_id) REFERENCES purchases(id)
-    );
-  `);
-
-  // 10. Credit Notes Table (Returns & Refunds)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS credit_notes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      credit_note_number TEXT UNIQUE NOT NULL,
-      order_id INTEGER,
-      invoice_id INTEGER,
-      customer_name TEXT NOT NULL,
-      customer_phone TEXT,
-      return_date TEXT NOT NULL DEFAULT (date('now')),
-      subtotal INTEGER NOT NULL,
-      tax_amount INTEGER NOT NULL DEFAULT 0,
-      total_amount INTEGER NOT NULL,
-      reason TEXT,
-      stock_restored INTEGER DEFAULT 1,
-      refund_status TEXT DEFAULT 'COMPLETED',
-      refund_method TEXT DEFAULT 'CASH',
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (order_id) REFERENCES orders(id)
-    );
-  `);
-
-  // 11. Credit Note Items Table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS credit_note_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      credit_note_id INTEGER NOT NULL,
-      product_id INTEGER,
-      product_name TEXT NOT NULL,
-      quantity INTEGER NOT NULL,
-      price INTEGER NOT NULL,
-      tax_amount INTEGER NOT NULL DEFAULT 0,
-      total INTEGER NOT NULL,
-      condition TEXT DEFAULT 'GOOD',
-      FOREIGN KEY (credit_note_id) REFERENCES credit_notes(id) ON DELETE CASCADE,
-      FOREIGN KEY (product_id) REFERENCES products(id)
-    );
-  `);
-
-  // Update existing products with standard barcodes and purchase prices if not set
-  try {
-    const prods = db.prepare('SELECT id, sku, price, barcode, purchase_price FROM products').all();
-    const updateProd = db.prepare('UPDATE products SET barcode = ?, purchase_price = ? WHERE id = ?');
-    prods.forEach(p => {
-      let changed = false;
-      let bc = p.barcode;
-      let pp = p.purchase_price;
-      if (!bc) {
-        bc = '890' + String(100000000 + p.id * 12345).slice(-9);
-        changed = true;
-      }
-      if (!pp || pp === 0) {
-        pp = Math.round(p.price * 0.70); // 30% margin default
-        changed = true;
-      }
-      if (changed) {
-        updateProd.run(bc, pp, p.id);
-      }
-    });
-  } catch (e) {
-    console.error('Error updating product barcodes/prices:', e.message);
-  }
-}
-
-function seedInitialData() {
-  // Ensure development seed credentials match explicit user prompt requirements (Sec. 8 & 15)
-  const ownerPass = hashPassword('MotoPit@2026!Owner');
-  const adminPass = hashPassword('MotoPit@2026!Admin');
-  const staffPass = hashPassword('MotoPit@2026!Staff');
-  const custPass = hashPassword('MotoPit@2026!Customer');
-  const cashierPass = hashPassword('MotoPit@2026!Cashier');
-  const inventoryPass = hashPassword('MotoPit@2026!Inventory');
-
-  const insertUser = db.prepare(`
-    INSERT OR REPLACE INTO users (id, email, password_hash, full_name, phone, role, status, permissions_json, staff_role)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  insertUser.run(1, 'owner@motopitshop.com', ownerPass, 'Balaji MJ', '+91 9876543210', 'OWNER', 'ACTIVE', JSON.stringify({ all: true }), 'OWNER');
-  insertUser.run(2, 'admin@motopitshop.com', adminPass, 'Moto Pitshop Administrator', '+91 9876543211', 'ADMIN', 'ACTIVE', JSON.stringify({ all: true }), 'MANAGER');
-  insertUser.run(3, 'staff@motopitshop.com', staffPass, 'Moto Pitshop Operations', '+91 9876543212', 'STAFF', 'ACTIVE', JSON.stringify({ orders: 'READ_WRITE', inventory: 'READ_WRITE', customers: 'READ' }), 'STAFF');
-  insertUser.run(4, 'customer@motopitshop.com', custPass, 'Demo Customer', '+91 9876543213', 'CUSTOMER', 'ACTIVE', '{}', 'CUSTOMER');
-  insertUser.run(5, 'cashier@motopitshop.com', cashierPass, 'Counter Cashier', '+91 9876543214', 'STAFF', 'ACTIVE', JSON.stringify({ pos: true, billing: true, customers: true }), 'CASHIER');
-  insertUser.run(6, 'inventory@motopitshop.com', inventoryPass, 'Warehouse Manager', '+91 9876543215', 'STAFF', 'ACTIVE', JSON.stringify({ products: true, stock: true, purchases: true }), 'INVENTORY');
-
-  // Seed Categories
-  const catCount = db.prepare('SELECT COUNT(*) as count FROM categories').get().count;
+  const catCount = await db.collection('categories').countDocuments();
   if (catCount === 0) {
-    const insertCat = db.prepare(`INSERT INTO categories (slug, name, icon, description, display_order) VALUES (?, ?, ?, ?, ?)`);
     const cats = [
-      ['helmets', 'Helmets', '🪖', 'Full-face, modular and off-road certified helmets', 1],
-      ['gear', 'Riding Gear', '🧥', 'Jackets, gloves, boots and body armor', 2],
-      ['engine', 'Engine Parts', '⚙️', 'Pistons, valves, cylinder heads & gaskets', 3],
-      ['brake', 'Brake Parts', '🛑', 'Brake pads, discs, master cylinders & lines', 4],
-      ['clutch', 'Clutch Parts', '⛓️', 'Clutch plates, springs, cables & assemblies', 5],
-      ['chain-sprocket', 'Chain & Sprocket', '🔗', 'Drive chains, front & rear sprockets kits', 6],
-      ['filters', 'Filters & Fluids', '🛢️', 'Oil filters, air filters, engine oils & coolants', 7],
-      ['electrical', 'Electrical & LED', '⚡', 'Batteries, spark plugs, headlamps & turn signals', 8],
-      ['suspension', 'Suspension & Steering', '🏍️', 'Front forks, rear shocks, seals & bearings', 9],
-      ['accessories', 'Accessories', '🎒', 'Mobile holders, luggage bags, covers & guards', 10],
-      ['tools', 'Tools & Maintenance', '🔧', 'Paddock stands, chain lube, torque wrenches', 11]
+      { slug: 'helmets', name: 'Helmets', icon: 'Helmets', description: 'Full-face, modular and off-road certified helmets', display_order: 1 },
+      { slug: 'gear', name: 'Riding Gear', icon: 'Gear', description: 'Jackets, gloves, boots and body armor', display_order: 2 },
+      { slug: 'engine', name: 'Engine Parts', icon: 'Engine', description: 'Pistons, valves, cylinder heads & gaskets', display_order: 3 },
+      { slug: 'brake', name: 'Brake Parts', icon: 'Brake', description: 'Brake pads, discs, master cylinders & lines', display_order: 4 },
+      { slug: 'clutch', name: 'Clutch Parts', icon: 'Clutch', description: 'Clutch plates, springs, cables & assemblies', display_order: 5 },
+      { slug: 'chain-sprocket', name: 'Chain & Sprocket', icon: 'Chain', description: 'Drive chains, front & rear sprockets kits', display_order: 6 },
+      { slug: 'filters', name: 'Filters & Fluids', icon: 'Filters', description: 'Oil filters, air filters, engine oils & coolants', display_order: 7 },
+      { slug: 'electrical', name: 'Electrical & LED', icon: 'Electrical', description: 'Batteries, spark plugs, headlamps & turn signals', display_order: 8 },
+      { slug: 'suspension', name: 'Suspension & Steering', icon: 'Suspension', description: 'Front forks, rear shocks, seals & bearings', display_order: 9 },
+      { slug: 'accessories', name: 'Accessories', icon: 'Accessories', description: 'Mobile holders, luggage bags, covers & guards', display_order: 10 },
+      { slug: 'tools', name: 'Tools & Maintenance', icon: 'Tools', description: 'Paddock stands, chain lube, torque wrenches', display_order: 11 }
     ];
-    cats.forEach(c => insertCat.run(...c));
+    let catDocs = []; for (let i = 0; i < cats.length; i++) catDocs.push({ id: i + 1, ...cats[i], created_at: new Date().toISOString() });
+    await db.collection('categories').insertMany(catDocs);
+    await db.collection('counters').updateOne({ _id: 'categories' }, { $set: { seq: cats.length } }, { upsert: true });
+    console.log('[DB] Seeded 11 categories');
   }
 
-  // Seed Brands
-  const brandCount = db.prepare('SELECT COUNT(*) as count FROM brands').get().count;
+  const brandCount = await db.collection('brands').countDocuments();
   if (brandCount === 0) {
-    const insertBrand = db.prepare(`INSERT INTO brands (slug, name, logo, description) VALUES (?, ?, ?, ?)`);
     const brands = [
-      ['shoei', 'Shoei', 'brands/shoei.svg', 'Japanese premier helmet technology'],
-      ['brembo', 'Brembo', 'brands/brembo.svg', 'World-leading high performance braking systems'],
-      ['akrapovic', 'Akrapovič', 'brands/akrapovic.svg', 'Premium titanium exhaust systems'],
-      ['dainese', 'Dainese', 'brands/dainese.svg', 'Italian safety equipment & gear'],
-      ['agv', 'AGV', 'brands/agv.svg', 'Championship winning helmets'],
-      ['alpinestars', 'Alpinestars', 'brands/alpinestars.svg', 'Motorsports performance apparel'],
-      ['arai', 'Arai', 'brands/arai.svg', 'Handcrafted Japanese motorcycle safety helmets'],
-      ['garmin', 'Garmin', 'brands/garmin.svg', 'GPS navigation and smart sensors'],
-      ['moto-pitshop-oem', 'Moto Pitshop Genuine Parts', '', 'OEM certified motorcycle spare parts']
+      { slug: 'shoei', name: 'Shoei', logo: 'brands/shoei.svg', description: 'Japanese premier helmet technology' },
+      { slug: 'brembo', name: 'Brembo', logo: 'brands/brembo.svg', description: 'World-leading high performance braking systems' },
+      { slug: 'akrapovic', name: 'Akrapovic', logo: 'brands/akrapovic.svg', description: 'Premium titanium exhaust systems' },
+      { slug: 'dainese', name: 'Dainese', logo: 'brands/dainese.svg', description: 'Italian safety equipment & gear' },
+      { slug: 'agv', name: 'AGV', logo: 'brands/agv.svg', description: 'Championship winning helmets' },
+      { slug: 'alpinestars', name: 'Alpinestars', logo: 'brands/alpinestars.svg', description: 'Motorsports performance apparel' },
+      { slug: 'arai', name: 'Arai', logo: 'brands/arai.svg', description: 'Handcrafted Japanese motorcycle safety helmets' },
+      { slug: 'garmin', name: 'Garmin', logo: 'brands/garmin.svg', description: 'GPS navigation and smart sensors' },
+      { slug: 'moto-pitshop-oem', name: 'Moto Pitshop Genuine Parts', logo: '', description: 'OEM certified motorcycle spare parts' }
     ];
-    brands.forEach(b => insertBrand.run(...b));
+    let brandDocs = []; for (let i = 0; i < brands.length; i++) brandDocs.push({ id: i + 1, ...brands[i], created_at: new Date().toISOString() });
+    await db.collection('brands').insertMany(brandDocs);
+    await db.collection('counters').updateOne({ _id: 'brands' }, { $set: { seq: brands.length } }, { upsert: true });
+    console.log('[DB] Seeded 9 brands');
   }
 
-  // Seed Bike Models
-  const bikeCount = db.prepare('SELECT COUNT(*) as count FROM bikes').get().count;
+  const bikeCount = await db.collection('bikes').countDocuments();
   if (bikeCount === 0) {
-    const insertBike = db.prepare(`INSERT INTO bikes (brand, model, year, variant, engine_cc) VALUES (?, ?, ?, ?, ?)`);
     const bikes = [
-      ['Yamaha', 'R15', 2023, 'V4', 155],
-      ['Yamaha', 'R15', 2022, 'V3', 155],
-      ['Yamaha', 'MT-15', 2023, 'V2', 155],
-      ['Royal Enfield', 'Classic 350', 2023, 'Reborn', 349],
-      ['Royal Enfield', 'Himalayan', 2023, '411', 411],
-      ['KTM', 'Duke 390', 2023, 'BS6', 373],
-      ['KTM', 'RC 390', 2023, 'BS6', 373],
-      ['TVS', 'Apache RTR 200', 2023, '4V', 197],
-      ['Bajaj', 'Pulsar NS200', 2023, 'BS6', 199],
-      ['Honda', 'CBR 250R', 2022, 'ABS', 249],
-      ['Kawasaki', 'Ninja 300', 2023, 'BS6', 296],
-      ['Triumph', 'Speed 400', 2023, 'Standard', 398],
-      ['BMW', 'G310R', 2023, 'BS6', 313]
+      { brand: 'Yamaha', model: 'R15', year: 2023, variant: 'V4', engine_cc: 155 },
+      { brand: 'Yamaha', model: 'R15', year: 2022, variant: 'V3', engine_cc: 155 },
+      { brand: 'Yamaha', model: 'MT-15', year: 2023, variant: 'V2', engine_cc: 155 },
+      { brand: 'Royal Enfield', model: 'Classic 350', year: 2023, variant: 'Reborn', engine_cc: 349 },
+      { brand: 'Royal Enfield', model: 'Himalayan', year: 2023, variant: '411', engine_cc: 411 },
+      { brand: 'KTM', model: 'Duke 390', year: 2023, variant: 'BS6', engine_cc: 373 },
+      { brand: 'KTM', model: 'RC 390', year: 2023, variant: 'BS6', engine_cc: 373 },
+      { brand: 'TVS', model: 'Apache RTR 200', year: 2023, variant: '4V', engine_cc: 197 },
+      { brand: 'Bajaj', model: 'Pulsar NS200', year: 2023, variant: 'BS6', engine_cc: 199 },
+      { brand: 'Honda', model: 'CBR 250R', year: 2022, variant: 'ABS', engine_cc: 249 },
+      { brand: 'Kawasaki', model: 'Ninja 300', year: 2023, variant: 'BS6', engine_cc: 296 },
+      { brand: 'Triumph', model: 'Speed 400', year: 2023, variant: 'Standard', engine_cc: 398 },
+      { brand: 'BMW', model: 'G310R', year: 2023, variant: 'BS6', engine_cc: 313 }
     ];
-    bikes.forEach(b => insertBike.run(...b));
+    let bikeDocs = []; for (let i = 0; i < bikes.length; i++) bikeDocs.push({ id: i + 1, ...bikes[i], created_at: new Date().toISOString() });
+    await db.collection('bikes').insertMany(bikeDocs);
+    await db.collection('counters').updateOne({ _id: 'bikes' }, { $set: { seq: bikes.length } }, { upsert: true });
+    console.log('[DB] Seeded 13 bikes');
   }
 
-  // Seed Suppliers
-  const suppCount = db.prepare('SELECT COUNT(*) as count FROM suppliers').get().count;
+  const suppCount = await db.collection('suppliers').countDocuments();
   if (suppCount === 0) {
-    const insertSupp = db.prepare(`INSERT INTO suppliers (name, contact_person, email, phone, address, gstin) VALUES (?, ?, ?, ?, ?, ?)`);
-    insertSupp.run('Apex Moto Supplies Ltd', 'Rajesh Sharma', 'sales@apexmoto.in', '+91 9811223344', 'Plot 42, Industrial Zone, Chennai, TN', '33AAPCA9876E1Z2');
-    insertSupp.run('Performance Gears India', 'Vikram Singh', 'supply@performancegears.com', '+91 9722334455', 'Sector 18, Gurugram, HR', '06AAACP4321D1Z8');
+    await db.collection('suppliers').insertMany([
+      { id: 1, name: 'Apex Moto Supplies Ltd', contact_person: 'Rajesh Sharma', email: 'sales@apexmoto.in', phone: '+91 9811223344', address: 'Plot 42, Industrial Zone, Chennai, TN', gstin: '33AAPCA9876E1Z2', status: 'ACTIVE', created_at: new Date().toISOString() },
+      { id: 2, name: 'Performance Gears India', contact_person: 'Vikram Singh', email: 'supply@performancegears.com', phone: '+91 9722334455', address: 'Sector 18, Gurugram, HR', gstin: '06AAACP4321D1Z8', status: 'ACTIVE', created_at: new Date().toISOString() }
+    ]);
+    await db.collection('counters').updateOne({ _id: 'suppliers' }, { $set: { seq: 2 } }, { upsert: true });
+    console.log('[DB] Seeded 2 suppliers');
   }
 
-  // Note: Catalog Products, Orders, Purchases, Expenses start 100% clean for Owner Portal entry
-  // Seed Store Settings & Business Profile (Sec. 12 & 14 Requirements)
-  const insertSetting = db.prepare(`INSERT OR REPLACE INTO store_settings (key, value) VALUES (?, ?)`);
-  insertSetting.run('BUSINESS_NAME', 'MOTO PITSHOP');
-  insertSetting.run('STORE_NAME', 'MOTO PITSHOP');
-  insertSetting.run('STORE_LEGAL_NAME', 'Moto Pitshop Retail Pvt Ltd');
-  insertSetting.run('BUSINESS_OWNER', 'Balaji MJ');
-  insertSetting.run('TAGLINE', 'Your Ride. Your Parts. Your Pitstop.');
-  insertSetting.run('STORE_EMAIL', 'owner@motopitshop.com');
-  insertSetting.run('STORE_PHONE', '+91 98765 43210');
-  insertSetting.run('STORE_ADDRESS', '124 Racing Track Boulevard, Motor City, Chennai, TN 600001');
-  insertSetting.run('STORE_GSTIN', '33AABCM1234F1Z9');
-  insertSetting.run('STORE_STATE', 'Tamil Nadu');
-  insertSetting.run('STORE_STATE_CODE', '33');
-  insertSetting.run('CURRENCY', 'INR');
-  insertSetting.run('CURRENCY_SYMBOL', '₹');
-  insertSetting.run('COUNTRY', 'India');
-  insertSetting.run('INVOICE_PREFIX', 'INV-');
-  insertSetting.run('POS_INVOICE_PREFIX', 'POS-');
-  insertSetting.run('PURCHASE_PREFIX', 'PUR-');
-  insertSetting.run('ORDER_PREFIX', 'MPS-ORD-');
-  insertSetting.run('TAX_INCLUSIVE', 'true');
-  insertSetting.run('LOW_STOCK_THRESHOLD', '5');
+  const settingCount = await db.collection('store_settings').countDocuments();
+  if (settingCount === 0) {
+    const settings = [
+      { key: 'BUSINESS_NAME', value: 'MOTO PITSHOP' }, { key: 'STORE_NAME', value: 'MOTO PITSHOP' },
+      { key: 'STORE_LEGAL_NAME', value: 'Moto Pitshop Retail Pvt Ltd' }, { key: 'BUSINESS_OWNER', value: 'Balaji MJ' },
+      { key: 'TAGLINE', value: 'Your Ride. Your Parts. Your Pitstop.' }, { key: 'STORE_EMAIL', value: 'owner@motopitshop.com' },
+      { key: 'STORE_PHONE', value: '+91 98765 43210' }, { key: 'STORE_ADDRESS', value: '124 Racing Track Boulevard, Motor City, Chennai, TN 600001' },
+      { key: 'STORE_GSTIN', value: '33AABCM1234F1Z9' }, { key: 'STORE_STATE', value: 'Tamil Nadu' },
+      { key: 'STORE_STATE_CODE', value: '33' }, { key: 'CURRENCY', value: 'INR' },
+      { key: 'CURRENCY_SYMBOL', value: 'Rs' }, { key: 'COUNTRY', value: 'India' },
+      { key: 'INVOICE_PREFIX', value: 'INV-' }, { key: 'POS_INVOICE_PREFIX', value: 'POS-' },
+      { key: 'PURCHASE_PREFIX', value: 'PUR-' }, { key: 'ORDER_PREFIX', value: 'MPS-ORD-' },
+      { key: 'TAX_INCLUSIVE', value: 'true' }, { key: 'LOW_STOCK_THRESHOLD', value: '5' }
+    ];
+    await db.collection('store_settings').insertMany(settings.map(s => ({ ...s, created_at: new Date().toISOString() })));
+    console.log('[DB] Seeded store settings');
+  }
 
-  // Seed Sample Coupon
-  const couponCount = db.prepare('SELECT COUNT(*) as count FROM coupons').get().count;
+  const couponCount = await db.collection('coupons').countDocuments();
   if (couponCount === 0) {
-    const insertCpn = db.prepare(`INSERT INTO coupons (code, discount_type, discount_value, min_order_amount, max_discount, is_active) VALUES (?, ?, ?, ?, ?, ?)`);
-    insertCpn.run('PITSTOP10', 'PERCENTAGE', 10, 1000, 500, 1);
-    insertCpn.run('RIDER500', 'FIXED', 500, 3000, 500, 1);
+    await db.collection('coupons').insertMany([
+      { id: 1, code: 'PITSTOP10', discount_type: 'PERCENTAGE', discount_value: 10, min_order_amount: 1000, max_discount: 500, is_active: 1, created_at: new Date().toISOString() },
+      { id: 2, code: 'RIDER500', discount_type: 'FIXED', discount_value: 500, min_order_amount: 3000, max_discount: 500, is_active: 1, created_at: new Date().toISOString() }
+    ]);
+    await db.collection('counters').updateOne({ _id: 'coupons' }, { $set: { seq: 2 } }, { upsert: true });
+    console.log('[DB] Seeded 2 coupons');
   }
 
-  // Catalog, Orders & Purchases ready for new owner entries
+  console.log('[DB] MongoDB initialization complete.');
 }
 
-module.exports = {
-  db,
-  initDatabase,
-  hashPassword
-};
-
+module.exports = { initDatabase, hashPassword, getNextId, getDb };
