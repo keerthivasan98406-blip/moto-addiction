@@ -219,55 +219,12 @@ async function syncToMongo(collectionName, filter, document, options = { upsert:
 }
 
 /**
- * Helper to sync a full SQLite record to MongoDB
+ * Helper to sync a record to MongoDB (no-op now — MongoDB is the only DB)
+ * Kept for backward compatibility with any code still calling it
  */
 async function syncTableRecordToMongo(sqliteDb, tableName, recordId) {
-  if (!dbInstance || connectionState !== 'CONNECTED' || !sqliteDb) return;
-  try {
-    const row = sqliteDb.prepare(`SELECT * FROM "${tableName}" WHERE id = ?`).get(recordId);
-    if (!row) return;
-
-    if (tableName === 'orders') {
-      const items = sqliteDb.prepare('SELECT * FROM order_items WHERE order_id = ?').all(recordId);
-      const doc = {
-        ...row,
-        shipping_address: typeof row.shipping_address_json === 'string' ? JSON.parse(row.shipping_address_json || '{}') : row.shipping_address_json,
-        items,
-        _synced_at: new Date()
-      };
-      await dbInstance.collection('orders').updateOne({ order_number: row.order_number }, { $set: doc }, { upsert: true });
-    } else if (tableName === 'products') {
-      const compBikes = sqliteDb.prepare('SELECT bike_id FROM bike_compatibility WHERE product_id = ?').all(recordId);
-      const doc = {
-        ...row,
-        images: typeof row.images_json === 'string' ? JSON.parse(row.images_json || '[]') : row.images_json,
-        variants: typeof row.variants_json === 'string' ? JSON.parse(row.variants_json || '[]') : row.variants_json,
-        compatible_bike_ids: compBikes.map(b => b.bike_id),
-        _synced_at: new Date()
-      };
-      await dbInstance.collection('products').updateOne({ sku: row.sku }, { $set: doc }, { upsert: true });
-    } else if (tableName === 'purchases') {
-      const items = sqliteDb.prepare('SELECT * FROM purchase_items WHERE purchase_id = ?').all(recordId);
-      const doc = { ...row, items, _synced_at: new Date() };
-      await dbInstance.collection('purchases').updateOne({ purchase_number: row.purchase_number }, { $set: doc }, { upsert: true });
-    } else if (tableName === 'credit_notes') {
-      const items = sqliteDb.prepare('SELECT * FROM credit_note_items WHERE credit_note_id = ?').all(recordId);
-      const doc = { ...row, items, _synced_at: new Date() };
-      await dbInstance.collection('credit_notes').updateOne({ credit_note_number: row.credit_note_number }, { $set: doc }, { upsert: true });
-    } else {
-      const uniqueField = tableName === 'invoices' ? 'invoice_number'
-        : tableName === 'customers' ? 'customer_code'
-        : tableName === 'expenses' ? 'expense_number'
-        : tableName === 'supplier_payments' ? 'payment_number'
-        : tableName === 'users' ? 'email'
-        : 'id';
-      const filter = {};
-      filter[uniqueField] = row[uniqueField];
-      await dbInstance.collection(tableName).updateOne(filter, { $set: { ...row, _synced_at: new Date() } }, { upsert: true });
-    }
-  } catch (e) {
-    console.warn(`[SYNC WARNING] Failed syncing ${tableName} #${recordId}:`, e.message);
-  }
+  // MongoDB is now the primary database, no sync needed
+  return;
 }
 
 async function syncSettingToMongo(key, value) {

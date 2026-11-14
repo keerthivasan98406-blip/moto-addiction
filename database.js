@@ -146,6 +146,144 @@ async function initDatabase() {
     console.log('[DB] Seeded 2 coupons');
   }
 
+  // Seed Products if none exist or ensure Product #4 (Shoei Helmet) exists
+  const prodCount = await db.collection('products').countDocuments();
+  if (prodCount === 0) {
+    const defaultProducts = [
+      {
+        id: 1,
+        sku: 'MPS-PROD-5983',
+        product_code: 'MPS-PROD-5983',
+        name: 'Silman Silencer',
+        slug: 'silman-silencer',
+        brand_id: 1,
+        brand_name: 'Silman',
+        category_id: 3,
+        category_name: 'Engine Parts',
+        category_slug: 'engine',
+        description: 'Performance exhaust silencer for motorcycles',
+        price: 2500,
+        old_price: 3000,
+        purchase_price: 1500,
+        discount: 16,
+        gst_rate: 18,
+        hsn: '8714',
+        stock: 10,
+        min_stock: 5,
+        primary_image: 'hero1.png',
+        images: ['hero1.png'],
+        images_json: JSON.stringify(['hero1.png']),
+        variants: [],
+        variants_json: '[]',
+        warranty: '1 Year Manufacturer',
+        weight: '1.0 kg',
+        barcode: '890633412526',
+        is_archived: 0,
+        status: 'ACTIVE',
+        rating: 5.0,
+        rating_count: 1,
+        is_featured: 0,
+        is_bestseller: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 4,
+        sku: 'MPS-SHOEI-X15',
+        product_code: 'MPS-SHOEI-X15',
+        name: 'Shoei X-Fifteen Carbon Racing Helmet',
+        slug: 'shoei-x-fifteen-carbon-racing-helmet',
+        brand_id: 1,
+        brand_name: 'Shoei',
+        category_id: 1,
+        category_name: 'Helmets',
+        category_slug: 'helmets',
+        description: 'ECE 22.06 & FIM homologated carbon track helmet. Ultra aerodynamic shell with multi-density EPS.',
+        price: 64999,
+        old_price: 72000,
+        purchase_price: 42000,
+        discount: 10,
+        gst_rate: 18,
+        hsn: '6506',
+        stock: 10,
+        min_stock: 3,
+        primary_image: 'hero2.png',
+        images: ['hero2.png', 'gloves.png', 'jacket.png'],
+        images_json: JSON.stringify(['hero2.png', 'gloves.png', 'jacket.png']),
+        variants: [],
+        variants_json: '[]',
+        warranty: '6 Months Manufacturer',
+        weight: '0.5 kg',
+        barcode: '890816252107',
+        is_archived: 0,
+        status: 'ACTIVE',
+        rating: 5.0,
+        rating_count: 1,
+        is_featured: 1,
+        is_bestseller: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ];
+    await db.collection('products').insertMany(defaultProducts);
+    console.log('[DB] Seeded default products');
+  } else {
+    const shoei = await db.collection('products').findOne({ $or: [{ id: 4 }, { sku: 'MPS-SHOEI-X15' }] });
+    if (!shoei) {
+      await db.collection('products').insertOne({
+        id: 4,
+        sku: 'MPS-SHOEI-X15',
+        product_code: 'MPS-SHOEI-X15',
+        name: 'Shoei X-Fifteen Carbon Racing Helmet',
+        slug: 'shoei-x-fifteen-carbon-racing-helmet',
+        brand_id: 1,
+        brand_name: 'Shoei',
+        category_id: 1,
+        category_name: 'Helmets',
+        category_slug: 'helmets',
+        description: 'ECE 22.06 & FIM homologated carbon track helmet. Ultra aerodynamic shell with multi-density EPS.',
+        price: 64999,
+        old_price: 72000,
+        purchase_price: 42000,
+        discount: 10,
+        gst_rate: 18,
+        hsn: '6506',
+        stock: 10,
+        min_stock: 3,
+        primary_image: 'hero2.png',
+        images: ['hero2.png', 'gloves.png', 'jacket.png'],
+        images_json: JSON.stringify(['hero2.png', 'gloves.png', 'jacket.png']),
+        variants: [],
+        variants_json: '[]',
+        warranty: '6 Months Manufacturer',
+        weight: '0.5 kg',
+        barcode: '890816252107',
+        is_archived: 0,
+        status: 'ACTIVE',
+        rating: 5.0,
+        rating_count: 1,
+        is_featured: 1,
+        is_bestseller: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      console.log('[DB] Seeded Shoei X-Fifteen Carbon Racing Helmet');
+    }
+  }
+
+  // Ensure counters match highest existing numeric IDs
+  const collectionsWithIds = ['products', 'users', 'categories', 'brands', 'bikes', 'suppliers', 'orders', 'order_items', 'invoices', 'customers', 'inventory_transactions', 'coupons'];
+  for (const col of collectionsWithIds) {
+    const highest = await db.collection(col).find({ id: { $type: 'number' } }).sort({ id: -1 }).limit(1).toArray();
+    if (highest.length > 0 && highest[0].id) {
+      await db.collection('counters').updateOne(
+        { _id: col },
+        { $max: { seq: highest[0].id } },
+        { upsert: true }
+      );
+    }
+  }
+
   console.log('[DB] MongoDB initialization complete.');
 }
 

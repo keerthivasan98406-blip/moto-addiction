@@ -66,9 +66,38 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const validatedItems = []; let calculatedSubtotal = 0, calculatedTaxTotal = 0, calculatedCgst = 0, calculatedSgst = 0, calculatedIgst = 0, calculatedDiscountTotal = 0;
       const settings = await getStoreSettings(); const taxInclusive = settings.TAX_INCLUSIVE !== 'false';
       for (const item of items) {
-        const prodId = parseInt(item.product_id || item.id, 10); const qty = parseInt(item.quantity || 1, 10);
-        const prod = await db.collection('products').findOne({ id: prodId });
-        if (!prod) return sendJson(res, 404, { error: `Product ID #${prodId} not found in catalog` });
+        const rawId = item.product_id || item.id;
+        const numId = parseInt(rawId, 10);
+        const qty = Math.max(1, parseInt(item.quantity || 1, 10));
+        let prod = null;
+        if (!isNaN(numId)) {
+          prod = await db.collection('products').findOne({ id: numId });
+        }
+        if (!prod && rawId) {
+          prod = await db.collection('products').findOne({
+            $or: [
+              { id: rawId },
+              { id: String(rawId) },
+              { sku: rawId },
+              { barcode: rawId }
+            ]
+          });
+          if (!prod) {
+            try {
+              const { ObjectId } = require('mongodb');
+              if (ObjectId.isValid(rawId)) {
+                prod = await db.collection('products').findOne({ _id: new ObjectId(rawId) });
+              }
+            } catch (e) {}
+          }
+        }
+        if (!prod && item.sku) {
+          prod = await db.collection('products').findOne({ sku: item.sku });
+        }
+        if (!prod && item.name) {
+          prod = await db.collection('products').findOne({ name: item.name });
+        }
+        if (!prod) return sendJson(res, 404, { error: `Product ID #${rawId || 'unknown'} not found in catalog` });
         if ((prod.stock || 0) < qty) return sendJson(res, 400, { error: `Insufficient stock for "${prod.name}". Available: ${prod.stock}, Requested: ${qty}` });
         const unitPrice = parseFloat(item.price || prod.price); const discountPct = parseFloat(item.discount_pct || 0);
         const lineGross = unitPrice * qty; const lineDiscount = Math.round(lineGross * (discountPct / 100)); const lineDiscounted = lineGross - lineDiscount;
@@ -79,7 +108,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         let lineCgst = 0, lineSgst = 0, lineIgst = 0;
         if (is_interstate) { lineIgst = lineTax; } else { lineCgst = Math.round(lineTax / 2); lineSgst = lineTax - lineCgst; }
         calculatedSubtotal += lineTaxable; calculatedTaxTotal += lineTax; calculatedCgst += lineCgst; calculatedSgst += lineSgst; calculatedIgst += lineIgst; calculatedDiscountTotal += lineDiscount;
-        validatedItems.push({ product_id: prod.id, sku: prod.sku, barcode: prod.barcode, name: prod.name, price: unitPrice, quantity: qty, discount_pct: discountPct, discount_val: lineDiscount, taxable: lineTaxable, gst_rate: gstRate, hsn: prod.hsn || '8714', tax_amount: lineTax, cgst: lineCgst, sgst: lineSgst, igst: lineIgst, total: taxInclusive ? lineDiscounted : (lineTaxable + lineTax), current_stock: prod.stock });
+        validatedItems.push({ product_id: prod.id !== undefined ? prod.id : (prod._id ? prod._id.toString() : numId), mongo_id: prod._id, sku: prod.sku, barcode: prod.barcode, name: prod.name, price: unitPrice, quantity: qty, discount_pct: discountPct, discount_val: lineDiscount, taxable: lineTaxable, gst_rate: gstRate, hsn: prod.hsn || '8714', tax_amount: lineTax, cgst: lineCgst, sgst: lineSgst, igst: lineIgst, total: taxInclusive ? lineDiscounted : (lineTaxable + lineTax), current_stock: prod.stock });
       }
       const orderDiscount = parseFloat(body.discount || body.discount_amount || 0); if (!isNaN(orderDiscount) && orderDiscount > 0) calculatedDiscountTotal += orderDiscount;
       const grandTotal = Math.max(0, (calculatedSubtotal + calculatedTaxTotal) - (!isNaN(orderDiscount) && orderDiscount > 0 ? orderDiscount : 0));
@@ -98,7 +127,11 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       for (const vi of validatedItems) {
         const itemId = await getNextId('order_items');
         await db.collection('order_items').insertOne({ id: itemId, order_id: orderId, product_id: vi.product_id, product_name: vi.name, product_sku: vi.sku, price: vi.price, quantity: vi.quantity, hsn: vi.hsn, gst_rate: vi.gst_rate, tax_amount: vi.tax_amount, total: vi.total, created_at: now });
-        await db.collection('products').updateOne({ id: vi.product_id }, { $inc: { stock: -vi.quantity }, $set: { updated_at: now } });
+        if (vi.mongo_id) {
+          await db.collection('products').updateOne({ _id: vi.mongo_id }, { $inc: { stock: -vi.quantity }, $set: { updated_at: now } });
+        } else {
+          await db.collection('products').updateOne({ id: vi.product_id }, { $inc: { stock: -vi.quantity }, $set: { updated_at: now } });
+        }
         const txnId = await getNextId('inventory_transactions');
         await db.collection('inventory_transactions').insertOne({ id: txnId, product_id: vi.product_id, transaction_type: 'SALE', quantity_change: -vi.quantity, previous_stock: vi.current_stock, new_stock: vi.current_stock - vi.quantity, notes: `POS Bill #${billNumber}`, user_id: currentUser ? currentUser.id : 1, created_at: now });
       }
@@ -175,8 +208,11 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
   if (pathname.startsWith('/api/owner/products/scan/') && req.method === 'GET') {
     if (!isOwnerStaff) return sendJson(res, 403, { error: 'Unauthorized' });
     const code = decodeURIComponent(pathname.split('/')[5] || '').trim(); if (!code) return sendJson(res, 400, { error: 'Scan code is required' });
-    const product = await db.collection('products').findOne({ $or: [{ barcode: code }, { sku: code }, { product_code: code }], is_archived: { $ne: 1 } });
-    if (!product) return sendJson(res, 404, { error: `No active product found for barcode / SKU: ${code}` });
+    const numCode = parseInt(code, 10);
+    const filter = { is_archived: { $ne: 1 }, $or: [{ barcode: code }, { sku: code }, { product_code: code }] };
+    if (!isNaN(numCode)) filter.$or.push({ id: numCode });
+    const product = await db.collection('products').findOne(filter);
+    if (!product) return sendJson(res, 404, { error: `No active product found for barcode / SKU / ID: ${code}` });
     return sendJson(res, 200, { product, ...product });
   }
 

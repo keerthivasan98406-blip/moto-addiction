@@ -214,10 +214,54 @@ async function mainHandler(req, res) {
 
   if (pathname === '/api/orders' && req.method === 'POST') {
     try { const body = await parseJsonBody(req); const { customer, items, payment } = body; if (!customer || !items || !items.length) return sendJson(res, 400, { error: 'Customer information and cart items are required' }); const db = getDb(); let subtotal = 0, taxTotal = 0, cgstTotal = 0, sgstTotal = 0; const preparedItems = [];
-      for (const item of items) { const prodId = parseInt(item.id || item.product_id, 10); const prod = await db.collection('products').findOne({ id: prodId }); const itemPrice = prod ? prod.price : (item.price || 0); const itemQty = item.quantity || item.qty || 1; const itemSubtotal = itemPrice * itemQty; const gstRate = prod ? prod.gst_rate : 18.0; const taxVal = Math.round(itemSubtotal * (gstRate / (100 + gstRate))); subtotal += itemSubtotal - taxVal; taxTotal += taxVal; cgstTotal += Math.round(taxVal / 2); sgstTotal += Math.round(taxVal / 2); preparedItems.push({ product_id: prod ? prod.id : null, product_name: prod ? prod.name : item.name, product_sku: prod ? prod.sku : 'MPS-GEN', price: itemPrice, quantity: itemQty, hsn: prod ? prod.hsn : '8714', gst_rate: gstRate, tax_amount: taxVal, total: itemSubtotal }); }
+      for (const item of items) {
+        const rawId = item.id || item.product_id;
+        const numId = parseInt(rawId, 10);
+        let prod = null;
+        if (!isNaN(numId)) {
+          prod = await db.collection('products').findOne({ id: numId });
+        }
+        if (!prod && rawId) {
+          prod = await db.collection('products').findOne({
+            $or: [{ id: rawId }, { id: String(rawId) }, { sku: rawId }, { barcode: rawId }]
+          });
+          if (!prod) {
+            try {
+              const { ObjectId } = require('mongodb');
+              if (ObjectId.isValid(rawId)) {
+                prod = await db.collection('products').findOne({ _id: new ObjectId(rawId) });
+              }
+            } catch (e) {}
+          }
+        }
+        if (!prod && item.sku) prod = await db.collection('products').findOne({ sku: item.sku });
+        if (!prod && item.name) prod = await db.collection('products').findOne({ name: item.name });
+        const itemPrice = prod ? prod.price : (item.price || 0);
+        const itemQty = item.quantity || item.qty || 1;
+        const itemSubtotal = itemPrice * itemQty;
+        const gstRate = prod ? prod.gst_rate : 18.0;
+        const taxVal = Math.round(itemSubtotal * (gstRate / (100 + gstRate)));
+        subtotal += itemSubtotal - taxVal;
+        taxTotal += taxVal;
+        cgstTotal += Math.round(taxVal / 2);
+        sgstTotal += Math.round(taxVal / 2);
+        preparedItems.push({ product_id: prod ? prod.id : null, mongo_id: prod ? prod._id : null, product_name: prod ? prod.name : item.name, product_sku: prod ? prod.sku : 'MPS-GEN', price: itemPrice, quantity: itemQty, hsn: prod ? prod.hsn : '8714', gst_rate: gstRate, tax_amount: taxVal, total: itemSubtotal });
+      }
       const grandTotal = subtotal + taxTotal; const orderNumber = `MPS-ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`; const userId = currentUser ? currentUser.id : null; const payStatus = (payment && payment.status) ? payment.status : (customer.payment === 'COD' ? 'PENDING' : 'SUCCESS'); const payRef = (payment && payment.transactionRef) ? payment.transactionRef : `REF-${Date.now()}`; const screenshot = customer.screenshot || ''; const screenshotStored = screenshot.length > 524288 ? screenshot.substring(0, 524288) : screenshot; const orderId = await getNextId('orders'); const now = new Date().toISOString();
       await db.collection('orders').insertOne({ id: orderId, order_number: orderNumber, user_id: userId, customer_name: (customer.name || '').trim(), customer_email: (customer.email || '').trim(), customer_phone: (customer.phone || '').trim(), shipping_address_json: JSON.stringify(customer.address || {}), status: payStatus === 'SUCCESS' ? 'CONFIRMED' : 'PLACED', payment_status: payStatus, payment_method: customer.payment || 'UPI', payment_ref: payRef, payment_screenshot: screenshotStored, subtotal, tax_total: taxTotal, cgst_total: cgstTotal, sgst_total: sgstTotal, igst_total: 0, grand_total: grandTotal, order_type: 'ONLINE', created_at: now, updated_at: now, items: preparedItems });
-      for (const item of preparedItems) { const itemId = await getNextId('order_items'); await db.collection('order_items').insertOne({ id: itemId, order_id: orderId, product_id: item.product_id, product_name: item.product_name, product_sku: item.product_sku, price: item.price, quantity: item.quantity, hsn: item.hsn, gst_rate: item.gst_rate, tax_amount: item.tax_amount, total: item.total, created_at: now }); if (item.product_id) { await db.collection('products').updateOne({ id: item.product_id }, { $inc: { stock: -item.quantity }, $set: { updated_at: now } }); const txnId = await getNextId('inventory_transactions'); await db.collection('inventory_transactions').insertOne({ id: txnId, product_id: item.product_id, transaction_type: 'SALE', quantity_change: -item.quantity, notes: `Order #${orderNumber}`, user_id: userId, created_at: now }); } }
+      for (const item of preparedItems) {
+        const itemId = await getNextId('order_items');
+        await db.collection('order_items').insertOne({ id: itemId, order_id: orderId, product_id: item.product_id, product_name: item.product_name, product_sku: item.product_sku, price: item.price, quantity: item.quantity, hsn: item.hsn, gst_rate: item.gst_rate, tax_amount: item.tax_amount, total: item.total, created_at: now });
+        if (item.mongo_id) {
+          await db.collection('products').updateOne({ _id: item.mongo_id }, { $inc: { stock: -item.quantity }, $set: { updated_at: now } });
+        } else if (item.product_id) {
+          await db.collection('products').updateOne({ id: item.product_id }, { $inc: { stock: -item.quantity }, $set: { updated_at: now } });
+        }
+        if (item.product_id || item.mongo_id) {
+          const txnId = await getNextId('inventory_transactions');
+          await db.collection('inventory_transactions').insertOne({ id: txnId, product_id: item.product_id, transaction_type: 'SALE', quantity_change: -item.quantity, notes: `Order #${orderNumber}`, user_id: userId, created_at: now });
+        }
+      }
       const invoiceNum = `INV-${Date.now().toString().slice(-6)}`; const invoiceId = await getNextId('invoices'); await db.collection('invoices').insertOne({ id: invoiceId, invoice_number: invoiceNum, order_id: orderId, order_number: orderNumber, user_id: userId, customer_name: customer.name, taxable_value: subtotal, cgst: cgstTotal, sgst: sgstTotal, igst: 0, total_tax: taxTotal, grand_total: grandTotal, invoice_type: 'ONLINE', payment_status: 'PAID', created_at: now });
       await logAudit(userId, customer.name, currentUser ? currentUser.role : 'CUSTOMER', 'CREATE_ORDER', 'ORDER', orderId, 'SUCCESS', { orderNumber, grandTotal });
       return sendJson(res, 201, { message: 'Order placed successfully', orderId, orderNumber, invoiceNumber: invoiceNum, grandTotal });

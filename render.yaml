@@ -4,7 +4,7 @@ services:
     env: node
     region: singapore
     plan: free
-    buildCommand: npm install --legacy-peer-deps && node test-sqlite.js
+    buildCommand: npm install --legacy-peer-deps
     startCommand: node server.js
     envVars:
       - key: NODE_VERSION
