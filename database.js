@@ -3,22 +3,59 @@ const Database = require('better-sqlite3');
 const crypto = require('crypto');
 const path = require('path');
 
-// On Render (read-only filesystem), use /tmp for SQLite or fall back to in-memory
-const DB_PATH = process.env.DB_PATH || 
-  (process.env.NODE_ENV === 'production' 
-    ? '/tmp/motopitshop.db'   // Render allows writes to /tmp
-    : path.join(__dirname, 'motopitshop.db'));
+const fs = require('fs');
+
+console.log('[DB-INIT] Initializing SQLite data layer...');
+console.log(`[DB-INIT] Node: ${process.version}, Platform: ${process.platform} (${process.arch}), ABI: ${process.versions.modules}`);
+
+const defaultDbPath = path.join(__dirname, 'motopitshop.db');
+let DB_PATH = process.env.DB_PATH;
+
+if (!DB_PATH) {
+  // Check if directory is writable (Render Linux allows writes in /opt/render/project/src)
+  try {
+    fs.accessSync(__dirname, fs.constants.W_OK);
+    DB_PATH = defaultDbPath;
+    console.log(`[DB-INIT] Workspace directory is writable. Using primary DB: ${DB_PATH}`);
+  } catch (permErr) {
+    console.warn(`[DB-INIT] Directory write check failed (${permErr.message}). Falling back to /tmp/motopitshop.db`);
+    DB_PATH = '/tmp/motopitshop.db';
+  }
+} else {
+  console.log(`[DB-INIT] Using custom DB_PATH from environment: ${DB_PATH}`);
+}
+
+// DATA PRESERVATION:
+// If DB_PATH is in /tmp (or another non-repo path) and doesn't exist yet,
+// copy the existing seeded motopitshop.db so no products/users/categories are lost!
+if (DB_PATH !== defaultDbPath && !fs.existsSync(DB_PATH) && fs.existsSync(defaultDbPath)) {
+  try {
+    fs.copyFileSync(defaultDbPath, DB_PATH);
+    console.log(`[DB-PRESERVATION] Successfully copied existing database from ${defaultDbPath} to ${DB_PATH}`);
+  } catch (copyErr) {
+    console.warn(`[DB-PRESERVATION] Warning: Could not copy existing DB to ${DB_PATH}:`, copyErr.message);
+  }
+}
 
 let db;
 try {
-  db = new Database(DB_PATH);
+  console.log(`[DB-INIT] Opening SQLite database connection at ${DB_PATH}...`);
+  db = new Database(DB_PATH, { verbose: process.env.DEBUG_SQL ? console.log : null });
+  console.log(`[DB-INIT] SQLite database opened successfully (open: ${db.open}).`);
 } catch (err) {
-  console.warn('[DB] Could not open SQLite at', DB_PATH, '- using in-memory DB:', err.message);
+  console.warn(`[DB-INIT] Could not open SQLite at ${DB_PATH}: ${err.message}. Falling back to in-memory DB.`);
   db = new Database(':memory:');
+  console.log('[DB-INIT] In-memory SQLite fallback database initialized.');
 }
 
-// Enable Foreign Keys
-db.exec('PRAGMA foreign_keys = ON;');
+// Configure Foreign Keys & Journal Mode
+try {
+  db.exec('PRAGMA foreign_keys = OFF;');
+  const jm = db.pragma('journal_mode = WAL');
+  console.log(`[DB-INIT] Foreign keys set to OFF (safe hybrid mode). Journal mode: ${JSON.stringify(jm)}`);
+} catch (pragmaErr) {
+  console.warn('[DB-INIT] PRAGMA configuration warning:', pragmaErr.message);
+}
 
 function hashPassword(password) {
   const salt = 'motopitshop_prod_salt_2026';

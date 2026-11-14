@@ -39,6 +39,29 @@ server.listen(PORT, '0.0.0.0', () => {
   connectMongo().then(async (mDb) => {
     if (mDb) {
       console.log('[SERVER] MongoDB Atlas connected. Syncing owner portal records...');
+      try {
+        // Sync master data from MongoDB to SQLite if missing
+        const mCats = await mDb.collection('categories').find({}).toArray();
+        for (const c of mCats) {
+          if (c.id) {
+            db.prepare('INSERT OR IGNORE INTO categories (id, slug, name, icon, description, display_order) VALUES (?, ?, ?, ?, ?, ?)').run(c.id, c.slug, c.name, c.icon || '📦', c.description || '', c.display_order || 0);
+          }
+        }
+        const mBrands = await mDb.collection('brands').find({}).toArray();
+        for (const b of mBrands) {
+          if (b.id) {
+            db.prepare('INSERT OR IGNORE INTO brands (id, slug, name, logo, description) VALUES (?, ?, ?, ?, ?)').run(b.id, b.slug, b.name, b.logo || '', b.description || '');
+          }
+        }
+        const mSupps = await mDb.collection('suppliers').find({}).toArray();
+        for (const s of mSupps) {
+          if (s.id) {
+            db.prepare('INSERT OR IGNORE INTO suppliers (id, name, contact_person, email, phone, address, gstin, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(s.id, s.name, s.contact_person || '', s.email || '', s.phone || '', s.address || '', s.gstin || '', s.status || 'ACTIVE');
+          }
+        }
+      } catch (syncErr) {
+        console.warn('[SERVER] Master data sync warning:', syncErr.message);
+      }
       await migrateAllToMongo();
     }
   }).catch(err => {
@@ -608,6 +631,11 @@ async function mainHandler(req, res) {
         discount = Math.round(((old_price - price) / old_price) * 100);
       }
 
+      let safeBrand = brand_id && db.prepare('SELECT id FROM brands WHERE id = ?').get(brand_id) ? brand_id : null;
+      let safeCat = category_id && db.prepare('SELECT id FROM categories WHERE id = ?').get(category_id) ? category_id : null;
+      const safePrice = !isNaN(parseFloat(price)) ? Math.round(parseFloat(price)) : 0;
+      const safeOldPrice = old_price && !isNaN(parseFloat(old_price)) ? Math.round(parseFloat(old_price)) : null;
+
       const insert = db.prepare(`
         INSERT INTO products (
           sku, product_code, name, slug, brand_id, category_id, description,
@@ -615,8 +643,8 @@ async function mainHandler(req, res) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 5, ?, ?)
       `);
       const result = insert.run(
-        generatedSku, generatedSku, name.trim(), slug, brand_id || 1, category_id || 1,
-        description || '', price, old_price || null, discount, gst_rate || 18.0, hsn || '8714',
+        generatedSku, generatedSku, name.trim(), slug, safeBrand, safeCat,
+        description || '', safePrice, safeOldPrice, discount, gst_rate || 18.0, hsn || '8714',
         stock || 10, primary_image.trim(), JSON.stringify(images_json || [primary_image])
       );
 

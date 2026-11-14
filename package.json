@@ -9,12 +9,13 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "test": "node test-sqlite.js",
+    "test:sqlite": "node test-sqlite.js",
     "init-db": "node database.js",
-    "migrate-mongo": "node migrate-to-mongo.js",
-    "postinstall": "npm rebuild better-sqlite3"
+    "migrate-mongo": "node migrate-to-mongo.js"
   },
   "dependencies": {
-    "better-sqlite3": "^13.1.1",
+    "better-sqlite3": "11.8.1",
     "dotenv": "^16.4.7",
     "mongodb": "^6.12.0",
     "mongoose": "^8.9.0"

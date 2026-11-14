@@ -3,5 +3,7 @@ motopitshop.db
 .env
 *.db-shm
 *.db-wal
+*.bak
+*.db.bak
 .DS_Store
 .kiro/

@@ -4,11 +4,11 @@ services:
     env: node
     region: singapore
     plan: free
-    buildCommand: npm install --legacy-peer-deps && npm rebuild better-sqlite3
+    buildCommand: npm install --legacy-peer-deps && node test-sqlite.js
     startCommand: node server.js
     envVars:
       - key: NODE_VERSION
-        value: 22.12.0
+        value: 20.18.0
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI

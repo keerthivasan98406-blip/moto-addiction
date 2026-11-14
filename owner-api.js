@@ -1026,7 +1026,7 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
         primary_image, images_json, variants_json, warranty, weight
       } = body;
 
-      if (!name || !price) {
+      if (!name || price === undefined || price === null || price === '') {
         return sendJson(res, 400, { error: 'Product name and selling price are required' });
       }
 
@@ -1047,15 +1047,32 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now().toString().slice(-4);
 
-      const safeBrandId = brand_id && !isNaN(parseInt(brand_id, 10)) ? parseInt(brand_id, 10) : null;
-      const safeCatId = category_id && !isNaN(parseInt(category_id, 10)) ? parseInt(category_id, 10) : null;
-      const safeSuppId = supplier_id && !isNaN(parseInt(supplier_id, 10)) ? parseInt(supplier_id, 10) : null;
-      const safePrice = parseInt(price, 10) || 0;
-      const safeOldPrice = old_price && !isNaN(parseInt(old_price, 10)) ? parseInt(old_price, 10) : null;
-      const safeGstRate = parseFloat(gst_rate) || 18.0;
-      const safeMinStock = parseInt(min_stock, 10) || 5;
+      // Safe brand / category / supplier resolution so foreign key constraints never fail
+      let safeBrandId = brand_id && !isNaN(parseInt(brand_id, 10)) ? parseInt(brand_id, 10) : null;
+      if (safeBrandId) {
+        const brandExists = db.prepare('SELECT id FROM brands WHERE id = ?').get(safeBrandId);
+        if (!brandExists) safeBrandId = null;
+      }
+      let safeCatId = category_id && !isNaN(parseInt(category_id, 10)) ? parseInt(category_id, 10) : null;
+      if (safeCatId) {
+        const catExists = db.prepare('SELECT id FROM categories WHERE id = ?').get(safeCatId);
+        if (!catExists) safeCatId = null;
+      }
+      let safeSuppId = supplier_id && !isNaN(parseInt(supplier_id, 10)) ? parseInt(supplier_id, 10) : null;
+      if (safeSuppId) {
+        const suppExists = db.prepare('SELECT id FROM suppliers WHERE id = ?').get(safeSuppId);
+        if (!suppExists) safeSuppId = null;
+      }
 
-      const purPrice = purchase_price && !isNaN(parseInt(purchase_price, 10)) ? parseInt(purchase_price, 10) : Math.round(safePrice * 0.70);
+      // Buying price can start from ₹10 (or lower, min 0), selling price set freely by owner
+      const safePrice = !isNaN(parseFloat(price)) ? Math.round(parseFloat(price)) : 0;
+      const safeOldPrice = old_price && !isNaN(parseFloat(old_price)) ? Math.round(parseFloat(old_price)) : null;
+      const safeGstRate = !isNaN(parseFloat(gst_rate)) ? parseFloat(gst_rate) : 18.0;
+      const safeMinStock = !isNaN(parseInt(min_stock, 10)) ? parseInt(min_stock, 10) : 5;
+
+      const purPrice = purchase_price !== undefined && purchase_price !== null && purchase_price !== '' && !isNaN(parseFloat(purchase_price))
+        ? Math.round(parseFloat(purchase_price))
+        : Math.round(safePrice * 0.70);
       const initialStock = stock && !isNaN(parseInt(stock, 10)) ? parseInt(stock, 10) : 0;
       const img = primary_image ? primary_image.trim() : 'hero1.png';
       const safeDiscount = safeOldPrice && safeOldPrice > safePrice ? Math.round(((safeOldPrice - safePrice) / safeOldPrice) * 100) : 0;
@@ -1080,11 +1097,15 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
 
       // Log opening stock
       if (initialStock > 0) {
-        db.prepare(`
-          INSERT INTO inventory_transactions (
-            product_id, transaction_type, quantity_change, previous_stock, new_stock, notes, user_id
-          ) VALUES (?, 'PURCHASE', ?, 0, ?, 'Initial opening stock entry', ?)
-        `).run(productId, initialStock, initialStock, currentUser.id);
+        try {
+          db.prepare(`
+            INSERT INTO inventory_transactions (
+              product_id, transaction_type, quantity_change, previous_stock, new_stock, notes, user_id
+            ) VALUES (?, 'PURCHASE', ?, 0, ?, 'Initial opening stock entry', ?)
+          `).run(productId, initialStock, initialStock, currentUser ? currentUser.id : null);
+        } catch (txnErr) {
+          console.warn('[INVENTORY] Could not log opening stock txn:', txnErr.message);
+        }
       }
 
       logAudit(currentUser.id, currentUser.full_name, currentUser.role, 'CREATE_PRODUCT', 'PRODUCT', productId, 'SUCCESS', {
@@ -1196,15 +1217,29 @@ async function handleOwnerApi(req, res, pathname, parsedUrl, currentUser, parseJ
       const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
       if (!existing) return sendJson(res, 404, { error: 'Product not found' });
 
-      const safeBrandId = brand_id && !isNaN(parseInt(brand_id, 10)) ? parseInt(brand_id, 10) : null;
-      const safeCatId = category_id && !isNaN(parseInt(category_id, 10)) ? parseInt(category_id, 10) : null;
-      const safeSuppId = supplier_id && !isNaN(parseInt(supplier_id, 10)) ? parseInt(supplier_id, 10) : null;
-      const safePrice = price && !isNaN(parseInt(price, 10)) ? parseInt(price, 10) : null;
-      const safeOldPrice = old_price && !isNaN(parseInt(old_price, 10)) ? parseInt(old_price, 10) : null;
-      const safePurchasePrice = purchase_price && !isNaN(parseInt(purchase_price, 10)) ? parseInt(purchase_price, 10) : null;
-      const safeGstRate = gst_rate && !isNaN(parseFloat(gst_rate)) ? parseFloat(gst_rate) : null;
+      // Safe brand / category / supplier resolution
+      let safeBrandId = brand_id !== undefined ? (brand_id && !isNaN(parseInt(brand_id, 10)) ? parseInt(brand_id, 10) : null) : undefined;
+      if (safeBrandId) {
+        const brandExists = db.prepare('SELECT id FROM brands WHERE id = ?').get(safeBrandId);
+        if (!brandExists) safeBrandId = null;
+      }
+      let safeCatId = category_id !== undefined ? (category_id && !isNaN(parseInt(category_id, 10)) ? parseInt(category_id, 10) : null) : undefined;
+      if (safeCatId) {
+        const catExists = db.prepare('SELECT id FROM categories WHERE id = ?').get(safeCatId);
+        if (!catExists) safeCatId = null;
+      }
+      let safeSuppId = supplier_id !== undefined ? (supplier_id && !isNaN(parseInt(supplier_id, 10)) ? parseInt(supplier_id, 10) : null) : undefined;
+      if (safeSuppId) {
+        const suppExists = db.prepare('SELECT id FROM suppliers WHERE id = ?').get(safeSuppId);
+        if (!suppExists) safeSuppId = null;
+      }
+
+      const safePrice = price !== undefined && price !== null && price !== '' && !isNaN(parseFloat(price)) ? Math.round(parseFloat(price)) : null;
+      const safeOldPrice = old_price !== undefined && old_price !== null && old_price !== '' && !isNaN(parseFloat(old_price)) ? Math.round(parseFloat(old_price)) : null;
+      const safePurchasePrice = purchase_price !== undefined && purchase_price !== null && purchase_price !== '' && !isNaN(parseFloat(purchase_price)) ? Math.round(parseFloat(purchase_price)) : null;
+      const safeGstRate = gst_rate !== undefined && !isNaN(parseFloat(gst_rate)) ? parseFloat(gst_rate) : null;
       const safeStock = stock !== undefined && !isNaN(parseInt(stock, 10)) ? parseInt(stock, 10) : null;
-      const safeMinStock = min_stock && !isNaN(parseInt(min_stock, 10)) ? parseInt(min_stock, 10) : null;
+      const safeMinStock = min_stock !== undefined && !isNaN(parseInt(min_stock, 10)) ? parseInt(min_stock, 10) : null;
       const safeDiscount = safeOldPrice && safePrice && safeOldPrice > safePrice
         ? Math.round(((safeOldPrice - safePrice) / safeOldPrice) * 100)
         : (safeOldPrice ? 0 : existing.discount);
